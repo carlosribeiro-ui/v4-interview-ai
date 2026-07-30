@@ -1,0 +1,20 @@
+import { NextResponse } from 'next/server';
+import { getVagas } from '@/lib/store';
+
+export const dynamic = 'force-dynamic';
+
+/**
+ * Listagem pública e enxuta de vagas — usada na tela "Outras vagas disponíveis"
+ * ao final da entrevista. Sem autenticação (candidato nunca loga), por isso só
+ * expõe o mínimo (nada de requisitos/critérios/JD/fases internas).
+ */
+export async function GET() {
+  const todasVagas = await getVagas();
+  const vagas = todasVagas.map((v) => ({
+    id: v.id,
+    cargo: v.cargo,
+    senioridade: v.senioridade,
+    segmento: v.segmento
+  }));
+  return NextResponse.json(vagas);
+}

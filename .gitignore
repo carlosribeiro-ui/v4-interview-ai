@@ -1,0 +1,13 @@
+node_modules
+.next
+data/*.json
+public/uploads/*
+!public/uploads/.gitkeep
+.env.local
+*.tsbuildinfo
+
+.vercel
+
+*.log
+Prints/
+.claude/
