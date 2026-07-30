@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Montserrat, IBM_Plex_Sans } from 'next/font/google';
 import './globals.css';
-import { SessaoProvider, UserBadge } from '@/app/components/Sessao';
+import { SessaoProvider, UserBadge, AdminNavLink } from '@/app/components/Sessao';
 
 const fontBody = Montserrat({
   subsets: ['latin'],
@@ -78,6 +78,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               >
                 API Docs
               </a>
+              <AdminNavLink />
             </nav>
             <UserBadge />
           </header>

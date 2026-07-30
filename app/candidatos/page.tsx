@@ -32,6 +32,7 @@ function CandidatosPageInner() {
   const [filtro, setFiltro] = useState<Filtro>(statusInicial);
   const [vagaFiltro, setVagaFiltro] = useState('');
   const [faixaScore, setFaixaScore] = useState('');
+  const [mostrarTestes, setMostrarTestes] = useState(false);
 
   async function carregar() {
     const params = new URLSearchParams();
@@ -44,6 +45,7 @@ function CandidatosPageInner() {
       params.set('scoreMax', '6.99');
     }
     if (faixaScore === 'baixo') params.set('scoreMax', '3.99');
+    if (mostrarTestes) params.set('incluirTestes', '1');
 
     const res = await fetch(`/api/candidatos?${params.toString()}`);
     const data = await res.json();
@@ -55,7 +57,7 @@ function CandidatosPageInner() {
   useEffect(() => {
     carregar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtro, busca, vagaFiltro, faixaScore]);
+  }, [filtro, busca, vagaFiltro, faixaScore, mostrarTestes]);
 
   function baixarCsv() {
     const params = new URLSearchParams();
@@ -132,6 +134,15 @@ function CandidatosPageInner() {
             {label}
           </button>
         ))}
+        <label className="ml-auto flex items-center gap-1.5 text-xs text-white/50 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={mostrarTestes}
+            onChange={(e) => setMostrarTestes(e.target.checked)}
+            className="accent-v4red"
+          />
+          Mostrar testes (🧪)
+        </label>
       </div>
 
       {loading ? (
@@ -163,6 +174,7 @@ function CandidatosPageInner() {
                 <Pill tom={c.status === 'concluida' ? 'verde' : 'amarelo'}>
                   {c.status === 'concluida' ? 'Concluída' : 'Em andamento'}
                 </Pill>
+                {c.teste && <Pill tom="neutro">🧪 Teste</Pill>}
               </div>
               <p className="text-xs text-white/30 mt-2">
                 {new Date(c.createdAt).toLocaleString('pt-BR')}

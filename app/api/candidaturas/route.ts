@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
 import { getVaga, saveCandidatura, findCandidaturaPorEmail } from '@/lib/store';
 import type { Candidatura } from '@/lib/types';
+import { registrarLog } from '@/lib/logs';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,5 +51,11 @@ export async function POST(req: NextRequest) {
   };
 
   await saveCandidatura(candidatura);
+  await registrarLog('candidatura_criada', {
+    candidaturaId: candidatura.id,
+    vagaId,
+    email,
+    teste: email.trim().toLowerCase().startsWith('teste+')
+  });
   return NextResponse.json(candidatura, { status: 201 });
 }

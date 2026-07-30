@@ -15,6 +15,8 @@ export type CandidatoEnriquecido = {
   vagaId: string;
   vagaCargo: string;
   vagaSenioridade: string;
+  /** true = criado via "Testar entrevista" (email teste+...) — card de validação, não um candidato real. */
+  teste: boolean;
 };
 
 function paraCsv(linhas: CandidatoEnriquecido[]): string {
@@ -46,6 +48,7 @@ export async function GET(req: NextRequest) {
   const scoreMin = params.get('scoreMin') ? Number(params.get('scoreMin')) : null;
   const scoreMax = params.get('scoreMax') ? Number(params.get('scoreMax')) : null;
   const formato = params.get('formato');
+  const incluirTestes = params.get('incluirTestes') === '1';
 
   const vagas = await getVagas();
   const vagaPorId = new Map(vagas.map((v) => [v.id, v]));
@@ -64,10 +67,12 @@ export async function GET(req: NextRequest) {
       createdAt: c.createdAt,
       vagaId: c.vagaId,
       vagaCargo: vaga?.cargo ?? '—',
-      vagaSenioridade: vaga?.senioridade ?? '—'
+      vagaSenioridade: vaga?.senioridade ?? '—',
+      teste: c.email.trim().toLowerCase().startsWith('teste+')
     };
   });
 
+  if (!incluirTestes) candidatos = candidatos.filter((c) => !c.teste);
   if (status) candidatos = candidatos.filter((c) => c.status === status);
   if (vagaId) candidatos = candidatos.filter((c) => c.vagaId === vagaId);
   if (q) {

@@ -4,6 +4,8 @@ export type Pergunta = {
   criterios: string;
   /** Ausente = tratado como 'principal'. Adicionais são opcionais no fluxo do candidato. */
   tipo?: 'principal' | 'adicional';
+  /** URL pública (R2) do áudio TTS já sintetizado desta pergunta — evita chamar a API Gemini a cada "Ouvir pergunta". */
+  audioUrl?: string;
 };
 
 export type Vaga = {
@@ -32,6 +34,8 @@ export type FaseDef = {
   id: string;
   nome: string;
   cor: CorFase;
+  /** URL opcional chamada via POST sempre que uma candidatura entra nesta fase (ver lib/webhooks.ts). */
+  webhookUrl?: string;
 };
 
 /** Fases padrão semeadas em toda vaga nova; também usadas para normalizar vagas antigas sem `fases`. */

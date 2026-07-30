@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCandidatura, saveCandidatura, getVaga } from '@/lib/store';
+import { dispararWebhookFase } from '@/lib/webhooks';
+import { lerSessao } from '@/lib/auth';
+import { registrarLog } from '@/lib/logs';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +21,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: `fase deve ser uma de: ${idsValidos.join(', ')}` }, { status: 400 });
   }
 
+  const faseAnterior = candidatura.fase;
   candidatura.fase = fase;
   await saveCandidatura(candidatura);
+
+  const sessao = await lerSessao(req);
+  await registrarLog(
+    'fase_alterada',
+    { candidaturaId: candidatura.id, vagaId: vaga.id, de: faseAnterior, para: fase },
+    sessao?.email
+  );
+  await dispararWebhookFase(vaga, candidatura, fase);
   return NextResponse.json(candidatura);
 }
