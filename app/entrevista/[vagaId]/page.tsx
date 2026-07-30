@@ -43,7 +43,9 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
   const [indice, setIndice] = useState(0);
   const [retomado, setRetomado] = useState(false);
   const [falando, setFalando] = useState(false);
+  const [carregandoAudio, setCarregandoAudio] = useState(false);
   const [ehTeste, setEhTeste] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -51,29 +53,44 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
     }
   }, []);
 
+  function pararFala() {
+    audioRef.current?.pause();
+    audioRef.current = null;
+    setFalando(false);
+    setCarregandoAudio(false);
+  }
+
   // Troca de pergunta: qualquer fala em andamento da pergunta anterior é interrompida.
   useEffect(() => {
-    return () => {
-      if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel();
-    };
+    return () => pararFala();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [indice]);
 
-  function ouvirPergunta(texto: string) {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return;
-    if (falando) {
-      window.speechSynthesis.cancel();
-      setFalando(false);
+  async function ouvirPergunta(texto: string) {
+    if (falando || carregandoAudio) {
+      pararFala();
       return;
     }
-    window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(texto);
-    utter.lang = 'pt-BR';
-    const vozPt = window.speechSynthesis.getVoices().find((v) => v.lang?.toLowerCase().startsWith('pt'));
-    if (vozPt) utter.voice = vozPt;
-    utter.onend = () => setFalando(false);
-    utter.onerror = () => setFalando(false);
-    window.speechSynthesis.speak(utter);
-    setFalando(true);
+    setCarregandoAudio(true);
+    try {
+      const res = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ texto })
+      });
+      if (!res.ok) throw new Error('Falha ao gerar áudio');
+      const blob = await res.blob();
+      const audio = new Audio(URL.createObjectURL(blob));
+      audioRef.current = audio;
+      audio.onended = () => setFalando(false);
+      audio.onerror = () => setFalando(false);
+      setCarregandoAudio(false);
+      setFalando(true);
+      await audio.play();
+    } catch {
+      setCarregandoAudio(false);
+      setFalando(false);
+    }
   }
 
   useEffect(() => {
@@ -309,14 +326,13 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
       </p>
       <div className="flex items-start justify-between gap-3">
         <h1 className="font-heading text-lg font-semibold">{pergunta.texto}</h1>
-        {typeof window !== 'undefined' && 'speechSynthesis' in window && (
-          <button
-            onClick={() => ouvirPergunta(pergunta.texto)}
-            className="shrink-0 rounded border border-white/10 hover:bg-white/10 text-white/70 hover:text-white px-3 py-1.5 text-sm whitespace-nowrap"
-          >
-            {falando ? '⏸ Parar' : '🔊 Ouvir pergunta'}
-          </button>
-        )}
+        <button
+          onClick={() => ouvirPergunta(pergunta.texto)}
+          disabled={carregandoAudio}
+          className="shrink-0 rounded border border-white/10 hover:bg-white/10 text-white/70 hover:text-white px-3 py-1.5 text-sm whitespace-nowrap disabled:opacity-50"
+        >
+          {carregandoAudio ? '⏳ Gerando áudio…' : falando ? '⏸ Parar' : '🔊 Ouvir pergunta'}
+        </button>
       </div>
       {ehAdicional && (
         <button
