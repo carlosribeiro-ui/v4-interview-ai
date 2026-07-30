@@ -34,8 +34,6 @@ export type FaseDef = {
   id: string;
   nome: string;
   cor: CorFase;
-  /** URL opcional chamada via POST sempre que uma candidatura entra nesta fase (ver lib/webhooks.ts). */
-  webhookUrl?: string;
 };
 
 /** Fases padrão semeadas em toda vaga nova; também usadas para normalizar vagas antigas sem `fases`. */
