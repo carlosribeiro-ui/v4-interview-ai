@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
-    "start": "next start -p 3001"
+    "start": "next start -p 3001",
+    "deploy": "vercel --prod"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1098.0",
