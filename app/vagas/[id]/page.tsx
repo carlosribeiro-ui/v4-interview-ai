@@ -99,6 +99,21 @@ export default function VagaPage({ params }: { params: { id: string } }) {
     return () => clearInterval(interval);
   }, [params.id]);
 
+  async function alternarAtiva() {
+    if (!vaga) return;
+    const novaAtiva = !(vaga.ativa !== false);
+    setVaga({ ...vaga, ativa: novaAtiva });
+    const res = await fetch(`/api/vagas/${vaga.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ativa: novaAtiva })
+    });
+    if (!res.ok) {
+      setVaga((atual) => (atual ? { ...atual, ativa: !novaAtiva } : atual));
+      mostrar('Não foi possível alterar o status da vaga.', 'erro');
+    }
+  }
+
   async function moverFase(candidaturaId: string, fase: string) {
     setCandidaturas((atual) => atual.map((c) => (c.id === candidaturaId ? { ...c, fase } : c)));
     const res = await fetch(`/api/candidaturas/${candidaturaId}/fase`, {
@@ -265,9 +280,31 @@ export default function VagaPage({ params }: { params: { id: string } }) {
         <a href="/" className="text-sm text-white/40 hover:text-white/70">
           ← Dashboard
         </a>
-        <h1 className="font-heading text-xl font-bold mt-1">
-          {vaga.cargo} <span className="text-white/40 font-normal">· {vaga.senioridade}</span>
-        </h1>
+        <div className="flex items-center gap-2.5 mt-1 flex-wrap">
+          <h1 className="font-heading text-xl font-bold">
+            {vaga.cargo} <span className="text-white/40 font-normal">· {vaga.senioridade}</span>
+          </h1>
+          {isAdmin ? (
+            <button
+              onClick={alternarAtiva}
+              className={`text-xs px-2.5 py-1 rounded-full font-medium transition ${
+                vaga.ativa !== false
+                  ? 'bg-v4green/15 text-v4green hover:bg-v4green/25'
+                  : 'bg-white/[0.06] text-white/40 hover:bg-white/10'
+              }`}
+            >
+              {vaga.ativa !== false ? '● Ativa' : '○ Inativa'}
+            </button>
+          ) : (
+            <span
+              className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                vaga.ativa !== false ? 'bg-v4green/15 text-v4green' : 'bg-white/[0.06] text-white/40'
+              }`}
+            >
+              {vaga.ativa !== false ? '● Ativa' : '○ Inativa'}
+            </span>
+          )}
+        </div>
         <p className="text-white/50">{vaga.segmento}</p>
       </div>
 

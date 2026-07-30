@@ -1,25 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCandidatura, getVaga, saveCandidatura, deleteCandidatura } from '@/lib/store';
-import { lerSessao } from '@/lib/auth';
+import { getCandidatura, saveCandidatura, deleteCandidatura } from '@/lib/store';
+import { checarChaveExterna } from '@/lib/auth-externa';
 import { registrarLog } from '@/lib/logs';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+/** Candidatura completa (inclui respostas, transcrições, parecer) — pra sistemas externos que precisam do estado inteiro. */
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  const authErro = checarChaveExterna(req);
+  if (authErro) return authErro;
+
   const candidatura = await getCandidatura(params.id);
   if (!candidatura) return NextResponse.json({ error: 'Candidatura não encontrada' }, { status: 404 });
-
-  const vaga = await getVaga(candidatura.vagaId);
-  return NextResponse.json({ candidatura, vaga });
+  return NextResponse.json(candidatura);
 }
 
-/**
- * Atualiza os dados que o próprio candidato preenche (linkedin, telefone, pretensão
- * salarial, currículo, nome) — usado tanto pelo formulário de entrevista (candidato não
- * loga, o id da candidatura funciona como token, igual já acontece no GET) quanto por
- * quem administra o painel.
- */
+/** Atualiza os dados que o próprio candidato preenche (linkedin, telefone, pretensão salarial, currículo, nome). */
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+  const authErro = checarChaveExterna(req);
+  if (authErro) return authErro;
+
   const candidatura = await getCandidatura(params.id);
   if (!candidatura) return NextResponse.json({ error: 'Candidatura não encontrada' }, { status: 404 });
 
@@ -35,20 +35,15 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   return NextResponse.json(candidatura);
 }
 
+/** Remove a candidatura (respostas e vídeos ficam órfãos no R2 — não é apagado do bucket). */
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const sessao = await lerSessao(req);
-  if (!sessao || sessao.role !== 'admin') {
-    return NextResponse.json({ error: 'Apenas admin pode remover a candidatura' }, { status: 403 });
-  }
+  const authErro = checarChaveExterna(req);
+  if (authErro) return authErro;
 
   const candidatura = await getCandidatura(params.id);
   if (!candidatura) return NextResponse.json({ error: 'Candidatura não encontrada' }, { status: 404 });
 
   await deleteCandidatura(params.id);
-  await registrarLog(
-    'candidatura_removida',
-    { candidaturaId: params.id, vagaId: candidatura.vagaId, email: candidatura.email },
-    sessao.email
-  );
+  await registrarLog('candidatura_removida', { candidaturaId: params.id, vagaId: candidatura.vagaId, email: candidatura.email }, 'api-externa');
   return NextResponse.json({ ok: true });
 }

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
-import { getVaga, getCandidaturas, saveVaga } from '@/lib/store';
+import { getVaga, getCandidaturas, saveVaga, deleteVaga } from '@/lib/store';
 import { lerSessao } from '@/lib/auth';
+import { registrarLog } from '@/lib/logs';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,7 +49,28 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (body.senioridade) vaga.senioridade = body.senioridade;
   if (body.segmento) vaga.segmento = body.segmento;
   if (typeof body.jobDescription === 'string') vaga.jobDescription = body.jobDescription;
+  if (typeof body.ativa === 'boolean') vaga.ativa = body.ativa;
 
   await saveVaga(vaga);
   return NextResponse.json(vaga);
+}
+
+/** Remove a vaga e todas as candidaturas associadas — irreversível. */
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  const sessao = await lerSessao(req);
+  if (!sessao || sessao.role !== 'admin') {
+    return NextResponse.json({ error: 'Apenas admin pode remover a vaga' }, { status: 403 });
+  }
+
+  const vaga = await getVaga(params.id);
+  if (!vaga) return NextResponse.json({ error: 'Vaga não encontrada' }, { status: 404 });
+
+  const candidaturas = await getCandidaturas(params.id);
+  await deleteVaga(params.id);
+  await registrarLog(
+    'vaga_removida',
+    { vagaId: params.id, cargo: vaga.cargo, candidaturasRemovidas: candidaturas.length },
+    sessao.email
+  );
+  return NextResponse.json({ ok: true, candidaturasRemovidas: candidaturas.length });
 }

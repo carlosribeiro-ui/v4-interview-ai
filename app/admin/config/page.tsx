@@ -16,7 +16,9 @@ const RÓTULO_EVENTO: Record<string, string> = {
   usuario_removido: 'Usuário removido',
   fase_alterada: 'Fase alterada',
   candidatura_criada: 'Candidatura criada',
-  vaga_criada: 'Vaga criada'
+  candidatura_removida: 'Candidatura removida',
+  vaga_criada: 'Vaga criada',
+  vaga_removida: 'Vaga removida'
 };
 
 export default function AdminConfigPage() {

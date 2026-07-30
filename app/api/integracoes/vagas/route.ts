@@ -15,9 +15,16 @@ export async function GET(req: NextRequest) {
   if (authErro) return authErro;
 
   const externalId = req.nextUrl.searchParams.get('externalId');
+  const ativaParam = req.nextUrl.searchParams.get('ativa');
   const todasVagas = await getVagas();
-  const vagas = todasVagas.filter((v) => !externalId || v.externalId === externalId);
   const todasCandidaturas = await getCandidaturas();
+
+  const vagas = todasVagas.filter((v) => {
+    if (externalId && v.externalId !== externalId) return false;
+    if (ativaParam === 'true' && v.ativa === false) return false;
+    if (ativaParam === 'false' && v.ativa !== false) return false;
+    return true;
+  });
 
   const resultado = vagas.map((vaga) => {
     const candidaturas = todasCandidaturas.filter((c) => c.vagaId === vaga.id);
@@ -33,6 +40,11 @@ export async function GET(req: NextRequest) {
       cargo: vaga.cargo,
       senioridade: vaga.senioridade,
       segmento: vaga.segmento,
+      ativa: vaga.ativa !== false,
+      requisitos: vaga.requisitos,
+      perguntas: vaga.perguntas,
+      fases: vaga.fases,
+      jobDescription: vaga.jobDescription ?? null,
       createdAt: vaga.createdAt,
       linkCandidato: `/entrevista/${vaga.id}`,
       totalCandidatos: candidaturas.length,
@@ -44,12 +56,19 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(resultado);
 }
 
+/**
+ * Cria a vaga replicando exatamente o que o front permite configurar: se `perguntas` e
+ * `requisitos` vierem prontos, usa direto (sem IA) — pra quem quer integrar o processo
+ * inteiro via API. Se vierem vazios, gera automaticamente a partir de jobDescription,
+ * como já fazia.
+ */
 export async function POST(req: NextRequest) {
   const authErro = checarChaveExterna(req);
   if (authErro) return authErro;
 
   const body = await req.json();
-  const { cargo, senioridade, segmento, jobDescription, externalId, origem } = body ?? {};
+  const { cargo, senioridade, segmento, jobDescription, externalId, origem, requisitos, perguntas, fases, ativa } =
+    body ?? {};
 
   if (!cargo || !senioridade || !segmento) {
     return NextResponse.json(
@@ -59,7 +78,18 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const vaga = await criarVaga({ cargo, senioridade, segmento, jobDescription, externalId, origem });
+    const vaga = await criarVaga({
+      cargo,
+      senioridade,
+      segmento,
+      jobDescription,
+      externalId,
+      origem,
+      requisitos,
+      perguntas,
+      fases,
+      ativa
+    });
     return NextResponse.json(
       { ...vaga, linkCandidato: `/entrevista/${vaga.id}` },
       { status: 201 }

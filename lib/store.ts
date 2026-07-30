@@ -12,10 +12,11 @@ async function candidaturasCollection() {
   return db.collection<Candidatura>('candidaturas');
 }
 
-/** Vagas gravadas antes do kanban de fases ser customizável não têm o campo — assume as fases padrão. */
+/** Vagas gravadas antes do kanban de fases/do campo `ativa` existirem — aplica os defaults. */
 function normalizarFases(v: Vaga): Vaga {
   const { _id, ...resto } = v as Vaga & { _id?: unknown };
-  return resto.fases && resto.fases.length > 0 ? resto : { ...resto, fases: FASES_PADRAO };
+  const comFases = resto.fases && resto.fases.length > 0 ? resto : { ...resto, fases: FASES_PADRAO };
+  return typeof comFases.ativa === 'boolean' ? comFases : { ...comFases, ativa: true };
 }
 
 /** Candidaturas gravadas antes do pipeline de fases existir não têm o campo — assume 'triagem'. */
@@ -39,6 +40,14 @@ export async function getVaga(id: string): Promise<Vaga | undefined> {
 export async function saveVaga(vaga: Vaga): Promise<void> {
   const col = await vagasCollection();
   await col.replaceOne({ id: vaga.id }, vaga, { upsert: true });
+}
+
+/** Remove a vaga e todas as candidaturas dela — não há como recuperar depois. */
+export async function deleteVaga(id: string): Promise<void> {
+  const vagas = await vagasCollection();
+  const candidaturas = await candidaturasCollection();
+  await candidaturas.deleteMany({ vagaId: id });
+  await vagas.deleteOne({ id });
 }
 
 export async function getCandidaturas(vagaId?: string): Promise<Candidatura[]> {
@@ -71,4 +80,9 @@ export async function findCandidaturaPorEmail(
 export async function saveCandidatura(candidatura: Candidatura): Promise<void> {
   const col = await candidaturasCollection();
   await col.replaceOne({ id: candidatura.id }, candidatura, { upsert: true });
+}
+
+export async function deleteCandidatura(id: string): Promise<void> {
+  const col = await candidaturasCollection();
+  await col.deleteOne({ id });
 }

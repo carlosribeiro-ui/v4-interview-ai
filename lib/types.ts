@@ -24,6 +24,8 @@ export type Vaga = {
   fases: FaseDef[];
   /** Job Description completa (texto livre) enviada pelo recrutador. Quando presente, é a fonte de verdade usada pela IA para gerar/avaliar contra a vaga — tem prioridade sobre `requisitos`. */
   jobDescription?: string;
+  /** Ausente = tratado como true (vagas antigas). false = fechada — some de /entrevista, /vagas/publicas e da criação de novas candidaturas. */
+  ativa?: boolean;
 };
 
 /** Cor semântica de uma fase — mapeia pra um token fixo da paleta V4 (nunca hex livre). */
