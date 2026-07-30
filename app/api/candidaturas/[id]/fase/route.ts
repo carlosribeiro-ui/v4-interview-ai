@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCandidatura, saveCandidatura, getVaga } from '@/lib/store';
-import { dispararWebhookFase } from '@/lib/webhooks';
 import { lerSessao } from '@/lib/auth';
 import { registrarLog } from '@/lib/logs';
 
@@ -31,6 +30,5 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     { candidaturaId: candidatura.id, vagaId: vaga.id, de: faseAnterior, para: fase },
     sessao?.email
   );
-  await dispararWebhookFase(vaga, candidatura, fase);
   return NextResponse.json(candidatura);
 }

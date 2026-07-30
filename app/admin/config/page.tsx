@@ -4,9 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSessao } from '@/app/components/Sessao';
 
-type Aba = 'automacoes' | 'usuarios' | 'logs';
+type Aba = 'usuarios' | 'logs';
 
-type Automacao = { vagaId: string; vagaCargo: string; faseId: string; faseNome: string; webhookUrl?: string };
 type Usuario = { id: string; nome: string; email: string; role: 'admin' | 'talent' };
 type LogEntry = { id: string; evento: string; ator?: string; detalhes?: Record<string, unknown>; criadoEm: string };
 
@@ -15,9 +14,6 @@ const RÓTULO_EVENTO: Record<string, string> = {
   login_falhou: 'Login falhou',
   usuario_criado: 'Usuário criado',
   usuario_removido: 'Usuário removido',
-  webhook_configurado: 'Webhook configurado',
-  webhook_disparado: 'Webhook disparado',
-  webhook_falhou: 'Webhook falhou',
   fase_alterada: 'Fase alterada',
   candidatura_criada: 'Candidatura criada',
   vaga_criada: 'Vaga criada'
@@ -26,7 +22,7 @@ const RÓTULO_EVENTO: Record<string, string> = {
 export default function AdminConfigPage() {
   const router = useRouter();
   const { usuario, carregando } = useSessao();
-  const [aba, setAba] = useState<Aba>('automacoes');
+  const [aba, setAba] = useState<Aba>('usuarios');
 
   useEffect(() => {
     if (!carregando && (!usuario || usuario.role !== 'admin')) router.replace('/');
@@ -40,13 +36,12 @@ export default function AdminConfigPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="font-heading text-2xl font-bold">⚙ Configurações</h1>
-        <p className="text-white/40 text-sm mt-0.5">Automações, usuários e trilha de auditoria — só admin.</p>
+        <p className="text-white/40 text-sm mt-0.5">Usuários e trilha de auditoria — só admin.</p>
       </div>
 
       <div className="flex gap-1.5">
         {(
           [
-            ['automacoes', 'Automações (webhooks)'],
             ['usuarios', 'Usuários'],
             ['logs', 'Logs']
           ] as [Aba, string][]
@@ -63,97 +58,8 @@ export default function AdminConfigPage() {
         ))}
       </div>
 
-      {aba === 'automacoes' && <AbaAutomacoes />}
       {aba === 'usuarios' && <AbaUsuarios usuarioAtualId={usuario.id} />}
       {aba === 'logs' && <AbaLogs />}
-    </div>
-  );
-}
-
-function AbaAutomacoes() {
-  const [itens, setItens] = useState<Automacao[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [salvando, setSalvando] = useState<string | null>(null);
-  const [rascunhos, setRascunhos] = useState<Record<string, string>>({});
-  const [erro, setErro] = useState('');
-
-  function carregar() {
-    setLoading(true);
-    fetch('/api/admin/automacoes')
-      .then((r) => r.json())
-      .then((data: Automacao[]) => {
-        setItens(data);
-        setRascunhos(Object.fromEntries(data.map((i) => [`${i.vagaId}:${i.faseId}`, i.webhookUrl ?? ''])));
-        setLoading(false);
-      });
-  }
-
-  useEffect(carregar, []);
-
-  async function salvar(item: Automacao) {
-    const chave = `${item.vagaId}:${item.faseId}`;
-    setErro('');
-    setSalvando(chave);
-    try {
-      const res = await fetch('/api/admin/automacoes', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vagaId: item.vagaId, faseId: item.faseId, webhookUrl: rascunhos[chave] })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Erro ao salvar');
-      carregar();
-    } catch (err: any) {
-      setErro(err.message ?? 'Erro ao salvar');
-    } finally {
-      setSalvando(null);
-    }
-  }
-
-  if (loading) return <p className="text-white/50">Carregando…</p>;
-
-  const porVaga = itens.reduce<Record<string, Automacao[]>>((acc, i) => {
-    (acc[i.vagaId] ??= []).push(i);
-    return acc;
-  }, {});
-
-  return (
-    <div className="space-y-5">
-      <p className="text-sm text-white/50">
-        Um POST é disparado sempre que uma candidatura entra na fase configurada — útil pra integrar com n8n,
-        Pipefy ou qualquer automação externa. Deixe em branco pra desativar.
-      </p>
-      {erro && <p className="text-sm text-v4red">{erro}</p>}
-      {Object.entries(porVaga).length === 0 ? (
-        <p className="text-white/40 text-sm">Nenhuma vaga cadastrada ainda.</p>
-      ) : (
-        Object.entries(porVaga).map(([vagaId, fases]) => (
-          <div key={vagaId} className="rounded-2xl border border-v4border bg-v4surface p-4 space-y-2.5">
-            <h3 className="font-heading text-sm font-semibold">{fases[0].vagaCargo}</h3>
-            {fases.map((f) => {
-              const chave = `${f.vagaId}:${f.faseId}`;
-              return (
-                <div key={chave} className="flex items-center gap-2">
-                  <span className="w-28 shrink-0 text-xs text-white/50">{f.faseNome}</span>
-                  <input
-                    value={rascunhos[chave] ?? ''}
-                    onChange={(e) => setRascunhos((r) => ({ ...r, [chave]: e.target.value }))}
-                    placeholder="https://…"
-                    className="flex-1 min-w-0 rounded-lg bg-black/30 border border-white/10 px-2.5 py-1.5 text-xs outline-none focus:border-v4red"
-                  />
-                  <button
-                    onClick={() => salvar(f)}
-                    disabled={salvando === chave}
-                    className="shrink-0 rounded-lg bg-v4red/15 text-v4red hover:bg-v4red/25 disabled:opacity-50 px-3 py-1.5 text-xs font-medium"
-                  >
-                    {salvando === chave ? 'Salvando…' : 'Salvar'}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        ))
-      )}
     </div>
   );
 }

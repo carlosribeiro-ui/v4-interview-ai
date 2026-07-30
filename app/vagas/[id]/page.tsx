@@ -491,61 +491,53 @@ export default function VagaPage({ params }: { params: { id: string } }) {
             {erroFases && <p className="text-sm text-v4red">{erroFases}</p>}
             <div className="space-y-2">
               {editFasesList.map((f, i) => (
-                <div key={f.id} className="border border-white/10 rounded p-2 space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <div className="flex flex-col leading-none shrink-0">
-                      <button
-                        type="button"
-                        disabled={i === 0}
-                        onClick={() => moverOrdemFase(i, -1)}
-                        className="disabled:opacity-20 text-white/50 hover:text-white text-xs px-1"
-                      >
-                        ▲
-                      </button>
-                      <button
-                        type="button"
-                        disabled={i === editFasesList.length - 1}
-                        onClick={() => moverOrdemFase(i, 1)}
-                        className="disabled:opacity-20 text-white/50 hover:text-white text-xs px-1"
-                      >
-                        ▼
-                      </button>
-                    </div>
-                    <input
-                      value={f.nome}
-                      onChange={(e) => atualizarFase(i, { nome: e.target.value })}
-                      className="flex-1 min-w-0 rounded bg-black/30 border border-white/10 px-2 py-1 text-sm outline-none focus:border-v4red"
-                    />
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {CORES_DISPONIVEIS.map((c) => (
-                        <button
-                          key={c.valor}
-                          type="button"
-                          title={c.label}
-                          aria-label={`Cor ${c.label}`}
-                          onClick={() => atualizarFase(i, { cor: c.valor })}
-                          className={`w-5 h-5 rounded-full ${c.classe} ${
-                            f.cor === c.valor ? 'ring-2 ring-white' : 'opacity-40 hover:opacity-80'
-                          }`}
-                        />
-                      ))}
-                    </div>
+                <div key={f.id} className="flex items-center gap-2 border border-white/10 rounded p-2">
+                  <div className="flex flex-col leading-none shrink-0">
                     <button
                       type="button"
-                      onClick={() => removerFase(i)}
-                      disabled={editFasesList.length === 1}
-                      className="shrink-0 text-white/40 hover:text-v4red disabled:opacity-20 text-sm px-1"
-                      aria-label="Excluir fase"
+                      disabled={i === 0}
+                      onClick={() => moverOrdemFase(i, -1)}
+                      className="disabled:opacity-20 text-white/50 hover:text-white text-xs px-1"
                     >
-                      ✕
+                      ▲
+                    </button>
+                    <button
+                      type="button"
+                      disabled={i === editFasesList.length - 1}
+                      onClick={() => moverOrdemFase(i, 1)}
+                      className="disabled:opacity-20 text-white/50 hover:text-white text-xs px-1"
+                    >
+                      ▼
                     </button>
                   </div>
                   <input
-                    value={f.webhookUrl ?? ''}
-                    onChange={(e) => atualizarFase(i, { webhookUrl: e.target.value || undefined })}
-                    placeholder="Webhook (opcional) — POST disparado quando um candidato entra nesta fase"
-                    className="w-full rounded bg-black/30 border border-white/10 px-2 py-1 text-xs text-white/70 outline-none focus:border-v4red placeholder:text-white/30"
+                    value={f.nome}
+                    onChange={(e) => atualizarFase(i, { nome: e.target.value })}
+                    className="flex-1 min-w-0 rounded bg-black/30 border border-white/10 px-2 py-1 text-sm outline-none focus:border-v4red"
                   />
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {CORES_DISPONIVEIS.map((c) => (
+                      <button
+                        key={c.valor}
+                        type="button"
+                        title={c.label}
+                        aria-label={`Cor ${c.label}`}
+                        onClick={() => atualizarFase(i, { cor: c.valor })}
+                        className={`w-5 h-5 rounded-full ${c.classe} ${
+                          f.cor === c.valor ? 'ring-2 ring-white' : 'opacity-40 hover:opacity-80'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removerFase(i)}
+                    disabled={editFasesList.length === 1}
+                    className="shrink-0 text-white/40 hover:text-v4red disabled:opacity-20 text-sm px-1"
+                    aria-label="Excluir fase"
+                  >
+                    ✕
+                  </button>
                 </div>
               ))}
             </div>

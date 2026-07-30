@@ -6,9 +6,6 @@ export type LogEvento =
   | 'login_falhou'
   | 'usuario_criado'
   | 'usuario_removido'
-  | 'webhook_configurado'
-  | 'webhook_disparado'
-  | 'webhook_falhou'
   | 'fase_alterada'
   | 'candidatura_criada'
   | 'vaga_criada';
