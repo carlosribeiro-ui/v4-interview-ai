@@ -32,7 +32,13 @@ export async function POST(req: NextRequest) {
         { status: 409 }
       );
     }
+    // Retomar uma candidatura já iniciada continua liberado mesmo se a vaga for
+    // inativada no meio do processo — só bloqueia gente nova entrando.
     return NextResponse.json({ ...existente, retomada: true }, { status: 200 });
+  }
+
+  if (vaga.ativa === false) {
+    return NextResponse.json({ error: 'Esta vaga está inativa e não aceita novas candidaturas.' }, { status: 409 });
   }
 
   const candidatura: Candidatura = {

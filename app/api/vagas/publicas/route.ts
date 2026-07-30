@@ -10,11 +10,13 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET() {
   const todasVagas = await getVagas();
-  const vagas = todasVagas.map((v) => ({
-    id: v.id,
-    cargo: v.cargo,
-    senioridade: v.senioridade,
-    segmento: v.segmento
-  }));
+  const vagas = todasVagas
+    .filter((v) => v.ativa !== false)
+    .map((v) => ({
+      id: v.id,
+      cargo: v.cargo,
+      senioridade: v.senioridade,
+      segmento: v.segmento
+    }));
   return NextResponse.json(vagas);
 }

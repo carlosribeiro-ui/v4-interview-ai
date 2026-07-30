@@ -8,7 +8,9 @@ export type LogEvento =
   | 'usuario_removido'
   | 'fase_alterada'
   | 'candidatura_criada'
-  | 'vaga_criada';
+  | 'candidatura_removida'
+  | 'vaga_criada'
+  | 'vaga_removida';
 
 export type LogEntry = {
   id: string;
