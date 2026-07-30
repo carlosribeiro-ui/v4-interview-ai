@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-type Usuario = { nome: string; email: string; role: 'admin' | 'talent' };
+type Usuario = { id: string; nome: string; email: string; role: 'admin' | 'talent' };
 
 const SessaoContext = createContext<{ usuario: Usuario | null; carregando: boolean }>({
   usuario: null,
@@ -26,6 +26,19 @@ export function SessaoProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return <SessaoContext.Provider value={{ usuario, carregando }}>{children}</SessaoContext.Provider>;
+}
+
+export function AdminNavLink() {
+  const { usuario } = useSessao();
+  if (usuario?.role !== 'admin') return null;
+  return (
+    <a
+      href="/admin/config"
+      className="px-3.5 py-1.5 rounded-full text-white/40 hover:text-white hover:bg-white/[0.06] transition text-xs"
+    >
+      ⚙ Configurações
+    </a>
+  );
 }
 
 export function UserBadge() {

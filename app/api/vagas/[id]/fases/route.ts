@@ -29,7 +29,9 @@ function validarFases(body: unknown): FaseDef[] | null {
     const id = (f as any).id.trim();
     if (vistos.has(id)) return null;
     vistos.add(id);
-    resultado.push({ id, nome: (f as any).nome.trim(), cor: (f as any).cor });
+    const webhookUrlBruto = (f as any).webhookUrl;
+    const webhookUrl = typeof webhookUrlBruto === 'string' && webhookUrlBruto.trim() ? webhookUrlBruto.trim() : undefined;
+    resultado.push({ id, nome: (f as any).nome.trim(), cor: (f as any).cor, ...(webhookUrl ? { webhookUrl } : {}) });
   }
   return resultado;
 }

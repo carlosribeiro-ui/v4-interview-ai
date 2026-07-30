@@ -66,9 +66,27 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [indice]);
 
-  async function ouvirPergunta(texto: string) {
+  function tocarAudio(src: string) {
+    const audio = new Audio(src);
+    audioRef.current = audio;
+    audio.onended = () => setFalando(false);
+    audio.onerror = () => setFalando(false);
+    setCarregandoAudio(false);
+    setFalando(true);
+    audio.play();
+  }
+
+  /**
+   * Se a pergunta já tem `audioUrl` cacheado (gerado numa audição anterior, por qualquer
+   * candidato), toca direto — zero chamada à API. Só fala com o Gemini na primeira vez.
+   */
+  async function ouvirPergunta(pergunta: { id: string; texto: string; audioUrl?: string }) {
     if (falando || carregandoAudio) {
       pararFala();
+      return;
+    }
+    if (pergunta.audioUrl) {
+      tocarAudio(pergunta.audioUrl);
       return;
     }
     setCarregandoAudio(true);
@@ -76,17 +94,23 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
       const res = await fetch('/api/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ texto })
+        body: JSON.stringify({ texto: pergunta.texto, vagaId: params.vagaId, perguntaId: pergunta.id })
       });
       if (!res.ok) throw new Error('Falha ao gerar áudio');
-      const blob = await res.blob();
-      const audio = new Audio(URL.createObjectURL(blob));
-      audioRef.current = audio;
-      audio.onended = () => setFalando(false);
-      audio.onerror = () => setFalando(false);
-      setCarregandoAudio(false);
-      setFalando(true);
-      await audio.play();
+
+      const contentType = res.headers.get('Content-Type') ?? '';
+      if (contentType.includes('application/json')) {
+        const { audioUrl } = await res.json();
+        setVaga((atual) =>
+          atual
+            ? { ...atual, perguntas: atual.perguntas.map((p) => (p.id === pergunta.id ? { ...p, audioUrl } : p)) }
+            : atual
+        );
+        tocarAudio(audioUrl);
+      } else {
+        const blob = await res.blob();
+        tocarAudio(URL.createObjectURL(blob));
+      }
     } catch {
       setCarregandoAudio(false);
       setFalando(false);
@@ -327,7 +351,7 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
       <div className="flex items-start justify-between gap-3">
         <h1 className="font-heading text-lg font-semibold">{pergunta.texto}</h1>
         <button
-          onClick={() => ouvirPergunta(pergunta.texto)}
+          onClick={() => ouvirPergunta(pergunta)}
           disabled={carregandoAudio}
           className="shrink-0 rounded border border-white/10 hover:bg-white/10 text-white/70 hover:text-white px-3 py-1.5 text-sm whitespace-nowrap disabled:opacity-50"
         >

@@ -1,4 +1,4 @@
-import { randomBytes, scryptSync, timingSafeEqual } from 'crypto';
+import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from 'crypto';
 import type { Role } from './auth-edge';
 import { getDb } from './mongodb';
 
@@ -70,4 +70,37 @@ export async function autenticar(email: string, senha: string): Promise<Usuario 
   if (!usuario) return null;
   if (!verificarSenha(senha, usuario.senha)) return null;
   return usuario;
+}
+
+export type UsuarioPublico = Omit<Usuario, 'senha'>;
+
+export async function listarUsuarios(): Promise<UsuarioPublico[]> {
+  const col = await usuariosCollection();
+  const usuarios = await col.find({}).sort({ nome: 1 }).toArray();
+  return usuarios.map(({ senha: _senha, _id, ...resto }: any) => resto);
+}
+
+export async function criarUsuario(dados: { nome: string; email: string; role: Role; senha: string }): Promise<UsuarioPublico> {
+  const col = await usuariosCollection();
+  const email = dados.email.trim().toLowerCase();
+  if (await col.findOne({ email })) throw new Error('Já existe um usuário com este e-mail');
+
+  const usuario: Usuario = { id: randomUUID(), nome: dados.nome.trim(), email, role: dados.role, senha: hashSenha(dados.senha) };
+  await col.insertOne(usuario);
+  return { id: usuario.id, nome: usuario.nome, email: usuario.email, role: usuario.role };
+}
+
+export async function contarAdmins(): Promise<number> {
+  const col = await usuariosCollection();
+  return col.countDocuments({ role: 'admin' });
+}
+
+export async function buscarUsuarioPorId(id: string): Promise<Usuario | null> {
+  const col = await usuariosCollection();
+  return col.findOne({ id });
+}
+
+export async function excluirUsuario(id: string): Promise<void> {
+  const col = await usuariosCollection();
+  await col.deleteOne({ id });
 }

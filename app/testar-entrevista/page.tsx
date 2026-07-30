@@ -59,13 +59,17 @@ export default function TestarEntrevistaPage() {
     setErro('');
     setIniciando(true);
     try {
+      // Sufixo único por execução: cada "Iniciar teste" vira uma candidatura nova e independente
+      // (nunca esbarra no bloqueio de "e-mail já concluiu essa vaga"), mantendo o prefixo teste+
+      // que separa esses cards dos candidatos reais em /candidatos e nos relatórios.
+      const execucao = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
       const res = await fetch('/api/candidaturas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           vagaId,
-          nome: `[TESTE] ${usuario.nome}`,
-          email: `teste+${usuario.email}`
+          nome: `[TESTE] ${usuario.nome} (${new Date().toLocaleDateString('pt-BR')})`,
+          email: `teste+${execucao}+${usuario.email}`
         })
       });
       const data = await res.json();

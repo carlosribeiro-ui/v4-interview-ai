@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getVagas } from '@/lib/store';
 import { criarVaga } from '@/lib/vagas';
 import { lerSessao } from '@/lib/auth';
+import { registrarLog } from '@/lib/logs';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +29,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const vaga = await criarVaga({ cargo, senioridade, segmento, jobDescription });
+    await registrarLog('vaga_criada', { vagaId: vaga.id, cargo: vaga.cargo }, sessao.email);
     return NextResponse.json(vaga, { status: 201 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message ?? 'Erro ao gerar roteiro' }, { status: 500 });
