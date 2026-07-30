@@ -23,42 +23,39 @@ function bgNota(n: number) {
   return 'bg-v4red/10 border-v4red/30';
 }
 
+type PerguntaForm = { texto: string; criterios: string };
+
+const PERGUNTA_VAZIA: PerguntaForm = { texto: '', criterios: '' };
+
 export default function AdminAnalisarPerguntas() {
   const [cargo, setCargo] = useState('');
   const [senioridade, setSenioridade] = useState('');
   const [segmento, setSegmento] = useState('');
-  const [perguntasRaw, setPerguntasRaw] = useState('');
+  const [perguntas, setPerguntas] = useState<PerguntaForm[]>([{ ...PERGUNTA_VAZIA }]);
   const [analise, setAnalise] = useState<AnaliseItem[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const [modoEntrada, setModoEntrada] = useState<'manual' | 'vaga'>('manual');
+
+  function atualizarPergunta(i: number, campo: keyof PerguntaForm, valor: string) {
+    setPerguntas((atual) => atual.map((p, idx) => (idx === i ? { ...p, [campo]: valor } : p)));
+  }
+
+  function adicionarPergunta() {
+    setPerguntas((atual) => [...atual, { ...PERGUNTA_VAZIA }]);
+  }
+
+  function removerPergunta(i: number) {
+    setPerguntas((atual) => atual.filter((_, idx) => idx !== i));
+  }
 
   async function analisar() {
     setErro(null);
     setAnalise(null);
 
-    let perguntas: { texto: string; criterios: string }[];
-
-    if (modoEntrada === 'manual') {
-      try {
-        perguntas = JSON.parse(perguntasRaw);
-        if (!Array.isArray(perguntas) || perguntas.length === 0)
-          throw new Error('Array vazio');
-      } catch {
-        setErro('JSON inválido. Use o formato: [{ "texto": "...", "criterios": "..." }]');
-        return;
-      }
-    } else {
-      try {
-        const vaga = JSON.parse(perguntasRaw);
-        perguntas = (vaga.perguntas ?? vaga).map((p: any) => ({
-          texto: p.texto ?? p.pergunta ?? '',
-          criterios: p.criterios ?? p.criterio ?? ''
-        }));
-      } catch {
-        setErro('JSON inválido. Cole o JSON da vaga ou array de perguntas.');
-        return;
-      }
+    const validas = perguntas.filter((p) => p.texto.trim() && p.criterios.trim());
+    if (validas.length === 0) {
+      setErro('Preencha ao menos uma pergunta com o texto e os critérios.');
+      return;
     }
 
     setLoading(true);
@@ -66,7 +63,7 @@ export default function AdminAnalisarPerguntas() {
       const res = await fetch('/api/analisar-perguntas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ perguntas, cargo, senioridade, segmento })
+        body: JSON.stringify({ perguntas: validas, cargo, senioridade, segmento })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -113,35 +110,49 @@ export default function AdminAnalisarPerguntas() {
           </div>
         </div>
 
-        <div className="flex gap-2">
-          {(['manual', 'vaga'] as const).map((modo) => (
-            <button key={modo} onClick={() => { setModoEntrada(modo); setPerguntasRaw(''); setAnalise(null); setErro(null); }}
-              className={`px-3 py-1.5 rounded border text-sm transition ${
-                modoEntrada === modo
-                  ? 'bg-v4red text-white border-v4red font-medium'
-                  : 'border-white/10 text-white/60 hover:bg-white/5'
-              }`}>
-              {modo === 'manual' ? 'Inserir perguntas' : 'JSON da vaga'}
-            </button>
+        <div className="space-y-4">
+          {perguntas.map((p, i) => (
+            <div key={i} className="rounded border border-white/10 bg-black/20 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-white/50">Pergunta #{i + 1}</span>
+                {perguntas.length > 1 && (
+                  <button onClick={() => removerPergunta(i)} className="text-v4red text-sm hover:underline">
+                    Remover
+                  </button>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm text-white/60 mb-1">Pergunta</label>
+                <textarea
+                  value={p.texto}
+                  onChange={(e) => atualizarPergunta(i, 'texto', e.target.value)}
+                  placeholder="Ex: Descreva uma situação em que você precisou..."
+                  rows={2}
+                  className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-v4red text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-white/60 mb-1">Critérios de avaliação</label>
+                <textarea
+                  value={p.criterios}
+                  onChange={(e) => atualizarPergunta(i, 'criterios', e.target.value)}
+                  placeholder="O que a resposta ideal deve demonstrar…"
+                  rows={2}
+                  className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-v4red text-sm"
+                />
+              </div>
+            </div>
           ))}
-        </div>
-
-        <div>
-          <label className="block text-sm text-white/60 mb-1">
-            {modoEntrada === 'manual'
-              ? 'Array de perguntas (JSON)'
-              : 'JSON da vaga (objeto completo ou array de perguntas)'}
-          </label>
-          <textarea value={perguntasRaw} onChange={(e) => setPerguntasRaw(e.target.value)}
-            placeholder={modoEntrada === 'manual'
-              ? '[{ "texto": "Pergunta...", "criterios": "O que avaliar..." }]'
-              : 'Cole aqui o JSON exportado da vaga'}
-            rows={8}
-            className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-v4red text-sm font-mono" />
+          <button
+            onClick={adicionarPergunta}
+            className="rounded border border-white/20 hover:bg-white/10 text-white/80 px-4 py-2 text-sm"
+          >
+            + Adicionar pergunta
+          </button>
         </div>
 
         <div className="flex items-center gap-3">
-          <button onClick={analisar} disabled={loading || !perguntasRaw.trim()}
+          <button onClick={analisar} disabled={loading}
             className="rounded bg-v4red hover:bg-v4redDark disabled:opacity-50 text-white uppercase font-bold px-4 py-2 transition">
             {loading ? 'Analisando com IA (Gemini Flash)…' : 'Analisar perguntas'}
           </button>
