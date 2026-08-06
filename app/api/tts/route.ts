@@ -9,9 +9,9 @@ export const dynamic = 'force-dynamic';
 /**
  * Converte texto em áudio (voz natural via Gemini TTS) — usado pelo botão "Ouvir pergunta" da entrevista.
  *
- * Com `vagaId` + `perguntaId`, o áudio é cacheado no R2: a primeira chamada gera e salva a URL em
- * `vaga.perguntas[i].audioUrl`; chamadas seguintes para a mesma pergunta nem chegam aqui — o front toca
- * a URL salva direto. Sem esses IDs (compat), gera e devolve sem cachear.
+ * BUG FIX: SEMPRE regenera o áudio quando chamado — nunca serve cache obsoleto.
+ * O frontend agora sempre chama a API (não toca audioUrl direto), então o áudio
+ * sempre corresponde ao texto atual da pergunta.
  */
 export async function POST(req: NextRequest) {
   const bloqueado = aplicarRateLimit(req, 'tts', LIMITES.tts);
