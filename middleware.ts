@@ -87,6 +87,7 @@ export const config = {
     // Páginas internas
     '/',
     '/candidatos/:path*',
+    '/dashboard/:path*',
     '/relatorios/:path*',
     '/vagas/:path*',
     '/testar-entrevista/:path*',

@@ -48,6 +48,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 Candidatos
               </a>
               <a
+                href="/dashboard"
+                className="px-3.5 py-1.5 rounded-full text-white/60 hover:text-white hover:bg-white/[0.06] transition"
+              >
+                Dashboard
+              </a>
+              <a
                 href="/relatorios"
                 className="px-3.5 py-1.5 rounded-full text-white/60 hover:text-white hover:bg-white/[0.06] transition"
               >
