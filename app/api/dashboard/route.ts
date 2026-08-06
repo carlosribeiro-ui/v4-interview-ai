@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getVagas, getCandidaturas } from '@/lib/store';
+import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +13,9 @@ function paraCsv(linhas: Record<string, string | number>[]): string {
 }
 
 export async function GET(req: NextRequest) {
+  const bloqueado = aplicarRateLimit(req, 'dashboard', LIMITES.publicRead);
+  if (bloqueado) return bloqueado;
+
   const vagas = await getVagas();
   const todasCandidaturas = await getCandidaturas();
 

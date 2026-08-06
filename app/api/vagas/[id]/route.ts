@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import { getVaga, getCandidaturas, saveVaga, deleteVaga } from '@/lib/store';
 import { lerSessao } from '@/lib/auth';
 import { registrarLog } from '@/lib/logs';
+import { deletarPrefixoR2 } from '@/lib/r2';
 
 export const dynamic = 'force-dynamic';
 
@@ -67,6 +68,11 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
   const candidaturas = await getCandidaturas(params.id);
   await deleteVaga(params.id);
+  // Cleanup best-effort: remove vídeos e CVs de todas as candidaturas da vaga
+  for (const c of candidaturas) {
+    await deletarPrefixoR2(`${c.id}/`);
+  }
+  await deletarPrefixoR2(`tts/${params.id}/`);
   await registrarLog(
     'vaga_removida',
     { vagaId: params.id, cargo: vaga.cargo, candidaturasRemovidas: candidaturas.length },

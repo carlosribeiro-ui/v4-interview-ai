@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { autenticar, criarTokenSessao, garantirUsuariosSeed, NOME_COOKIE_SESSAO } from '@/lib/auth';
 import { registrarLog } from '@/lib/logs';
+import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  const bloqueado = aplicarRateLimit(req, 'login', LIMITES.login);
+  if (bloqueado) return bloqueado;
+
   await garantirUsuariosSeed();
 
   const { email, senha } = await req.json();

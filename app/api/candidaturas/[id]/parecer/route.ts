@@ -26,6 +26,8 @@ async function obterOuGerarParecer(candidaturaId: string) {
   }
 
   if (!candidatura.parecer) {
+    // Monta contexto do candidato (CV/LinkedIn) pra enriquecer o parecer
+    const curriculoTexto = [candidatura.linkedin, candidatura.curriculoPath].filter(Boolean).join('\n');
     const gerado = await gerarParecer(
       {
         cargo: vaga.cargo,
@@ -40,7 +42,8 @@ async function obterOuGerarParecer(candidaturaId: string) {
         transcricao: r.transcricao,
         score: r.score,
         feedback: r.feedback
-      }))
+      })),
+      curriculoTexto || undefined
     );
 
     const parecer: Parecer = {

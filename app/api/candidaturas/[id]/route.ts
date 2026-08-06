@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCandidatura, getVaga, saveCandidatura, deleteCandidatura } from '@/lib/store';
 import { lerSessao } from '@/lib/auth';
 import { registrarLog } from '@/lib/logs';
+import { deletarPrefixoR2 } from '@/lib/r2';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,6 +46,8 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   if (!candidatura) return NextResponse.json({ error: 'Candidatura não encontrada' }, { status: 404 });
 
   await deleteCandidatura(params.id);
+  // Cleanup best-effort: remove vídeos, CVs e TTS do R2 pra não deixar arquivos órfãos
+  await deletarPrefixoR2(`${params.id}/`);
   await registrarLog(
     'candidatura_removida',
     { candidaturaId: params.id, vagaId: candidatura.vagaId, email: candidatura.email },

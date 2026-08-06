@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import { getVaga, saveCandidatura, findCandidaturaPorEmail } from '@/lib/store';
 import type { Candidatura } from '@/lib/types';
 import { registrarLog } from '@/lib/logs';
+import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,9 @@ export const dynamic = 'force-dynamic';
  *  - existe concluida      -> 409, entrevista ja finalizada
  */
 export async function POST(req: NextRequest) {
+  const bloqueado = aplicarRateLimit(req, 'candidatura', LIMITES.candidaturaWrite);
+  if (bloqueado) return bloqueado;
+
   const body = await req.json();
   const { vagaId, nome, email, linkedin, telefone, pretensaoSalarial } = body ?? {};
 

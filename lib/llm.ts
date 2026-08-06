@@ -282,9 +282,11 @@ export async function avaliarResposta(
   transcricao: string,
   senioridade: string,
   requisitosVaga: string[],
-  frames?: { frameBase64: string; timestamp: string }[]
+  frames?: { frameBase64: string; timestamp: string }[],
+  curriculoTexto?: string
 ): Promise<AvaliacaoResposta> {
   const hasFrames = frames && frames.length > 0;
+  const hasCurriculo = curriculoTexto && curriculoTexto.trim().length > 0;
 
   const textPart: GeminiPart = {
     text: `Voce e um avaliador tecnico de entrevistas em video. Avalie a resposta abaixo com rigor,
@@ -293,6 +295,7 @@ proporcionalidade e calibragem pela senioridade da vaga.
 Pergunta: ${pergunta}
 Criterios de avaliacao: ${criterios}
 Requisitos formais da vaga (use como base p/ competenciasEssenciais): ${requisitosVaga.join('; ')}
+${hasCurriculo ? `\nCurriculo/LinkedIn do candidato (use como contexto adicional — verifique se a experiencia declarada na resposta e coerente com o perfil):\n"""${curriculoTexto.trim().slice(0, 3000)}"""\n` : ''}
 
 Transcricao da resposta do candidato:
 """
@@ -441,16 +444,22 @@ export async function gerarParecer(
     requisitos: string[];
     jobDescription?: string;
   },
-  respostas: { perguntaId: string; texto: string; transcricao: string; score: number; feedback: string }[]
+  respostas: { perguntaId: string; texto: string; transcricao: string; score: number; feedback: string }[],
+  curriculoTexto?: string
 ): Promise<ParecerGerado> {
   const fonteRequisitos = vaga.jobDescription
     ? `Job Description completa (fonte de verdade — priorize sobre a lista de requisitos abaixo em caso de conflito):\n"""${vaga.jobDescription}"""`
     : `Requisitos esperados: ${vaga.requisitos.join('; ')}`;
 
+  const contextoCandidato = curriculoTexto && curriculoTexto.trim().length > 0
+    ? `\nCurriculo/LinkedIn do candidato (use como contexto — verifique coerência entre experiencia declarada e respostas):\n"""${curriculoTexto.trim().slice(0, 3000)}"""\n`
+    : '';
+
   const prompt = `Voce e um avaliador senior de recrutamento. Com base nas respostas ja avaliadas de uma entrevista assincrona, produza um PARECER FINAL consolidado, calibrado pela senioridade da vaga.
 
 Vaga: ${vaga.cargo} (${vaga.senioridade}) — ${vaga.segmento}
 ${fonteRequisitos}
+${contextoCandidato}
 
 Respostas ja avaliadas individualmente (nota 0-10 e feedback tecnico ja existentes — use como insumo, nao repita literalmente):
 ${respostas

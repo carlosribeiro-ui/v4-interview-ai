@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { sintetizarFala } from '@/lib/tts';
 import { uploadParaR2 } from '@/lib/r2';
 import { getVaga, saveVaga } from '@/lib/store';
+import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +14,9 @@ export const dynamic = 'force-dynamic';
  * a URL salva direto. Sem esses IDs (compat), gera e devolve sem cachear.
  */
 export async function POST(req: NextRequest) {
+  const bloqueado = aplicarRateLimit(req, 'tts', LIMITES.tts);
+  if (bloqueado) return bloqueado;
+
   const body = await req.json().catch(() => ({}));
   const texto = typeof body?.texto === 'string' ? body.texto.trim() : '';
   const vagaId = typeof body?.vagaId === 'string' ? body.vagaId : undefined;
