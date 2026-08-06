@@ -256,6 +256,19 @@ export default function VagaPage({ params }: { params: { id: string } }) {
     return candidaturas.filter((c) => c.status === filtro);
   }, [candidaturas, filtro]);
 
+  const porFase = useMemo(() => {
+    const grupos: Record<string, Candidatura[]> = {};
+    for (const fase of vaga?.fases ?? []) grupos[fase.id] = [];
+    for (const c of candidaturasFiltradas) {
+      if (!grupos[c.fase]) grupos[c.fase] = [];
+      grupos[c.fase].push(c);
+    }
+    for (const key of Object.keys(grupos)) {
+      grupos[key].sort((a, b) => (b.scoreMedio ?? -1) - (a.scoreMedio ?? -1));
+    }
+    return grupos;
+  }, [candidaturasFiltradas, vaga]);
+
   if (loading) return <p className="text-white/50">Carregando…</p>;
   if (!vaga) return <p className="text-v4red">Vaga não encontrada.</p>;
 
@@ -589,16 +602,20 @@ export default function VagaPage({ params }: { params: { id: string } }) {
           <p className="text-white/50">Nenhum candidato nesse filtro.</p>
         ) : (
           <DndContext sensors={sensors} onDragEnd={aoSoltarCard}>
-            <div className="overflow-x-auto pb-3 scrollbar-thin">
-              <div className="flex gap-3 min-w-max">
-                {candidaturasFiltradas.map((c) => (
-                  <CardCandidato
-                    key={c.id}
-                    c={c}
-                    vaga={vaga}
-                    onAbrir={() => setAberta(c.id)}
-                    onMoverFase={(f) => moverFase(c.id, f)}
-                  />
+            <div className="overflow-x-auto pb-3">
+              <div className="flex gap-4 min-w-max">
+                {vaga.fases.map((fase) => (
+                  <ColunaFase key={fase.id} fase={fase} total={(porFase[fase.id] ?? []).length}>
+                    {(porFase[fase.id] ?? []).map((c) => (
+                      <CardCandidato
+                        key={c.id}
+                        c={c}
+                        vaga={vaga}
+                        onAbrir={() => setAberta(c.id)}
+                        onMoverFase={(f) => moverFase(c.id, f)}
+                      />
+                    ))}
+                  </ColunaFase>
                 ))}
               </div>
             </div>
@@ -624,6 +641,53 @@ export default function VagaPage({ params }: { params: { id: string } }) {
   );
 }
 
+/** Coluna do kanban estilo Pipefy — cabeçalho colorido + cards empilhados verticalmente. */
+function ColunaFase({
+  fase,
+  total,
+  children
+}: {
+  fase: FaseDef;
+  total: number;
+  children: React.ReactNode;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: fase.id });
+  const cor = COR_FASE_CLASSES[fase.cor];
+
+  const corHeader: Record<CorFase, string> = {
+    neutro: 'bg-white/[0.06] border-white/10',
+    atencao: 'bg-v4yellow/10 border-v4yellow/30',
+    sucesso: 'bg-v4green/10 border-v4green/30',
+    perigo: 'bg-v4red/10 border-v4red/30'
+  };
+
+  return (
+    <div className="w-72 shrink-0 flex flex-col">
+      {/* Cabeçalho da fase — estilo Pipefy */}
+      <div className={`flex items-center gap-2 px-3 py-2.5 rounded-t-xl border ${corHeader[fase.cor]}`}>
+        <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${cor.dot}`} />
+        <h3 className="text-sm font-semibold text-white/80 flex-1 truncate">{fase.nome}</h3>
+        <span className="text-xs font-medium text-white/40 bg-white/5 px-2 py-0.5 rounded-full">{total}</span>
+      </div>
+
+      {/* Lista de cards — fundo sutil, borda lateral transparente */}
+      <div
+        ref={setNodeRef}
+        className={`flex-1 space-y-2.5 p-2 rounded-b-xl border border-t-0 transition min-h-[6rem] ${
+          isOver ? 'border-v4red/40 bg-v4red/5' : 'border-white/5 bg-white/[0.02]'
+        }`}
+      >
+        {children}
+        {total === 0 && (
+          <div className="flex items-center justify-center h-16 text-xs text-white/20 border border-dashed border-white/10 rounded-lg">
+            Arraste candidatos aqui
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function CardCandidato({
   c,
   vaga,
@@ -639,9 +703,6 @@ function CardCandidato({
   const style = transform
     ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
     : undefined;
-
-  const faseAtual = vaga.fases.find((f) => f.id === c.fase);
-  const corFase = faseAtual ? COR_FASE_CLASSES[faseAtual.cor] : COR_FASE_CLASSES.neutro;
 
   return (
     <div
@@ -678,14 +739,10 @@ function CardCandidato({
         </button>
       </div>
 
-      <div className="px-3 pb-3 pt-2 pl-9 flex items-center gap-2 flex-wrap">
+      <div className="px-3 pb-3 pt-2 pl-9 flex items-center gap-2">
         <Pill tom={c.status === 'concluida' ? 'verde' : 'amarelo'}>
           {c.status === 'concluida' ? 'Concluída' : 'Em andamento'}
         </Pill>
-        <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-white/5 border border-white/10`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${corFase.dot}`} />
-          {faseAtual?.nome ?? c.fase}
-        </span>
         <select
           value={c.fase}
           onChange={(e) => onMoverFase(e.target.value)}
