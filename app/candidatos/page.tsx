@@ -1,17 +1,32 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ScoreRing from '@/app/components/ScoreRing';
 import Pill from '@/app/components/Pill';
 import type { CandidatoEnriquecido } from '@/app/api/candidatos/route';
 
-type Filtro = 'todos' | 'concluida' | 'em_andamento';
+type FiltroStatus = 'todos' | 'em_andamento' | 'concluida';
 
 function iniciais(nome: string) {
   const partes = nome.trim().split(/\s+/);
   return partes.slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('') || '?';
 }
+
+/** Mapeia status + faseId pra coluna do Kanban global. */
+function colunaDo(c: CandidatoEnriquecido): 'em_andamento' | 'concluido' | 'aprovado' | 'reprovado' {
+  if (c.status !== 'concluida') return 'em_andamento';
+  if (c.faseId === 'aprovado') return 'aprovado';
+  if (c.faseId === 'reprovado') return 'reprovado';
+  return 'concluido';
+}
+
+const COLUNAS = [
+  { id: 'em_andamento', nome: 'Em andamento', cor: 'bg-v4yellow/10 border-v4yellow/30', dot: 'bg-v4yellow' },
+  { id: 'concluido', nome: 'Aguardando análise', cor: 'bg-white/[0.04] border-white/10', dot: 'bg-white/40' },
+  { id: 'aprovado', nome: 'Aprovados', cor: 'bg-v4green/10 border-v4green/30', dot: 'bg-v4green' },
+  { id: 'reprovado', nome: 'Reprovados', cor: 'bg-v4red/10 border-v4red/30', dot: 'bg-v4red' }
+] as const;
 
 export default function CandidatosPage() {
   return (
@@ -23,27 +38,21 @@ export default function CandidatosPage() {
 
 function CandidatosPageInner() {
   const searchParams = useSearchParams();
-  const statusInicial = (searchParams.get('status') as Filtro) ?? 'todos';
 
   const [candidatos, setCandidatos] = useState<CandidatoEnriquecido[]>([]);
   const [vagas, setVagas] = useState<{ id: string; cargo: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState('');
-  const [filtro, setFiltro] = useState<Filtro>(statusInicial);
-  const [vagaFiltro, setVagaFiltro] = useState('');
+  const [vagaFiltro, setVagaFiltro] = useState(searchParams.get('vagaId') ?? '');
   const [faixaScore, setFaixaScore] = useState('');
   const [mostrarTestes, setMostrarTestes] = useState(false);
 
   async function carregar() {
     const params = new URLSearchParams();
-    if (filtro !== 'todos') params.set('status', filtro);
     if (busca) params.set('q', busca);
     if (vagaFiltro) params.set('vagaId', vagaFiltro);
     if (faixaScore === 'alto') params.set('scoreMin', '7');
-    if (faixaScore === 'medio') {
-      params.set('scoreMin', '4');
-      params.set('scoreMax', '6.99');
-    }
+    if (faixaScore === 'medio') { params.set('scoreMin', '4'); params.set('scoreMax', '6.99'); }
     if (faixaScore === 'baixo') params.set('scoreMax', '3.99');
     if (mostrarTestes) params.set('incluirTestes', '1');
 
@@ -56,12 +65,24 @@ function CandidatosPageInner() {
 
   useEffect(() => {
     carregar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtro, busca, vagaFiltro, faixaScore, mostrarTestes]);
+  }, [busca, vagaFiltro, faixaScore, mostrarTestes]);
+
+  const porColuna = useMemo(() => {
+    const grupos: Record<string, CandidatoEnriquecido[]> = {
+      em_andamento: [], concluido: [], aprovado: [], reprovado: []
+    };
+    for (const c of candidatos) {
+      grupos[colunaDo(c)].push(c);
+    }
+    // Ordena por score desc dentro de cada coluna
+    for (const key of Object.keys(grupos)) {
+      grupos[key].sort((a, b) => (b.scoreMedio ?? -1) - (a.scoreMedio ?? -1));
+    }
+    return grupos;
+  }, [candidatos]);
 
   function baixarCsv() {
     const params = new URLSearchParams();
-    if (filtro !== 'todos') params.set('status', filtro);
     if (busca) params.set('q', busca);
     if (vagaFiltro) params.set('vagaId', vagaFiltro);
     params.set('formato', 'csv');
@@ -69,12 +90,12 @@ function CandidatosPageInner() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="font-heading text-2xl font-bold">Candidatos</h1>
           <p className="text-white/40 text-sm mt-0.5">
-            Visualize, filtre e exporte todos os candidatos, de todas as vagas.
+            Pipeline global — todas as vagas em um só lugar.
           </p>
         </div>
         <button
@@ -85,6 +106,7 @@ function CandidatosPageInner() {
         </button>
       </div>
 
+      {/* Filtros */}
       <div className="flex flex-wrap gap-3 items-center">
         <input
           value={busca}
@@ -99,9 +121,7 @@ function CandidatosPageInner() {
         >
           <option value="">Todas as vagas</option>
           {vagas.map((v) => (
-            <option key={v.id} value={v.id}>
-              {v.cargo}
-            </option>
+            <option key={v.id} value={v.id}>{v.cargo}</option>
           ))}
         </select>
         <select
@@ -114,73 +134,75 @@ function CandidatosPageInner() {
           <option value="medio">Médio (4–7)</option>
           <option value="baixo">Baixo (&lt;4)</option>
         </select>
-      </div>
-
-      <div className="flex gap-1.5">
-        {(
-          [
-            ['todos', 'Todos'],
-            ['em_andamento', 'Em andamento'],
-            ['concluida', 'Concluídos']
-          ] as [Filtro, string][]
-        ).map(([valor, label]) => (
-          <button
-            key={valor}
-            onClick={() => setFiltro(valor)}
-            className={`px-3.5 py-1.5 rounded-full text-sm transition ${
-              filtro === valor ? 'bg-v4red text-white font-medium' : 'bg-white/[0.05] text-white/60 hover:bg-white/10'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-        <label className="ml-auto flex items-center gap-1.5 text-xs text-white/50 cursor-pointer select-none">
+        <label className="flex items-center gap-1.5 text-xs text-white/50 cursor-pointer select-none">
           <input
             type="checkbox"
             checked={mostrarTestes}
             onChange={(e) => setMostrarTestes(e.target.checked)}
             className="accent-v4red"
           />
-          Mostrar testes (🧪)
+          Testes 🧪
         </label>
       </div>
 
+      {/* Kanban global */}
       {loading ? (
         <p className="text-white/50">Carregando…</p>
       ) : candidatos.length === 0 ? (
         <p className="text-white/50">Nenhum candidato encontrado com esses filtros.</p>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {candidatos.map((c) => (
-            <a
-              key={c.id}
-              href={`/vagas/${c.vagaId}`}
-              className="rounded-2xl border border-v4border bg-v4surface hover:bg-white/[0.06] hover:border-white/20 p-4 transition shadow-card"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 shrink-0 rounded-full bg-v4red/15 text-v4red flex items-center justify-center text-xs font-bold">
-                    {iniciais(c.nome)}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="font-medium text-sm truncate">{c.nome}</div>
-                    <div className="text-xs text-white/40 truncate">{c.email}</div>
-                  </div>
+        <div className="overflow-x-auto pb-3">
+          <div className="flex gap-4 min-w-max">
+            {COLUNAS.map((col) => (
+              <div key={col.id} className="w-72 shrink-0 flex flex-col">
+                {/* Cabeçalho da coluna */}
+                <div className={`flex items-center gap-2 px-3 py-2.5 rounded-t-xl border ${col.cor}`}>
+                  <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${col.dot}`} />
+                  <h3 className="text-sm font-semibold text-white/80 flex-1 truncate">{col.nome}</h3>
+                  <span className="text-xs font-medium text-white/40 bg-white/5 px-2 py-0.5 rounded-full">
+                    {porColuna[col.id].length}
+                  </span>
                 </div>
-                <ScoreRing score={c.scoreMedio} size={40} strokeWidth={3.5} />
+
+                {/* Cards */}
+                <div className={`flex-1 space-y-2.5 p-2 rounded-b-xl border border-t-0 min-h-[6rem] ${col.cor}`}>
+                  {porColuna[col.id].length === 0 ? (
+                    <div className="flex items-center justify-center h-16 text-xs text-white/20 border border-dashed border-white/10 rounded-lg">
+                      Nenhum candidato
+                    </div>
+                  ) : (
+                    porColuna[col.id].map((c) => (
+                      <a
+                        key={c.id}
+                        href={`/vagas/${c.vagaId}`}
+                        className="block rounded-xl border border-v4border bg-v4surface hover:bg-white/[0.06] hover:border-white/15 p-3 transition shadow-card"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-9 h-9 shrink-0 rounded-full bg-v4red/15 text-v4red flex items-center justify-center text-xs font-bold">
+                            {iniciais(c.nome)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm truncate">{c.nome}</div>
+                            <div className="text-xs text-white/40 truncate">{c.vagaCargo}</div>
+                          </div>
+                          <ScoreRing score={c.scoreMedio} size={38} strokeWidth={3} />
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-2">
+                          <Pill tom={c.status === 'concluida' ? 'verde' : 'amarelo'}>
+                            {c.status === 'concluida' ? 'Concluída' : 'Em andamento'}
+                          </Pill>
+                          {c.teste && <Pill tom="neutro">🧪</Pill>}
+                          <span className="text-[10px] text-white/25 ml-auto">
+                            {new Date(c.createdAt).toLocaleDateString('pt-BR')}
+                          </span>
+                        </div>
+                      </a>
+                    ))
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-2 mt-3 flex-wrap">
-                <Pill tom="neutro">{c.vagaCargo}</Pill>
-                <Pill tom={c.status === 'concluida' ? 'verde' : 'amarelo'}>
-                  {c.status === 'concluida' ? 'Concluída' : 'Em andamento'}
-                </Pill>
-                {c.teste && <Pill tom="neutro">🧪 Teste</Pill>}
-              </div>
-              <p className="text-xs text-white/30 mt-2">
-                {new Date(c.createdAt).toLocaleString('pt-BR')}
-              </p>
-            </a>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>
