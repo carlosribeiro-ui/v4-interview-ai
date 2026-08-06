@@ -77,16 +77,13 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
   }
 
   /**
-   * Se a pergunta já tem `audioUrl` cacheado (gerado numa audição anterior, por qualquer
-   * candidato), toca direto — zero chamada à API. Só fala com o Gemini na primeira vez.
+   * Gera e toca o áudio da pergunta. SEMPRE chama a API pra validar que o áudio
+   * corresponde ao texto atual — corrige bug de cache obsoleto quando admin edita
+   * a pergunta ou teste gera áudio com texto diferente.
    */
   async function ouvirPergunta(pergunta: { id: string; texto: string; audioUrl?: string }) {
     if (falando || carregandoAudio) {
       pararFala();
-      return;
-    }
-    if (pergunta.audioUrl) {
-      tocarAudio(pergunta.audioUrl);
       return;
     }
     setCarregandoAudio(true);
