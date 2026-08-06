@@ -283,10 +283,12 @@ export async function avaliarResposta(
   senioridade: string,
   requisitosVaga: string[],
   frames?: { frameBase64: string; timestamp: string }[],
-  curriculoTexto?: string
+  curriculoTexto?: string,
+  jobDescription?: string
 ): Promise<AvaliacaoResposta> {
   const hasFrames = frames && frames.length > 0;
   const hasCurriculo = curriculoTexto && curriculoTexto.trim().length > 0;
+  const hasJD = jobDescription && jobDescription.trim().length > 0;
 
   const textPart: GeminiPart = {
     text: `Voce e um avaliador tecnico de entrevistas em video. Avalie a resposta abaixo com rigor,
@@ -295,6 +297,7 @@ proporcionalidade e calibragem pela senioridade da vaga.
 Pergunta: ${pergunta}
 Criterios de avaliacao: ${criterios}
 Requisitos formais da vaga (use como base p/ competenciasEssenciais): ${requisitosVaga.join('; ')}
+${hasJD ? `\nJob Description completa (fonte de verdade — priorize sobre a lista de requisitos quando houver conflito):\n"""${jobDescription.trim().slice(0, 3000)}"""\n` : ''}
 ${hasCurriculo ? `\nCurriculo/LinkedIn do candidato (use como contexto adicional — verifique se a experiencia declarada na resposta e coerente com o perfil):\n"""${curriculoTexto.trim().slice(0, 3000)}"""\n` : ''}
 
 Transcricao da resposta do candidato:

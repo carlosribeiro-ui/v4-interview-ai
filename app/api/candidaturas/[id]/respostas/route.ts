@@ -97,7 +97,7 @@ async function processarRespostaIA(
   videoPath: string,
   textoPergunta: string,
   criterios: string,
-  vaga: { senioridade: string; requisitos: string[] },
+  vaga: { senioridade: string; requisitos: string[]; jobDescription?: string },
   curriculoTexto?: string
 ) {
   try {
@@ -113,7 +113,8 @@ async function processarRespostaIA(
       vaga.senioridade,
       vaga.requisitos,
       frames,
-      curriculoTexto
+      curriculoTexto,
+      vaga.jobDescription
     );
 
     const resposta: Resposta = {
