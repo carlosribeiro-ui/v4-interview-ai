@@ -256,19 +256,6 @@ export default function VagaPage({ params }: { params: { id: string } }) {
     return candidaturas.filter((c) => c.status === filtro);
   }, [candidaturas, filtro]);
 
-  const porFase = useMemo(() => {
-    const grupos: Record<string, Candidatura[]> = {};
-    for (const fase of vaga?.fases ?? []) grupos[fase.id] = [];
-    for (const c of candidaturasFiltradas) {
-      if (!grupos[c.fase]) grupos[c.fase] = [];
-      grupos[c.fase].push(c);
-    }
-    for (const key of Object.keys(grupos)) {
-      grupos[key].sort((a, b) => (b.scoreMedio ?? -1) - (a.scoreMedio ?? -1));
-    }
-    return grupos;
-  }, [candidaturasFiltradas, vaga]);
-
   if (loading) return <p className="text-white/50">Carregando…</p>;
   if (!vaga) return <p className="text-v4red">Vaga não encontrada.</p>;
 
@@ -602,20 +589,18 @@ export default function VagaPage({ params }: { params: { id: string } }) {
           <p className="text-white/50">Nenhum candidato nesse filtro.</p>
         ) : (
           <DndContext sensors={sensors} onDragEnd={aoSoltarCard}>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {vaga.fases.map((fase) => (
-                <ColunaFase key={fase.id} fase={fase} total={(porFase[fase.id] ?? []).length}>
-                  {(porFase[fase.id] ?? []).map((c) => (
-                    <CardCandidato
-                      key={c.id}
-                      c={c}
-                      vaga={vaga}
-                      onAbrir={() => setAberta(c.id)}
-                      onMoverFase={(f) => moverFase(c.id, f)}
-                    />
-                  ))}
-                </ColunaFase>
-              ))}
+            <div className="overflow-x-auto pb-3 scrollbar-thin">
+              <div className="flex gap-3 min-w-max">
+                {candidaturasFiltradas.map((c) => (
+                  <CardCandidato
+                    key={c.id}
+                    c={c}
+                    vaga={vaga}
+                    onAbrir={() => setAberta(c.id)}
+                    onMoverFase={(f) => moverFase(c.id, f)}
+                  />
+                ))}
+              </div>
             </div>
           </DndContext>
         )}
@@ -639,37 +624,6 @@ export default function VagaPage({ params }: { params: { id: string } }) {
   );
 }
 
-function ColunaFase({
-  fase,
-  total,
-  children
-}: {
-  fase: FaseDef;
-  total: number;
-  children: React.ReactNode;
-}) {
-  const { setNodeRef, isOver } = useDroppable({ id: fase.id });
-  const cor = COR_FASE_CLASSES[fase.cor];
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2 px-1">
-        <span className={`w-2 h-2 rounded-full shrink-0 ${cor.dot}`} />
-        <h3 className="text-sm font-semibold text-white/70 flex-1 truncate">{fase.nome}</h3>
-        <span className="text-xs text-white/40">{total}</span>
-      </div>
-      <div
-        ref={setNodeRef}
-        className={`space-y-3 min-h-[4rem] rounded border p-1.5 transition ${
-          isOver ? 'border-v4red/60 bg-v4red/5' : 'border-transparent'
-        }`}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-
 function CardCandidato({
   c,
   vaga,
@@ -686,11 +640,14 @@ function CardCandidato({
     ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
     : undefined;
 
+  const faseAtual = vaga.fases.find((f) => f.id === c.fase);
+  const corFase = faseAtual ? COR_FASE_CLASSES[faseAtual.cor] : COR_FASE_CLASSES.neutro;
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`rounded-xl border border-v4border bg-v4surface hover:bg-white/[0.06] hover:border-white/15 overflow-hidden transition shadow-card ${
+      className={`w-64 shrink-0 rounded-xl border border-v4border bg-v4surface hover:bg-white/[0.06] hover:border-white/15 overflow-hidden transition shadow-card ${
         isDragging ? 'opacity-40 relative z-10' : ''
       }`}
     >
@@ -721,10 +678,14 @@ function CardCandidato({
         </button>
       </div>
 
-      <div className="px-3 pb-3 pt-2 pl-9 flex items-center gap-2">
+      <div className="px-3 pb-3 pt-2 pl-9 flex items-center gap-2 flex-wrap">
         <Pill tom={c.status === 'concluida' ? 'verde' : 'amarelo'}>
           {c.status === 'concluida' ? 'Concluída' : 'Em andamento'}
         </Pill>
+        <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-white/5 border border-white/10`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${corFase.dot}`} />
+          {faseAtual?.nome ?? c.fase}
+        </span>
         <select
           value={c.fase}
           onChange={(e) => onMoverFase(e.target.value)}
