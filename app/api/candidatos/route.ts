@@ -10,12 +10,12 @@ export type CandidatoEnriquecido = {
   telefone?: string;
   status: 'em_andamento' | 'concluida';
   fase: string;
+  faseId: string;
   scoreMedio: number | null;
   createdAt: string;
   vagaId: string;
   vagaCargo: string;
   vagaSenioridade: string;
-  /** true = criado via "Testar entrevista" (email teste+...) — card de validação, não um candidato real. */
   teste: boolean;
 };
 
@@ -63,6 +63,7 @@ export async function GET(req: NextRequest) {
       telefone: c.telefone,
       status: c.status,
       fase: vaga?.fases.find((f) => f.id === c.fase)?.nome ?? c.fase,
+      faseId: c.fase,
       scoreMedio: c.scoreMedio,
       createdAt: c.createdAt,
       vagaId: c.vagaId,
