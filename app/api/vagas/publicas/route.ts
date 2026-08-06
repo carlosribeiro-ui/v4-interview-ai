@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getVagas } from '@/lib/store';
+import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,7 +9,10 @@ export const dynamic = 'force-dynamic';
  * ao final da entrevista. Sem autenticação (candidato nunca loga), por isso só
  * expõe o mínimo (nada de requisitos/critérios/JD/fases internas).
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const bloqueado = aplicarRateLimit(req, 'vagas-publicas', LIMITES.publicRead);
+  if (bloqueado) return bloqueado;
+
   const todasVagas = await getVagas();
   const vagas = todasVagas
     .filter((v) => v.ativa !== false)

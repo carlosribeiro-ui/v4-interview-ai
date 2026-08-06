@@ -3,10 +3,14 @@ import { getVagas } from '@/lib/store';
 import { criarVaga } from '@/lib/vagas';
 import { lerSessao } from '@/lib/auth';
 import { registrarLog } from '@/lib/logs';
+import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const bloqueado = aplicarRateLimit(req, 'vagas-read', LIMITES.publicRead);
+  if (bloqueado) return bloqueado;
+
   return NextResponse.json(await getVagas());
 }
 
