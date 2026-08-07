@@ -191,6 +191,7 @@ export type AvaliacaoResposta = {
   qualidadeConteudo: { profundidade: number; estrutura: number; exemplos: number };
   competenciasEssenciais: CompetenciaGerada[];
   competenciasAdicionais: CompetenciaGerada[];
+  avaliacaoIdioma?: { score: number; nivel: string; feedback: string } | null;
 };
 
 const CALIBRAGEM_SENIORIDADE: Record<string, string> = {
@@ -261,7 +262,17 @@ const AVALIACAO_SCHEMA = {
       required: ['profundidade', 'estrutura', 'exemplos']
     },
     competenciasEssenciais: { type: 'ARRAY', items: COMPETENCIA_ITEM_SCHEMA },
-    competenciasAdicionais: { type: 'ARRAY', items: COMPETENCIA_ITEM_SCHEMA }
+    competenciasAdicionais: { type: 'ARRAY', items: COMPETENCIA_ITEM_SCHEMA },
+    avaliacaoIdioma: {
+      type: 'OBJECT',
+      nullable: true,
+      properties: {
+        score: { type: 'NUMBER' },
+        nivel: { type: 'STRING' },
+        feedback: { type: 'STRING' }
+      },
+      required: ['score', 'nivel', 'feedback']
+    }
   },
   required: [
     'score',
@@ -284,7 +295,8 @@ export async function avaliarResposta(
   requisitosVaga: string[],
   frames?: { frameBase64: string; timestamp: string }[],
   curriculoTexto?: string,
-  jobDescription?: string
+  jobDescription?: string,
+  avaliarIdioma?: boolean
 ): Promise<AvaliacaoResposta> {
   const hasFrames = frames && frames.length > 0;
   const hasCurriculo = curriculoTexto && curriculoTexto.trim().length > 0;
@@ -333,6 +345,7 @@ ${hasFrames ? '4. Nas imagens do video, analise se o candidato PARECE estar lend
    pontoAtencao acima — nunca de aderencia alta a algo listado como lacuna.
 8. competenciasAdicionais: 0-3 competencias reveladas pelo contexto da pergunta/resposta que NAO
    estao na lista formal de requisitos, mesma escala de aderencia.
+${avaliarIdioma ? `9. avaliacaoIdioma: avalie o nivel de idioma do candidato com base na transcricao (se a resposta contem termos tecnicos em ingles, se a fluencia e boa, se ha erros gramaticais, etc). Retorne: score (0-10), nivel (basico/intermediario/avancado/fluido/nativo), feedback (1-2 frases sobre o nivel). Se o candidato nao demonstrar conhecimento de idioma, retorne null.` : ''}
 
 Antes de responder, confira internamente: a nota esta calibrada pela senioridade? O
 feedback cita algo concreto da transcricao? Os scores de competencia sao coerentes com o

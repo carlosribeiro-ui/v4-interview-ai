@@ -97,7 +97,7 @@ async function processarRespostaIA(
   videoPath: string,
   textoPergunta: string,
   criterios: string,
-  vaga: { senioridade: string; requisitos: string[]; jobDescription?: string },
+  vaga: { senioridade: string; requisitos: string[]; jobDescription?: string; avaliarIdioma?: boolean },
   curriculoTexto?: string
 ) {
   try {
@@ -114,7 +114,8 @@ async function processarRespostaIA(
       vaga.requisitos,
       frames,
       curriculoTexto,
-      vaga.jobDescription
+      vaga.jobDescription,
+      vaga.avaliarIdioma
     );
 
     const resposta: Resposta = {
@@ -130,6 +131,7 @@ async function processarRespostaIA(
       qualidadeConteudo: avaliacao.qualidadeConteudo,
       competenciasEssenciais: avaliacao.competenciasEssenciais,
       competenciasAdicionais: avaliacao.competenciasAdicionais,
+      avaliacaoIdioma: avaliacao.avaliacaoIdioma,
       avaliando: false
     };
 

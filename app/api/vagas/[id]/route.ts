@@ -51,6 +51,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (body.segmento) vaga.segmento = body.segmento;
   if (typeof body.jobDescription === 'string') vaga.jobDescription = body.jobDescription;
   if (typeof body.ativa === 'boolean') vaga.ativa = body.ativa;
+  if (typeof body.prioritaria === 'boolean') vaga.prioritaria = body.prioritaria;
+  if (typeof body.avaliarIdioma === 'boolean') vaga.avaliarIdioma = body.avaliarIdioma;
 
   await saveVaga(vaga);
   return NextResponse.json(vaga);

@@ -11,6 +11,7 @@ type DashboardData = {
   topCandidatos: { nome: string; scoreMedio: number | null; vaga: string; talent: string }[];
   vagas: { id: string; cargo: string; senioridade: string; total: number; concluidos: number; emAndamento: number; scoreMedio: number | null }[];
   ultimasAtividades: { nome: string; vaga: string; status: string; scoreMedio: number | null; talent: string; criadoEm: string }[];
+  precisaAtencao: { id: string; nome: string; score?: number | null; vaga?: string; motivo: string }[];
 };
 
 function iniciais(n: string) { return n.trim().split(/\s+/).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('') || '?'; }
@@ -48,6 +49,28 @@ export default function DashboardPage() {
         <Kpi label="Rejeitados" value={data.totais.rejeitados} icone="❌" cor="text-v4red" />
         <Kpi label="Score médio" value={data.totais.scoreMedioGeral?.toFixed(1) ?? '—'} icone="⭐" cor={corScore(data.totais.scoreMedioGeral)} />
       </div>
+
+      {/* Precisa de atenção */}
+      {data.precisaAtencao.length > 0 && (
+        <div className="bg-v4yellow/5 border border-v4yellow/20 rounded-xl p-5">
+          <h3 className="font-heading font-semibold text-sm mb-3 flex items-center gap-2">
+            <span className="text-v4yellow">⚠️</span> Precisa de atenção
+            <span className="text-xs bg-v4yellow/20 text-v4yellow px-2 py-0.5 rounded-full">{data.precisaAtencao.length}</span>
+          </h3>
+          <div className="space-y-2">
+            {data.precisaAtencao.map((item, i) => (
+              <div key={i} className="flex items-center gap-3 text-sm p-2 rounded-lg bg-black/20 hover:bg-black/30 transition">
+                <div className="flex-1 min-w-0">
+                  <span className="font-medium">{item.nome}</span>
+                  {item.vaga && <span className="text-white/40"> · {item.vaga}</span>}
+                </div>
+                {item.score != null && <span className={`font-semibold text-xs ${corScore(item.score)}`}>{item.score.toFixed(1)}</span>}
+                <span className="text-xs text-v4yellow/80 shrink-0">{item.motivo}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Talent Performance */}
       <div className="bg-white/5 border border-white/10 rounded-xl p-5">
