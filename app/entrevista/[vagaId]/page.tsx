@@ -39,6 +39,13 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
   const [telefone, setTelefone] = useState('');
   const [pretensaoSalarial, setPretensaoSalarial] = useState('');
   const [curriculo, setCurriculo] = useState<File | null>(null);
+  const [segmento, setSegmento] = useState('');
+  const [nivelProfissional, setNivelProfissional] = useState('');
+  const [formacao, setFormacao] = useState('');
+  const [pais, setPais] = useState('');
+  const [estado, setEstado] = useState('');
+  const [cidade, setCidade] = useState('');
+  const [idioma, setIdioma] = useState('');
   const [candidaturaId, setCandidaturaId] = useState<string | null>(null);
   const [indice, setIndice] = useState(0);
   const [retomado, setRetomado] = useState(false);
@@ -176,7 +183,7 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
     const res = await fetch('/api/candidaturas', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ vagaId: params.vagaId, nome, email, linkedin, telefone, pretensaoSalarial })
+      body: JSON.stringify({ vagaId: params.vagaId, nome, email, linkedin, telefone, pretensaoSalarial, segmento, nivelProfissional, formacao, pais, estado, cidade, idioma })
     });
     const data = await res.json();
     if (!res.ok) {
@@ -279,6 +286,78 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
               placeholder="Ex: R$ 6.000"
               className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-v4red"
             />
+          </div>
+
+          {/* Dados adicionais para filtros avançados */}
+          <div className="border-t border-white/10 pt-4 mt-2">
+            <p className="text-xs text-white/40 uppercase tracking-wide mb-3">Dados adicionais (opcional — melhora os filtros)</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-white/50 mb-1">Segmento</label>
+                <select value={segmento} onChange={(e) => setSegmento(e.target.value)} className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red">
+                  <option value="">Selecione</option>
+                  <option value="tecnologia">Tecnologia</option>
+                  <option value="saude">Saúde</option>
+                  <option value="educacao">Educação</option>
+                  <option value="financeiro">Financeiro</option>
+                  <option value="varejo">Varejo</option>
+                  <option value="industria">Indústria</option>
+                  <option value="servicos">Serviços</option>
+                  <option value="outro">Outro</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-white/50 mb-1">Nível profissional</label>
+                <select value={nivelProfissional} onChange={(e) => setNivelProfissional(e.target.value)} className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red">
+                  <option value="">Selecione</option>
+                  <option value="estagiario">Estagiário</option>
+                  <option value="junior">Júnior</option>
+                  <option value="pleno">Pleno</option>
+                  <option value="senior">Sênior</option>
+                  <option value="especialista">Especialista</option>
+                  <option value="gerente">Gerente</option>
+                  <option value="diretor">Diretor</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-white/50 mb-1">Formação</label>
+                <select value={formacao} onChange={(e) => setFormacao(e.target.value)} className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red">
+                  <option value="">Selecione</option>
+                  <option value="ensino-medio">Ensino Médio</option>
+                  <option value="tecnico">Técnico</option>
+                  <option value="superior">Superior</option>
+                  <option value="pos-graduacao">Pós-graduação</option>
+                  <option value="mestrado">Mestrado</option>
+                  <option value="doutorado">Doutorado</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-white/50 mb-1">Idioma</label>
+                <select value={idioma} onChange={(e) => setIdioma(e.target.value)} className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red">
+                  <option value="">Selecione</option>
+                  <option value="portugues">Português</option>
+                  <option value="ingles">Inglês</option>
+                  <option value="espanhol">Espanhol</option>
+                  <option value="frances">Francês</option>
+                  <option value="alemao">Alemão</option>
+                  <option value="outro">Outro</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3 mt-3">
+              <div>
+                <label className="block text-xs text-white/50 mb-1">País</label>
+                <input value={pais} onChange={(e) => setPais(e.target.value)} placeholder="Ex: Brasil" className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red" />
+              </div>
+              <div>
+                <label className="block text-xs text-white/50 mb-1">Estado</label>
+                <input value={estado} onChange={(e) => setEstado(e.target.value)} placeholder="Ex: SP" className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red" />
+              </div>
+              <div>
+                <label className="block text-xs text-white/50 mb-1">Cidade</label>
+                <input value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="Ex: São Paulo" className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red" />
+              </div>
+            </div>
           </div>
           <div>
             <label className="block text-sm text-white/60 mb-1">Currículo em PDF (opcional)</label>

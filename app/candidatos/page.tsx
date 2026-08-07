@@ -52,6 +52,14 @@ function CandidatosPageInner() {
   const [candidaturaAberta, setCandidaturaAberta] = useState<any>(null);
   const [vagaAberta, setVagaAberta] = useState<any>(null);
   const [carregandoPerfil, setCarregandoPerfil] = useState(false);
+  const [filtroAvancado, setFiltroAvancado] = useState(false);
+  const [faSegmento, setFaSegmento] = useState('');
+  const [faNivel, setFaNivel] = useState('');
+  const [faFormacao, setFaFormacao] = useState('');
+  const [faPais, setFaPais] = useState('');
+  const [faEstado, setFaEstado] = useState('');
+  const [faCidade, setFaCidade] = useState('');
+  const [faIdioma, setFaIdioma] = useState('');
 
   async function carregar() {
     const params = new URLSearchParams();
@@ -61,6 +69,13 @@ function CandidatosPageInner() {
     if (faixaScore === 'medio') { params.set('scoreMin', '4'); params.set('scoreMax', '6.99'); }
     if (faixaScore === 'baixo') params.set('scoreMax', '3.99');
     if (mostrarTestes) params.set('incluirTestes', '1');
+    if (faSegmento) params.set('segmento', faSegmento);
+    if (faNivel) params.set('nivelProfissional', faNivel);
+    if (faFormacao) params.set('formacao', faFormacao);
+    if (faPais) params.set('pais', faPais);
+    if (faEstado) params.set('estado', faEstado);
+    if (faCidade) params.set('cidade', faCidade);
+    if (faIdioma) params.set('idioma', faIdioma);
 
     const res = await fetch(`/api/candidatos?${params.toString()}`);
     const data = await res.json();
@@ -72,7 +87,7 @@ function CandidatosPageInner() {
   useEffect(() => {
     fetch('/api/usuarios').then((r) => r.json()).then((d) => setTalents(d.filter((u: Talent) => u.role === 'talent')));
     carregar();
-  }, [busca, vagaFiltro, faixaScore, mostrarTestes]);
+  }, [busca, vagaFiltro, faixaScore, mostrarTestes, faSegmento, faNivel, faFormacao, faPais, faEstado, faCidade, faIdioma]);
 
   async function atribuirTalent(candidaturaId: string, email: string) {
     setCandidatos((atual) => atual.map((c) => c.id === candidaturaId ? { ...c, talentResponsavel: email || undefined } : c));
@@ -173,6 +188,12 @@ function CandidatosPageInner() {
           <option value="medio">Médio (4–7)</option>
           <option value="baixo">Baixo (&lt;4)</option>
         </select>
+        <button
+          onClick={() => setFiltroAvancado(true)}
+          className="rounded-full bg-white/[0.05] border border-white/10 text-white/60 hover:text-white hover:border-white/30 px-3 py-2.5 text-sm transition"
+        >
+          ⚙ Filtros avançados
+        </button>
         <label className="flex items-center gap-1.5 text-xs text-white/50 cursor-pointer select-none">
           <input
             type="checkbox"
@@ -255,6 +276,43 @@ function CandidatosPageInner() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Modal de filtro avançado */}
+      {filtroAvancado && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center v4-fade-in" onClick={(e) => { if (e.target === e.currentTarget) setFiltroAvancado(false); }}>
+          <div className="bg-v4bg border border-v4border rounded-2xl p-6 w-full max-w-lg shadow-card">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="font-heading font-semibold text-lg">+Filtros</h3>
+              <button onClick={() => setFiltroAvancado(false)} className="text-white/50 hover:text-white text-lg">✕</button>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <FiltroAvancadoSelect label="Segmento" value={faSegmento} onChange={setFaSegmento} options={[
+                ['tecnologia', 'Tecnologia'], ['saude', 'Saúde'], ['educacao', 'Educação'], ['financeiro', 'Financeiro'],
+                ['varejo', 'Varejo'], ['industria', 'Indústria'], ['servicos', 'Serviços'], ['outro', 'Outro']
+              ]} />
+              <FiltroAvancadoSelect label="Nível profissional" value={faNivel} onChange={setFaNivel} options={[
+                ['estagiario', 'Estagiário'], ['junior', 'Júnior'], ['pleno', 'Pleno'], ['senior', 'Sênior'],
+                ['especialista', 'Especialista'], ['gerente', 'Gerente'], ['diretor', 'Diretor']
+              ]} />
+              <FiltroAvancadoSelect label="Formação" value={faFormacao} onChange={setFaFormacao} options={[
+                ['ensino-medio', 'Ensino Médio'], ['tecnico', 'Técnico'], ['superior', 'Superior'],
+                ['pos-graduacao', 'Pós-graduação'], ['mestrado', 'Mestrado'], ['doutorado', 'Doutorado']
+              ]} />
+              <FiltroAvancadoSelect label="Idioma" value={faIdioma} onChange={setFaIdioma} options={[
+                ['portugues', 'Português'], ['ingles', 'Inglês'], ['espanhol', 'Espanhol'],
+                ['frances', 'Francês'], ['alemao', 'Alemão'], ['outro', 'Outro']
+              ]} />
+              <FiltroAvancadoInput label="País" value={faPais} onChange={setFaPais} placeholder="Ex: Brasil" />
+              <FiltroAvancadoInput label="Estado" value={faEstado} onChange={setFaEstado} placeholder="Ex: SP" />
+              <FiltroAvancadoInput label="Cidade" value={faCidade} onChange={setFaCidade} placeholder="Ex: São Paulo" />
+            </div>
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/10">
+              <button onClick={() => { setFaSegmento(''); setFaNivel(''); setFaFormacao(''); setFaPais(''); setFaEstado(''); setFaCidade(''); setFaIdioma(''); }} className="text-sm text-white/50 hover:text-white">Limpar filtros</button>
+              <button onClick={() => setFiltroAvancado(false)} className="rounded-full bg-v4red hover:bg-v4redDark text-white font-semibold px-5 py-2 text-sm transition">Aplicar</button>
+            </div>
           </div>
         </div>
       )}
@@ -368,6 +426,27 @@ function PerfilCandidatoModal({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function FiltroAvancadoSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: [string, string][] }) {
+  return (
+    <div>
+      <label className="block text-xs text-white/50 mb-1">{label}</label>
+      <select value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-lg bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red">
+        <option value="">Selecione um(a) {label.toLowerCase()}</option>
+        {options.map(([val, lbl]) => <option key={val} value={val}>{lbl}</option>)}
+      </select>
+    </div>
+  );
+}
+
+function FiltroAvancadoInput({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder: string }) {
+  return (
+    <div>
+      <label className="block text-xs text-white/50 mb-1">{label}</label>
+      <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="w-full rounded-lg bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red" />
     </div>
   );
 }

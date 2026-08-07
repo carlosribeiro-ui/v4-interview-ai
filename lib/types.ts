@@ -143,4 +143,12 @@ export type Candidatura = {
   parecer?: Parecer;
   /** Email do talent responsável por este candidato (atribuição manual). */
   talentResponsavel?: string;
+  /** ─── Filtros avançados ─── */
+  segmento?: string;
+  nivelProfissional?: string;
+  formacao?: string;
+  pais?: string;
+  estado?: string;
+  cidade?: string;
+  idioma?: string;
 };

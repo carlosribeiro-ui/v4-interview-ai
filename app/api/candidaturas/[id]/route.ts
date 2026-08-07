@@ -32,6 +32,14 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (typeof body.pretensaoSalarial === 'string') candidatura.pretensaoSalarial = body.pretensaoSalarial;
   if (typeof body.curriculoPath === 'string') candidatura.curriculoPath = body.curriculoPath;
   if (typeof body.talentResponsavel === 'string') candidatura.talentResponsavel = body.talentResponsavel || undefined;
+  // Filtros avançados
+  if (typeof body.segmento === 'string') candidatura.segmento = body.segmento || undefined;
+  if (typeof body.nivelProfissional === 'string') candidatura.nivelProfissional = body.nivelProfissional || undefined;
+  if (typeof body.formacao === 'string') candidatura.formacao = body.formacao || undefined;
+  if (typeof body.pais === 'string') candidatura.pais = body.pais || undefined;
+  if (typeof body.estado === 'string') candidatura.estado = body.estado || undefined;
+  if (typeof body.cidade === 'string') candidatura.cidade = body.cidade || undefined;
+  if (typeof body.idioma === 'string') candidatura.idioma = body.idioma || undefined;
 
   await saveCandidatura(candidatura);
   return NextResponse.json(candidatura);

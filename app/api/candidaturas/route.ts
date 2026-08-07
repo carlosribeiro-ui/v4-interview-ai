@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   if (bloqueado) return bloqueado;
 
   const body = await req.json();
-  const { vagaId, nome, email, linkedin, telefone, pretensaoSalarial } = body ?? {};
+  const { vagaId, nome, email, linkedin, telefone, pretensaoSalarial, segmento, nivelProfissional, formacao, pais, estado, cidade, idioma } = body ?? {};
 
   if (!vagaId || !nome || !email) {
     return NextResponse.json({ error: 'vagaId, nome e email são obrigatórios' }, { status: 400 });
@@ -57,7 +57,14 @@ export async function POST(req: NextRequest) {
     createdAt: new Date().toISOString(),
     ...(linkedin ? { linkedin } : {}),
     ...(telefone ? { telefone } : {}),
-    ...(pretensaoSalarial ? { pretensaoSalarial } : {})
+    ...(pretensaoSalarial ? { pretensaoSalarial } : {}),
+    ...(segmento ? { segmento } : {}),
+    ...(nivelProfissional ? { nivelProfissional } : {}),
+    ...(formacao ? { formacao } : {}),
+    ...(pais ? { pais } : {}),
+    ...(estado ? { estado } : {}),
+    ...(cidade ? { cidade } : {}),
+    ...(idioma ? { idioma } : {})
   };
 
   await saveCandidatura(candidatura);
