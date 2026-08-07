@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Vaga, Candidatura } from '@/lib/types';
 
-type Fase = 'carregando' | 'form' | 'onboarding' | 'entrevista' | 'concluido' | 'erro';
+type Fase = 'carregando' | 'form' | 'onboarding' | 'entrevista' | 'csat' | 'concluido' | 'erro';
 
 const TEMPO_LEITURA_SEG = 20;
 const TEMPO_MAX_RESPOSTA_SEG = 180;
@@ -156,7 +156,11 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
       const prox = proximoIndice(vagaCarregada, candidatura);
       if (candidatura.status === 'concluida' || prox === -1) {
         localStorage.removeItem(chaveSessao(params.vagaId));
-        setFase('concluido');
+        if (candidatura.csat) {
+          setFase('concluido');
+        } else {
+          setFase('csat');
+        }
         return;
       }
 
@@ -204,7 +208,7 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
     const prox = vaga ? proximoIndice(vaga, data as Candidatura) : 0;
     if (prox === -1) {
       localStorage.removeItem(chaveSessao(params.vagaId));
-      setFase('concluido');
+      setFase('csat');
       return;
     }
     setIndice(prox === -1 ? 0 : prox);
@@ -220,7 +224,7 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
     } else {
       await fetch(`/api/candidaturas/${candidaturaId}/finalizar`, { method: 'POST' });
       localStorage.removeItem(chaveSessao(params.vagaId));
-      setFase('concluido');
+      setFase('csat');
     }
   }
 
@@ -404,6 +408,10 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
         {!ehTeste && <OutrasVagas vagaAtualId={params.vagaId} />}
       </div>
     );
+  }
+
+  if (fase === 'csat' && candidaturaId) {
+    return <FormCSAT candidaturaId={candidaturaId} nome={nome} onConcluir={() => setFase('concluido')} />;
   }
 
   const pergunta = vaga.perguntas[indice];
@@ -864,6 +872,129 @@ function OutrasVagas({ vagaAtualId }: { vagaAtualId: string }) {
             <span className="shrink-0 text-v4red text-sm font-semibold">Começar →</span>
           </a>
         ))}
+      </div>
+    </div>
+  );
+}
+
+/** Formulário de CSAT — avalição da experiência do candidato com a plataforma. */
+function FormCSAT({ candidaturaId, nome, onConcluir }: { candidaturaId: string; nome: string; onConcluir: () => void }) {
+  const [notas, setNotas] = useState({ facilidadeUso: 0, claridadePerguntas: 0, qualidadeAudio: 0, experienciaGeral: 0, recomendaria: 0 });
+  const [comentario, setComentario] = useState('');
+  const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState('');
+  const [enviado, setEnviado] = useState(false);
+
+  const perguntas: { key: keyof typeof notas; label: string; desc: string }[] = [
+    { key: 'facilidadeUso', label: 'Facilidade de uso', desc: 'A plataforma foi fácil de navegar e usar?' },
+    { key: 'claridadePerguntas', label: 'Clareza das perguntas', desc: 'As perguntas estavam claras e bem formuladas?' },
+    { key: 'qualidadeAudio', label: 'Qualidade do áudio', desc: 'A funcionalidade "Ouvir pergunta" funcionou bem?' },
+    { key: 'experienciaGeral', label: 'Experiência geral', desc: 'Como foi sua experiência com a entrevista?' },
+    { key: 'recomendaria', label: 'Recomendaria', desc: 'Você recomendaria essa experiência para um colega?' }
+  ];
+
+  const preenchidas = Object.values(notas).filter((n) => n > 0).length;
+  const todasPreenchidas = preenchidas === 5;
+
+  async function enviar() {
+    if (!todasPreenchidas) return;
+    setEnviando(true);
+    setErro('');
+    try {
+      const res = await fetch(`/api/candidaturas/${candidaturaId}/csat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...notas, comentario })
+      });
+      if (!res.ok) throw new Error('Erro ao salvar');
+      setEnviado(true);
+      setTimeout(onConcluir, 1500);
+    } catch (err: any) {
+      setErro(err.message ?? 'Erro ao salvar');
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  if (enviado) {
+    return (
+      <div className="max-w-xl mx-auto text-center bg-white/5 border border-white/10 rounded-2xl p-8 v4-fade-in">
+        <div className="text-4xl mb-3">🎉</div>
+        <h1 className="font-heading text-xl font-bold mb-2">Obrigado!</h1>
+        <p className="text-white/60">Sua avaliação nos ajuda a melhorar a plataforma.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-xl mx-auto space-y-6 v4-fade-in">
+      <div className="text-center bg-white/5 border border-white/10 rounded-2xl p-6">
+        <h1 className="font-heading text-xl font-bold mb-1">Última etapa, {nome}!</h1>
+        <p className="text-white/50 text-sm">Avalie sua experiência com a plataforma (leva 30 segundos).</p>
+      </div>
+
+      <div className="space-y-5">
+        {perguntas.map((p) => (
+          <div key={p.key} className="bg-white/5 border border-white/10 rounded-xl p-4">
+            <p className="font-medium text-sm mb-1">{p.label}</p>
+            <p className="text-xs text-white/40 mb-3">{p.desc}</p>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setNotas((atual) => ({ ...atual, [p.key]: n }))}
+                  className={`w-10 h-10 rounded-lg font-bold text-sm transition ${
+                    notas[p.key] === n
+                      ? 'bg-v4red text-white'
+                      : notas[p.key] > n
+                        ? 'bg-v4red/20 text-v4red'
+                        : 'bg-white/5 text-white/40 hover:bg-white/10'
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+            {notas[p.key] > 0 && (
+              <p className="text-[10px] text-white/30 mt-1">
+                {notas[p.key] === 1 && 'Péssimo'}
+                {notas[p.key] === 2 && 'Ruim'}
+                {notas[p.key] === 3 && 'Regular'}
+                {notas[p.key] === 4 && 'Bom'}
+                {notas[p.key] === 5 && 'Excelente'}
+              </p>
+            )}
+          </div>
+        ))}
+
+        <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+          <p className="font-medium text-sm mb-2">Comentário opcional</p>
+          <textarea
+            value={comentario}
+            onChange={(e) => setComentario(e.target.value)}
+            rows={3}
+            placeholder="Algum feedback adicional sobre sua experiência?"
+            className="w-full rounded-lg bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red resize-none"
+          />
+        </div>
+      </div>
+
+      {erro && <p className="text-v4red text-sm text-center">{erro}</p>}
+
+      <div className="flex gap-3">
+        <button
+          onClick={onConcluir}
+          className="flex-1 rounded-full border border-white/10 text-white/50 hover:text-white/80 py-3 text-sm transition"
+        >
+          Pular
+        </button>
+        <button
+          onClick={enviar}
+          disabled={!todasPreenchidas || enviando}
+          className="flex-1 rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-white font-semibold py-3 text-sm transition"
+        >
+          {enviando ? 'Enviando…' : `Enviar (${preenchidas}/5)`}
+        </button>
       </div>
     </div>
   );

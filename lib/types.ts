@@ -149,6 +149,16 @@ export type Candidatura = {
   parecer?: Parecer;
   /** Email do talent responsável por este candidato (atribuição manual). */
   talentResponsavel?: string;
+  /** ─── CSAT: satisfação do candidato com a plataforma ─── */
+  csat?: {
+    facilidadeUso: number;
+    claridadePerguntas: number;
+    qualidadeAudio: number;
+    experienciaGeral: number;
+    recomendaria: number;
+    comentario?: string;
+    preenchidoEm: string;
+  };
   /** ─── Filtros avançados ─── */
   segmento?: string;
   nivelProfissional?: string;
