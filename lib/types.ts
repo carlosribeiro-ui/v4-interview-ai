@@ -141,4 +141,6 @@ export type Candidatura = {
   notasInternas?: NotaInterna[];
   /** Parecer consolidado (síntese + conclusão), gerado sob demanda e cacheado aqui até a próxima resposta. */
   parecer?: Parecer;
+  /** Email do talent responsável por este candidato (atribuição manual). */
+  talentResponsavel?: string;
 };

@@ -31,6 +31,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (typeof body.telefone === 'string') candidatura.telefone = body.telefone;
   if (typeof body.pretensaoSalarial === 'string') candidatura.pretensaoSalarial = body.pretensaoSalarial;
   if (typeof body.curriculoPath === 'string') candidatura.curriculoPath = body.curriculoPath;
+  if (typeof body.talentResponsavel === 'string') candidatura.talentResponsavel = body.talentResponsavel || undefined;
 
   await saveCandidatura(candidatura);
   return NextResponse.json(candidatura);
