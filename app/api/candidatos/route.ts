@@ -18,6 +18,13 @@ export type CandidatoEnriquecido = {
   vagaSenioridade: string;
   teste: boolean;
   talentResponsavel?: string;
+  segmento?: string;
+  nivelProfissional?: string;
+  formacao?: string;
+  pais?: string;
+  estado?: string;
+  cidade?: string;
+  idioma?: string;
 };
 
 function paraCsv(linhas: CandidatoEnriquecido[]): string {
@@ -71,7 +78,14 @@ export async function GET(req: NextRequest) {
       vagaCargo: vaga?.cargo ?? '—',
       vagaSenioridade: vaga?.senioridade ?? '—',
       teste: c.email.trim().toLowerCase().startsWith('teste+'),
-      talentResponsavel: c.talentResponsavel
+      talentResponsavel: c.talentResponsavel,
+      segmento: c.segmento,
+      nivelProfissional: c.nivelProfissional,
+      formacao: c.formacao,
+      pais: c.pais,
+      estado: c.estado,
+      cidade: c.cidade,
+      idioma: c.idioma
     };
   });
 
@@ -85,6 +99,21 @@ export async function GET(req: NextRequest) {
   }
   if (scoreMin !== null) candidatos = candidatos.filter((c) => (c.scoreMedio ?? -1) >= scoreMin);
   if (scoreMax !== null) candidatos = candidatos.filter((c) => (c.scoreMedio ?? 99) <= scoreMax);
+  // Filtros avançados
+  const seg = params.get('segmento');
+  const niv = params.get('nivelProfissional');
+  const form = params.get('formacao');
+  const pai = params.get('pais');
+  const est = params.get('estado');
+  const cid = params.get('cidade');
+  const idi = params.get('idioma');
+  if (seg) candidatos = candidatos.filter((c) => c.segmento === seg);
+  if (niv) candidatos = candidatos.filter((c) => c.nivelProfissional === niv);
+  if (form) candidatos = candidatos.filter((c) => c.formacao === form);
+  if (pai) candidatos = candidatos.filter((c) => c.pais === pai);
+  if (est) candidatos = candidatos.filter((c) => c.estado === est);
+  if (cid) candidatos = candidatos.filter((c) => c.cidade === cid);
+  if (idi) candidatos = candidatos.filter((c) => c.idioma === idi);
 
   candidatos.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
