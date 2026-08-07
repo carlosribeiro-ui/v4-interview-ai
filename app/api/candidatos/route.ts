@@ -17,6 +17,7 @@ export type CandidatoEnriquecido = {
   vagaCargo: string;
   vagaSenioridade: string;
   teste: boolean;
+  talentResponsavel?: string;
 };
 
 function paraCsv(linhas: CandidatoEnriquecido[]): string {
@@ -69,7 +70,8 @@ export async function GET(req: NextRequest) {
       vagaId: c.vagaId,
       vagaCargo: vaga?.cargo ?? '—',
       vagaSenioridade: vaga?.senioridade ?? '—',
-      teste: c.email.trim().toLowerCase().startsWith('teste+')
+      teste: c.email.trim().toLowerCase().startsWith('teste+'),
+      talentResponsavel: c.talentResponsavel
     };
   });
 

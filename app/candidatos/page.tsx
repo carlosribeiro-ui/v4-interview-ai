@@ -28,6 +28,8 @@ const COLUNAS = [
   { id: 'reprovado', nome: 'Reprovados', cor: 'bg-v4red/10 border-v4red/30', dot: 'bg-v4red' }
 ] as const;
 
+type Talent = { id: string; nome: string; email: string; role: string };
+
 export default function CandidatosPage() {
   return (
     <Suspense fallback={<p className="text-white/50">Carregando…</p>}>
@@ -41,6 +43,7 @@ function CandidatosPageInner() {
 
   const [candidatos, setCandidatos] = useState<CandidatoEnriquecido[]>([]);
   const [vagas, setVagas] = useState<{ id: string; cargo: string }[]>([]);
+  const [talents, setTalents] = useState<Talent[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState('');
   const [vagaFiltro, setVagaFiltro] = useState(searchParams.get('vagaId') ?? '');
@@ -64,8 +67,19 @@ function CandidatosPageInner() {
   }
 
   useEffect(() => {
+    fetch('/api/usuarios').then((r) => r.json()).then((d) => setTalents(d.filter((u: Talent) => u.role === 'talent')));
     carregar();
   }, [busca, vagaFiltro, faixaScore, mostrarTestes]);
+
+  async function atribuirTalent(candidaturaId: string, email: string) {
+    setCandidatos((atual) => atual.map((c) => c.id === candidaturaId ? { ...c, talentResponsavel: email || undefined } : c));
+    const res = await fetch(`/api/candidaturas/${candidaturaId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ talentResponsavel: email })
+    });
+    if (!res.ok) carregar();
+  }
 
   const porColuna = useMemo(() => {
     const grupos: Record<string, CandidatoEnriquecido[]> = {
@@ -172,21 +186,22 @@ function CandidatosPageInner() {
                     </div>
                   ) : (
                     porColuna[col.id].map((c) => (
-                      <a
+                      <div
                         key={c.id}
-                        href={`/vagas/${c.vagaId}`}
-                        className="block rounded-xl border border-v4border bg-v4surface hover:bg-white/[0.06] hover:border-white/15 p-3 transition shadow-card"
+                        className="rounded-xl border border-v4border bg-v4surface hover:bg-white/[0.06] hover:border-white/15 p-3 transition shadow-card"
                       >
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-9 h-9 shrink-0 rounded-full bg-v4red/15 text-v4red flex items-center justify-center text-xs font-bold">
-                            {iniciais(c.nome)}
+                        <a href={`/vagas/${c.vagaId}`} className="block">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-9 h-9 shrink-0 rounded-full bg-v4red/15 text-v4red flex items-center justify-center text-xs font-bold">
+                              {iniciais(c.nome)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-sm truncate">{c.nome}</div>
+                              <div className="text-xs text-white/40 truncate">{c.vagaCargo}</div>
+                            </div>
+                            <ScoreRing score={c.scoreMedio} size={38} strokeWidth={3} />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-sm truncate">{c.nome}</div>
-                            <div className="text-xs text-white/40 truncate">{c.vagaCargo}</div>
-                          </div>
-                          <ScoreRing score={c.scoreMedio} size={38} strokeWidth={3} />
-                        </div>
+                        </a>
                         <div className="flex items-center gap-1.5 mt-2">
                           <Pill tom={c.status === 'concluida' ? 'verde' : 'amarelo'}>
                             {c.status === 'concluida' ? 'Concluída' : 'Em andamento'}
@@ -196,7 +211,21 @@ function CandidatosPageInner() {
                             {new Date(c.createdAt).toLocaleDateString('pt-BR')}
                           </span>
                         </div>
-                      </a>
+                        {/* Atribuição de talent */}
+                        <div className="mt-2 pt-2 border-t border-white/5">
+                          <select
+                            value={c.talentResponsavel ?? ''}
+                            onChange={(e) => { e.stopPropagation(); atribuirTalent(c.id, e.target.value); }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full text-[11px] rounded bg-black/30 border border-white/10 px-2 py-1 outline-none focus:border-v4red text-white/60"
+                          >
+                            <option value="">Sem talent atribuído</option>
+                            {talents.map((t) => (
+                              <option key={t.email} value={t.email}>{t.nome}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
                     ))
                   )}
                 </div>
