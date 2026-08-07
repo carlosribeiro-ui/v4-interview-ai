@@ -26,6 +26,10 @@ export type Vaga = {
   jobDescription?: string;
   /** Ausente = tratado como true (vagas antigas). false = fechada — some de /entrevista, /vagas/publicas e da criação de novas candidaturas. */
   ativa?: boolean;
+  /** Se true, a IA avalia o nível de idioma do candidato em cada resposta. */
+  avaliarIdioma?: boolean;
+  /** Se true, a vaga aparece no topo da listagem. */
+  prioritaria?: boolean;
 };
 
 /** Cor semântica de uma fase — mapeia pra um token fixo da paleta V4 (nunca hex livre). */
@@ -93,6 +97,8 @@ export type Resposta = {
   competenciasEssenciais?: CompetenciaAvaliada[];
   /** Competências implícitas reveladas pela resposta, fora da lista formal de requisitos. */
   competenciasAdicionais?: CompetenciaAvaliada[];
+  /** Avaliação de idioma (quando vaga ativa essa feature). */
+  avaliacaoIdioma?: { score: number; nivel: string; feedback: string } | null;
 };
 
 /** Comentário interno do recrutador sobre a candidatura — não visível ao candidato. */

@@ -28,7 +28,12 @@ function normalizarFase(c: Candidatura): Candidatura {
 export async function getVagas(): Promise<Vaga[]> {
   const col = await vagasCollection();
   const vagas = await col.find({}).toArray();
-  return vagas.map(normalizarFases).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return vagas.map(normalizarFases).sort((a, b) => {
+    // Prioritárias primeiro
+    if (a.prioritaria && !b.prioritaria) return -1;
+    if (!a.prioritaria && b.prioritaria) return 1;
+    return b.createdAt.localeCompare(a.createdAt);
+  });
 }
 
 export async function getVaga(id: string): Promise<Vaga | undefined> {

@@ -114,6 +114,34 @@ export async function GET(req: NextRequest) {
       criadoEm: c.createdAt
     }));
 
+  // ─── Precisa de atenção ───
+  const agora = new Date();
+  const UM_DIA = 24 * 60 * 60 * 1000;
+
+  // Candidatos com nota alta sem decisão
+  const altaNotaSemDecisao = concluidas
+    .filter((c) => (c.scoreMedio ?? 0) >= 7 && c.fase !== 'aprovado' && c.fase !== 'reprovado')
+    .slice(0, 5)
+    .map((c) => ({ id: c.id, nome: c.nome, score: c.scoreMedio, vaga: vagaPorId.get(c.vagaId)?.cargo ?? '—', motivo: 'Nota alta sem decisão' }));
+
+  // Entrevistas finalizadas há mais de 3 dias sem parecer
+  const semParecer = concluidas
+    .filter((c) => !c.parecer && (agora.getTime() - new Date(c.createdAt).getTime()) > 3 * UM_DIA)
+    .slice(0, 5)
+    .map((c) => ({ id: c.id, nome: c.nome, score: c.scoreMedio, vaga: vagaPorId.get(c.vagaId)?.cargo ?? '—', motivo: 'Concluída há 3+ dias sem parecer' }));
+
+  // Vagas sem candidatos na última semana
+  const umaSemanaAtras = new Date(agora.getTime() - 7 * UM_DIA);
+  const vagasSemCandidatos = vagas
+    .filter((v) => {
+      const cs = candidaturas.filter((c) => c.vagaId === v.id);
+      return cs.length === 0 || cs.every((c) => new Date(c.createdAt) < umaSemanaAtras);
+    })
+    .slice(0, 5)
+    .map((v) => ({ id: v.id, nome: v.cargo, motivo: 'Sem candidatos novos na semana' }));
+
+  const precisaAtencao = [...altaNotaSemDecisao, ...semParecer, ...vagasSemCandidatos];
+
   return NextResponse.json({
     totais: {
       vagas: vagas.length,
@@ -130,6 +158,7 @@ export async function GET(req: NextRequest) {
     porTalent,
     topCandidatos,
     vagas: vagasComStats,
-    ultimasAtividades
+    ultimasAtividades,
+    precisaAtencao
   });
 }
