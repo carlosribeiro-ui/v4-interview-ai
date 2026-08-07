@@ -14,7 +14,9 @@ export const NOME_COOKIE_SESSAO = 'v4_session';
 const SESSAO_DIAS = 7;
 
 function segredo(): string {
-  return process.env.SESSION_SECRET || 'dev-secret-troque-em-producao-v4-interview-ai';
+  const s = process.env.SESSION_SECRET;
+  if (!s) throw new Error('SESSION_SECRET não configurado. Adicione uma chave secreta no .env.local e no Vercel.');
+  return s;
 }
 
 function base64urlEncode(bytes: Uint8Array): string {

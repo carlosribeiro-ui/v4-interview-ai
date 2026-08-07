@@ -92,6 +92,7 @@ export const config = {
     '/vagas/:path*',
     '/testar-entrevista/:path*',
     '/admin/:path*',
+    '/docs/:path*',
     // API routes protegidas por RBAC
     '/api/usuarios/:path*',
     '/api/logs',
