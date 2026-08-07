@@ -49,6 +49,9 @@ function CandidatosPageInner() {
   const [vagaFiltro, setVagaFiltro] = useState(searchParams.get('vagaId') ?? '');
   const [faixaScore, setFaixaScore] = useState('');
   const [mostrarTestes, setMostrarTestes] = useState(false);
+  const [candidaturaAberta, setCandidaturaAberta] = useState<any>(null);
+  const [vagaAberta, setVagaAberta] = useState<any>(null);
+  const [carregandoPerfil, setCarregandoPerfil] = useState(false);
 
   async function carregar() {
     const params = new URLSearchParams();
@@ -79,6 +82,28 @@ function CandidatosPageInner() {
       body: JSON.stringify({ talentResponsavel: email })
     });
     if (!res.ok) carregar();
+  }
+
+  async function abrirPerfil(c: CandidatoEnriquecido) {
+    setCarregandoPerfil(true);
+    setCandidaturaAberta(null);
+    setVagaAberta(null);
+    try {
+      const [resCand, resVaga] = await Promise.all([
+        fetch(`/api/candidaturas/${c.id}`),
+        fetch(`/api/vagas/${c.vagaId}`)
+      ]);
+      if (resCand.ok) {
+        const data = await resCand.json();
+        setCandidaturaAberta(data.candidatura);
+      }
+      if (resVaga.ok) {
+        const data = await resVaga.json();
+        setVagaAberta(data.vaga);
+      }
+    } finally {
+      setCarregandoPerfil(false);
+    }
   }
 
   const porColuna = useMemo(() => {
@@ -188,9 +213,9 @@ function CandidatosPageInner() {
                     porColuna[col.id].map((c) => (
                       <div
                         key={c.id}
-                        className="rounded-xl border border-v4border bg-v4surface hover:bg-white/[0.06] hover:border-white/15 p-3 transition shadow-card"
+                        onClick={() => abrirPerfil(c)}
+                        className="rounded-xl border border-v4border bg-v4surface hover:bg-white/[0.06] hover:border-white/15 p-3 transition shadow-card cursor-pointer"
                       >
-                        <a href={`/vagas/${c.vagaId}`} className="block">
                           <div className="flex items-center gap-2.5">
                             <div className="w-9 h-9 shrink-0 rounded-full bg-v4red/15 text-v4red flex items-center justify-center text-xs font-bold">
                               {iniciais(c.nome)}
@@ -201,7 +226,6 @@ function CandidatosPageInner() {
                             </div>
                             <ScoreRing score={c.scoreMedio} size={38} strokeWidth={3} />
                           </div>
-                        </a>
                         <div className="flex items-center gap-1.5 mt-2">
                           <Pill tom={c.status === 'concluida' ? 'verde' : 'amarelo'}>
                             {c.status === 'concluida' ? 'Concluída' : 'Em andamento'}
@@ -234,6 +258,116 @@ function CandidatosPageInner() {
           </div>
         </div>
       )}
+
+      {/* Modal de perfil do candidato */}
+      {carregandoPerfil && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center">
+          <div className="text-white/50">Carregando perfil…</div>
+        </div>
+      )}
+      {candidaturaAberta && vagaAberta && (
+        <PerfilCandidatoModal
+          c={candidaturaAberta}
+          vaga={vagaAberta}
+          onClose={() => { setCandidaturaAberta(null); setVagaAberta(null); }}
+        />
+      )}
+    </div>
+  );
+}
+
+/** Modal com perfil completo do candidato — vídeo, transcrição, feedback, notas. */
+function PerfilCandidatoModal({
+  c, vaga, onClose
+}: {
+  c: any;
+  vaga: any;
+  onClose: () => void;
+}) {
+  const [detalheAberto, setDetalheAberto] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    function aoTeclar(e: KeyboardEvent) { if (e.key === 'Escape') onClose(); }
+    document.addEventListener('keydown', aoTeclar);
+    document.body.style.overflow = 'hidden';
+    return () => { document.removeEventListener('keydown', aoTeclar); document.body.style.overflow = ''; };
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex flex-col v4-fade-in" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="w-full h-full sm:h-[95vh] sm:my-auto sm:max-w-4xl sm:mx-auto bg-v4bg sm:rounded-2xl sm:border sm:border-v4border flex flex-col overflow-hidden shadow-card">
+        {/* Header */}
+        <div className="shrink-0 flex items-start justify-between gap-4 px-6 py-5 border-b border-v4border bg-white/[0.02]">
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="w-14 h-14 shrink-0 rounded-full bg-v4red/15 text-v4red flex items-center justify-center text-lg font-bold">{iniciais(c.nome)}</div>
+            <div className="min-w-0">
+              <h2 className="font-heading text-xl font-bold truncate">{c.nome}</h2>
+              <p className="text-sm text-white/50 truncate">{c.email}</p>
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <Pill tom={c.status === 'concluida' ? 'verde' : 'amarelo'}>{c.status === 'concluida' ? 'Concluída' : 'Em andamento'}</Pill>
+                <Pill tom="neutro">{vaga.cargo} · {vaga.senioridade}</Pill>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <ScoreRing score={c.scoreMedio} size={56} strokeWidth={4.5} />
+            <button onClick={onClose} aria-label="Fechar" className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 text-lg transition">✕</button>
+          </div>
+        </div>
+        {/* Corpo */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+          {(c.linkedin || c.telefone || c.pretensaoSalarial || c.curriculoPath) && (
+            <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-white/60 border-b border-white/10 pb-4">
+              {c.linkedin && <a href={c.linkedin} target="_blank" rel="noreferrer" className="text-v4red hover:text-v4redDark">🔗 LinkedIn</a>}
+              {c.telefone && <span>📞 {c.telefone}</span>}
+              {c.pretensaoSalarial && <span>💰 {c.pretensaoSalarial}</span>}
+              {c.curriculoPath && <a href={c.curriculoPath} target="_blank" rel="noreferrer" className="text-v4red hover:text-v4redDark">📄 Currículo</a>}
+            </div>
+          )}
+          {c.respostas?.length === 0 && <p className="text-white/40 text-sm">Nenhuma resposta enviada ainda.</p>}
+          <div className="space-y-5">
+            {c.respostas?.map((r: any, i: number) => {
+              const pergunta = vaga.perguntas?.find((p: any) => p.id === r.perguntaId);
+              return (
+                <div key={r.perguntaId} className="rounded-2xl border border-v4border bg-white/[0.025] p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm font-medium text-white/80"><span className="text-white/40">Pergunta {i + 1} · </span>{pergunta?.texto ?? 'Pergunta'}</p>
+                    {r.avaliando ? <span className="shrink-0 w-[34px] h-[34px] rounded-full border-2 border-v4yellow/30 border-t-v4yellow animate-spin" /> : <ScoreRing score={r.score} size={34} strokeWidth={3} />}
+                  </div>
+                  <video src={r.videoPath} controls className="w-full rounded-xl bg-black aspect-video" />
+                  {r.avaliando && <Pill tom="amarelo">⏳ Processando…</Pill>}
+                  {!r.avaliando && r.estaLendo !== undefined && <Pill tom={r.estaLendo ? 'vermelho' : 'verde'}>{r.estaLendo ? '⚠️ Possível leitura' : '✅ Sem indícios'} · {Math.round((r.confiancaLeitura ?? 0) * 100)}%</Pill>}
+                  {!r.avaliando && <p className="text-xs text-white/40">Transcrição: <span className="text-white/70">{r.transcricao || '—'}</span></p>}
+                  {!r.avaliando && <p className="text-sm text-white/60">{r.feedback}</p>}
+                  {!r.avaliando && r.pontoAtencao && (
+                    <div className="rounded-xl border border-v4yellow/30 bg-v4yellow/5 px-3.5 py-3 space-y-1.5">
+                      <p className="text-xs font-semibold text-v4yellow uppercase">Ponto de atenção</p>
+                      <p className="text-xs text-white/70"><span className="text-white/50">Lacuna: </span>{r.pontoAtencao.lacuna}</p>
+                      <p className="text-xs text-white/70"><span className="text-white/50">Impacto: </span>{r.pontoAtencao.impacto}</p>
+                      <p className="text-xs text-white/70"><span className="text-white/50">Como validar: </span>{r.pontoAtencao.comoValidar}</p>
+                    </div>
+                  )}
+                  {r.qualidadeDiscurso && (
+                    <button onClick={() => setDetalheAberto((a) => ({ ...a, [r.perguntaId]: !a[r.perguntaId] }))} className="text-xs text-v4red hover:text-v4redDark font-medium">
+                      {detalheAberto[r.perguntaId] ? '▲ Ocultar' : '📊 Ver análise detalhada'}
+                    </button>
+                  )}
+                  {detalheAberto[r.perguntaId] && r.qualidadeDiscurso && (
+                    <div className="mt-3 space-y-3 v4-fade-in">
+                      <div className="rounded-xl border border-v4border bg-black/20 p-3.5 space-y-2">
+                        <p className="text-xs font-semibold text-white/70 uppercase">Discurso</p>
+                        {Object.entries(r.qualidadeDiscurso).map(([k, v]) => (
+                          <div key={k} className="flex items-center gap-2 text-xs"><span className="w-28 text-white/50 capitalize">{k}</span><div className="flex-1 h-1.5 rounded-full bg-white/[0.06]"><div className="h-full rounded-full bg-v4red" style={{ width: `${Number(v)}%` }} /></div><span className="w-8 text-right text-white/60">{String(v)}</span></div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
