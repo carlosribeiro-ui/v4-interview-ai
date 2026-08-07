@@ -60,6 +60,42 @@ function CandidatosPageInner() {
   const [faEstado, setFaEstado] = useState('');
   const [faCidade, setFaCidade] = useState('');
   const [faIdioma, setFaIdioma] = useState('');
+  const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
+  const [modoSelecao, setModoSelecao] = useState(false);
+
+  function toggleSelecao(id: string) {
+    setSelecionados((atual) => {
+      const next = new Set(atual);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleTodas(colId: string) {
+    const ids = porColuna[colId].map((c) => c.id);
+    const todasMarcadas = ids.every((id) => selecionados.has(id));
+    setSelecionados((atual) => {
+      const next = new Set(atual);
+      if (todasMarcadas) ids.forEach((id) => next.delete(id));
+      else ids.forEach((id) => next.add(id));
+      return next;
+    });
+  }
+
+  async function moverEmMassa(fase: string) {
+    const promessas = Array.from(selecionados).map((id) =>
+      fetch(`/api/candidaturas/${id}/fase`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fase })
+      })
+    );
+    await Promise.all(promessas);
+    setSelecionados(new Set());
+    setModoSelecao(false);
+    carregar();
+  }
 
   async function carregar() {
     const params = new URLSearchParams();
@@ -211,6 +247,32 @@ function CandidatosPageInner() {
       ) : candidatos.length === 0 ? (
         <p className="text-white/50">Nenhum candidato encontrado com esses filtros.</p>
       ) : (
+        <div className="space-y-4">
+        {/* Barra de ações em massa */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => { setModoSelecao(!modoSelecao); if (modoSelecao) setSelecionados(new Set()); }}
+            className={`rounded-full px-3 py-1.5 text-sm transition ${modoSelecao ? 'bg-v4red text-white' : 'bg-white/[0.05] text-white/60 hover:bg-white/10'}`}
+          >
+            {modoSelecao ? '✕ Cancelar' : '☑ Selecionar'}
+          </button>
+          {modoSelecao && selecionados.size > 0 && (
+            <>
+              <span className="text-xs text-white/50">{selecionados.size} selecionado(s)</span>
+              <select
+                onChange={(e) => { if (e.target.value) { moverEmMassa(e.target.value); e.target.value = ''; } }}
+                className="rounded-full bg-v4surface border border-v4border px-3 py-1.5 text-sm outline-none focus:border-v4red"
+              >
+                <option value="">Mover para…</option>
+                <option value="triagem">Triagem</option>
+                <option value="entrevista">Entrevista</option>
+                <option value="aprovado">Aprovado</option>
+                <option value="reprovado">Reprovado</option>
+              </select>
+            </>
+          )}
+        </div>
+
         <div className="overflow-x-auto pb-3">
           <div className="flex gap-4 min-w-max">
             {COLUNAS.map((col) => (
@@ -234,10 +296,21 @@ function CandidatosPageInner() {
                     porColuna[col.id].map((c) => (
                       <div
                         key={c.id}
-                        onClick={() => abrirPerfil(c)}
-                        className="rounded-xl border border-v4border bg-v4surface hover:bg-white/[0.06] hover:border-white/15 p-3 transition shadow-card cursor-pointer"
+                        onClick={() => modoSelecao ? toggleSelecao(c.id) : abrirPerfil(c)}
+                        className={`rounded-xl border bg-v4surface hover:bg-white/[0.06] hover:border-white/15 p-3 transition shadow-card cursor-pointer ${
+                          selecionados.has(c.id) ? 'border-v4red ring-1 ring-v4red/30' : 'border-v4border'
+                        }`}
                       >
                           <div className="flex items-center gap-2.5">
+                            {modoSelecao && (
+                              <input
+                                type="checkbox"
+                                checked={selecionados.has(c.id)}
+                                onChange={() => toggleSelecao(c.id)}
+                                onClick={(e) => e.stopPropagation()}
+                                className="accent-v4red shrink-0"
+                              />
+                            )}
                             <div className="w-9 h-9 shrink-0 rounded-full bg-v4red/15 text-v4red flex items-center justify-center text-xs font-bold">
                               {iniciais(c.nome)}
                             </div>
@@ -277,6 +350,7 @@ function CandidatosPageInner() {
               </div>
             ))}
           </div>
+        </div>
         </div>
       )}
 
