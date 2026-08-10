@@ -1,10 +1,4 @@
-/**
- * Script para criar users em batch via API.
- * Roda: node scripts/create-users.js
- * Requer que o dev server esteja rodando (npm run dev) ou use a URL de produção.
- */
-
-const BASE = process.env.API_URL || 'http://localhost:3001';
+const BASE = 'https://v4-interview-ai.vercel.app';
 
 const USERS = [
   { nome: 'Julia Perin', email: 'julia.perin@v4company.com', role: 'talent' },
@@ -24,29 +18,21 @@ async function login() {
   const res = await fetch(`${BASE}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: 'admin@v4company.com', senha: 'v4admin2026' }),
-    credentials: 'include'
+    body: JSON.stringify({ email: 'admin@v4company.com', senha: 'v4admin2026' })
   });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(`Login falhou: ${err.error}`);
-  }
-  // Pega o cookie da sessão
+  if (!res.ok) throw new Error(`Login falhou: ${await res.text()}`);
   const cookies = res.headers.getSetCookie?.() ?? [];
   return cookies.map(c => c.split(';')[0]).join('; ');
 }
 
-async function criarUser(sessionCookie, user) {
+async function criarUser(cookie, user) {
   const res = await fetch(`${BASE}/api/usuarios`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Cookie': sessionCookie
-    },
+    headers: { 'Content-Type': 'application/json', 'Cookie': cookie },
     body: JSON.stringify({ ...user, senha: SENHA_DEFAULT })
   });
   const data = await res.json();
-  return { ok: res.ok, status: res.status, data };
+  return { ok: res.ok, data };
 }
 
 async function main() {
@@ -70,7 +56,7 @@ async function main() {
   }
 
   console.log(`\nResumo: ${criados} criados, ${erros} erros`);
-  console.log(`Senha padrão para todos: ${SENHA_DEFAULT}`);
+  console.log(`Senha padrão: ${SENHA_DEFAULT}`);
 }
 
 main().catch(console.error);

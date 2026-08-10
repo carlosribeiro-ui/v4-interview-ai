@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     console.error('[Login] Erro não tratado:', err);
     return NextResponse.json(
-      { error: 'Erro interno no login', detalhes: err?.message ?? 'desconhecido' },
+      { error: 'Erro interno no login' },
       { status: 500 }
     );
   }
