@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCandidatura, saveCandidatura, deleteCandidatura } from '@/lib/store';
+import { getCandidatura, deleteCandidatura, patchCandidaturaAtomica } from '@/lib/store';
 import { checarChaveExterna } from '@/lib/auth-externa';
 import { registrarLog } from '@/lib/logs';
 
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   return NextResponse.json(candidatura);
 }
 
-/** Atualiza os dados que o próprio candidato preenche (linkedin, telefone, pretensão salarial, currículo, nome). */
+/** Atualiza os dados via API externa — usa optimistic locking. */
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const authErro = checarChaveExterna(req);
   if (authErro) return authErro;
@@ -25,14 +25,22 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   const body = await req.json().catch(() => ({}));
 
-  if (typeof body.nome === 'string' && body.nome.trim()) candidatura.nome = body.nome.trim();
-  if (typeof body.linkedin === 'string') candidatura.linkedin = body.linkedin;
-  if (typeof body.telefone === 'string') candidatura.telefone = body.telefone;
-  if (typeof body.pretensaoSalarial === 'string') candidatura.pretensaoSalarial = body.pretensaoSalarial;
-  if (typeof body.curriculoPath === 'string') candidatura.curriculoPath = body.curriculoPath;
+  const campos: Record<string, unknown> = {};
+  if (typeof body.nome === 'string' && body.nome.trim()) campos.nome = body.nome.trim();
+  if (typeof body.linkedin === 'string') campos.linkedin = body.linkedin;
+  if (typeof body.telefone === 'string') campos.telefone = body.telefone;
+  if (typeof body.pretensaoSalarial === 'string') campos.pretensaoSalarial = body.pretensaoSalarial;
+  if (typeof body.curriculoPath === 'string') campos.curriculoPath = body.curriculoPath;
 
-  await saveCandidatura(candidatura);
-  return NextResponse.json(candidatura);
+  if (Object.keys(campos).length === 0) {
+    return NextResponse.json(candidatura);
+  }
+
+  const atualizada = await patchCandidaturaAtomica(params.id, candidatura.version, campos);
+  if (!atualizada) {
+    return NextResponse.json({ error: 'Concorrência detectada — recarregue e tente novamente.' }, { status: 409 });
+  }
+  return NextResponse.json(atualizada);
 }
 
 /** Remove a candidatura (respostas e vídeos ficam órfãos no R2 — não é apagado do bucket). */

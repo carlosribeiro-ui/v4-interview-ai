@@ -6,7 +6,7 @@ import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const bloqueado = aplicarRateLimit(req, 'relatorios', LIMITES.publicRead);
+  const bloqueado = await aplicarRateLimit(req, 'relatorios', LIMITES.publicRead);
   if (bloqueado) return bloqueado;
 
   const params = req.nextUrl.searchParams;

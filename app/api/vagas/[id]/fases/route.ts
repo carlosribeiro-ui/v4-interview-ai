@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getVaga, saveVaga, getCandidaturas } from '@/lib/store';
+import { getVaga, updateVaga, getCandidaturas } from '@/lib/store';
 import { lerSessao } from '@/lib/auth';
+import { comFila } from '@/lib/queue';
 import type { FaseDef, CorFase } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -34,44 +35,52 @@ function validarFases(body: unknown): FaseDef[] | null {
   return resultado;
 }
 
+/**
+ * PATCH com fila — serializa updates de fases para a mesma vaga.
+ */
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const sessao = await lerSessao(req);
-  if (!sessao || sessao.role !== 'admin') {
-    return NextResponse.json({ error: 'Apenas admin pode gerenciar fases' }, { status: 403 });
-  }
+  return comFila(`vaga:${params.id}`, async () => {
+    const sessao = await lerSessao(req);
+    if (!sessao || sessao.role !== 'admin') {
+      return NextResponse.json({ error: 'Apenas admin pode gerenciar fases' }, { status: 403 });
+    }
 
-  const vaga = await getVaga(params.id);
-  if (!vaga) return NextResponse.json({ error: 'Vaga não encontrada' }, { status: 404 });
+    const vaga = await getVaga(params.id);
+    if (!vaga) return NextResponse.json({ error: 'Vaga não encontrada' }, { status: 404 });
 
-  const body = await req.json();
-  const novasFases = validarFases(body);
-  if (!novasFases) {
-    return NextResponse.json(
-      { error: 'fases deve ser uma lista não vazia de { id, nome, cor } com ids únicos e cor em neutro/atencao/sucesso/perigo' },
-      { status: 400 }
-    );
-  }
+    const body = await req.json();
+    const novasFases = validarFases(body);
+    if (!novasFases) {
+      return NextResponse.json(
+        { error: 'fases deve ser uma lista não vazia de { id, nome, cor } com ids únicos e cor em neutro/atencao/sucesso/perigo' },
+        { status: 400 }
+      );
+    }
 
-  const idsNovos = new Set(novasFases.map((f) => f.id));
-  const idsRemovidos = vaga.fases.filter((f) => !idsNovos.has(f.id)).map((f) => f.id);
+    const idsNovos = new Set(novasFases.map((f) => f.id));
+    const idsRemovidos = vaga.fases.filter((f) => !idsNovos.has(f.id)).map((f) => f.id);
 
-  if (idsRemovidos.length > 0) {
-    const candidaturas = await getCandidaturas(params.id);
-    for (const faseId of idsRemovidos) {
-      const emUso = candidaturas.filter((c) => c.fase === faseId);
-      if (emUso.length > 0) {
-        const nome = vaga.fases.find((f) => f.id === faseId)?.nome ?? faseId;
-        return NextResponse.json(
-          {
-            error: `${emUso.length} candidato(s) estão em "${nome}" — mova-os antes de excluir esta fase.`
-          },
-          { status: 409 }
-        );
+    if (idsRemovidos.length > 0) {
+      const candidaturas = await getCandidaturas(params.id);
+      for (const faseId of idsRemovidos) {
+        const emUso = candidaturas.filter((c) => c.fase === faseId);
+        if (emUso.length > 0) {
+          const nome = vaga.fases.find((f) => f.id === faseId)?.nome ?? faseId;
+          return NextResponse.json(
+            {
+              error: `${emUso.length} candidato(s) estão em "${nome}" — mova-os antes de excluir esta fase.`
+            },
+            { status: 409 }
+          );
+        }
       }
     }
-  }
 
-  vaga.fases = novasFases;
-  await saveVaga(vaga);
-  return NextResponse.json(vaga);
+    const atualizada = await updateVaga(params.id, vaga.version, { fases: novasFases });
+    if (!atualizada) {
+      return NextResponse.json({ error: 'Concorrência detectada — recarregue e tente novamente.' }, { status: 409 });
+    }
+
+    return NextResponse.json(atualizada);
+  });
 }

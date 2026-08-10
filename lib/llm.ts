@@ -2,8 +2,32 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 const GEMINI_URL =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
+/** Timeout padrão pra chamadas Gemini (30s). */
+const GEMINI_TIMEOUT_MS = 30_000;
+/** Máximo de retentativas em erros transitórios (429, 5xx, network). */
+const MAX_RETRIES = 3;
+
+import { medir } from './metrics';
+
 function geminiUrl() {
   return `${GEMINI_URL}?key=${GEMINI_API_KEY}`;
+}
+
+/** Detecta padrões de prompt injection em texto do usuário. */
+function detectarPromptInjection(input: string): boolean {
+  const padroes = [
+    /ignore\s+(all\s+)?previous\s+instructions/i,
+    /ignore\s+(all\s+)?above/i,
+    /you\s+are\s+now\s+(a|an)\s+/i,
+    /system\s*:\s*/i,
+    /act\s+as\s+if/i,
+    /pretend\s+you\s+are/i,
+    /disregard\s+(all\s+)?prior/i,
+    /\[INST\]/i,
+    /<<SYS>>/i,
+    /<\|im_start\|>/i,
+  ];
+  return padroes.some((p) => p.test(input));
 }
 
 type GeminiPart =
@@ -14,71 +38,101 @@ async function geminiGenerate(
   parts: GeminiPart[],
   opts?: { temperature?: number; maxTokens?: number; responseSchema?: object }
 ) {
-  if (!GEMINI_API_KEY) {
-    throw new Error('GEMINI_API_KEY nao configurada no .env.local');
-  }
-  const res = await fetch(geminiUrl(), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ role: 'user', parts }],
-      generationConfig: {
-        temperature: opts?.temperature ?? 0.7,
-        maxOutputTokens: opts?.maxTokens ?? 4000,
-        responseMimeType: 'application/json',
-        // Guardrail estrutural: o schema forca o formato no nivel do decoding do
-        // modelo (nao so via instrucao no prompt) — reduz drasticamente JSON
-        // malformado/campo ausente sem depender do modelo "obedecer" o prompt.
-        ...(opts?.responseSchema ? { responseSchema: opts.responseSchema } : {}),
-        // gemini-2.5-flash e modelo de raciocinio: sem isto, o "thinking"
-        // consome o orcamento de tokens e a resposta volta VAZIA.
-        thinkingConfig: { thinkingBudget: 0 }
-      }
-    })
-  });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`Gemini HTTP ${res.status}: ${text}`);
-  }
-
-  const json = await res.json();
-  const candidate = json?.candidates?.[0];
-  const finishReason: string | undefined = candidate?.finishReason;
-
-  // Junta todas as parts (a resposta nem sempre vem numa unica).
-  const text: string = (candidate?.content?.parts ?? [])
-    .map((p: any) => p?.text ?? '')
-    .join('');
-
-  if (!text.trim()) {
-    // Erro acionavel em vez do generico "JSON nao encontrado".
-    const bloqueio = json?.promptFeedback?.blockReason;
-    const detalhe = [
-      finishReason ? `finishReason=${finishReason}` : null,
-      bloqueio ? `blockReason=${bloqueio}` : null
-    ]
-      .filter(Boolean)
-      .join(' ');
-
-    if (finishReason === 'MAX_TOKENS') {
-      throw new Error(
-        `Gemini truncou a resposta antes de gerar texto (${detalhe}). Aumente maxTokens.`
-      );
+  return medir('gemini.generate', async () => {
+    if (!GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY nao configurada no .env.local');
     }
-    throw new Error(
-      `Gemini retornou resposta vazia${detalhe ? ` (${detalhe})` : ''}. ` +
-        `Resposta bruta: ${JSON.stringify(json).slice(0, 500)}`
-    );
+
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+
+    try {
+      const res = await fetch(geminiUrl(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts }],
+          generationConfig: {
+            temperature: opts?.temperature ?? 0.7,
+            maxOutputTokens: opts?.maxTokens ?? 4000,
+            responseMimeType: 'application/json',
+            ...(opts?.responseSchema ? { responseSchema: opts.responseSchema } : {}),
+            thinkingConfig: { thinkingBudget: 0 }
+          }
+        }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      // Retry em erros transitórios (429 rate limit, 5xx server error)
+      if (res.status === 429 || res.status >= 500) {
+        const text = await res.text().catch(() => '');
+        lastError = new Error(`Gemini HTTP ${res.status}: ${text}`);
+        // Exponential backoff: 1s, 2s, 4s
+        await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt));
+        continue;
+      }
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`Gemini HTTP ${res.status}: ${text}`);
+      }
+
+      const json = await res.json();
+      const candidate = json?.candidates?.[0];
+      const finishReason: string | undefined = candidate?.finishReason;
+
+      const text: string = (candidate?.content?.parts ?? [])
+        .map((p: any) => p?.text ?? '')
+        .join('');
+
+      if (!text.trim()) {
+        const bloqueio = json?.promptFeedback?.blockReason;
+        const detalhe = [
+          finishReason ? `finishReason=${finishReason}` : null,
+          bloqueio ? `blockReason=${bloqueio}` : null
+        ]
+          .filter(Boolean)
+          .join(' ');
+
+        if (finishReason === 'MAX_TOKENS') {
+          throw new Error(
+            `Gemini truncou a resposta antes de gerar texto (${detalhe}). Aumente maxTokens.`
+          );
+        }
+        throw new Error(
+          `Gemini retornou resposta vazia${detalhe ? ` (${detalhe})` : ''}. ` +
+            `Resposta bruta: ${JSON.stringify(json).slice(0, 500)}`
+        );
+      }
+
+      if (finishReason === 'MAX_TOKENS') {
+        throw new Error(
+          'Gemini truncou a resposta no meio (finishReason=MAX_TOKENS) — o JSON ficou incompleto. Aumente maxTokens.'
+        );
+      }
+
+      return text;
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      lastError = err;
+
+      // Retry em erros de rede/abort (timeout)
+      if (err.name === 'AbortError' || err.code === 'ECONNRESET' || err.code === 'ENOTFOUND') {
+        await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt));
+        continue;
+      }
+
+      // Erros não-transitórios: throw imediato
+      throw err;
+    }
   }
 
-  if (finishReason === 'MAX_TOKENS') {
-    throw new Error(
-      'Gemini truncou a resposta no meio (finishReason=MAX_TOKENS) — o JSON ficou incompleto. Aumente maxTokens.'
-    );
-  }
-
-  return text;
+  throw lastError ?? new Error('Gemini: todas as retentativas falharam');
+  }, { parteCount: parts.length, temperature: opts?.temperature });
 }
 
 function findJsonObject(text: string): string {
@@ -146,6 +200,12 @@ export async function generateRoteiro(
   segmento: string,
   jobDescription?: string
 ): Promise<RoteiroGerado> {
+  // Prompt injection check no jobDescription
+  if (jobDescription && detectarPromptInjection(jobDescription)) {
+    console.warn('[LLM] Prompt injection detectado no jobDescription — sanitizando');
+    jobDescription = jobDescription.replace(/\b(ignore|disregard|pretend|act as if)\b/gi, '[REDACTED]');
+  }
+
   const prompt = `Voce e um especialista em recrutamento tecnico. Crie um roteiro completo de entrevista assincrona para a vaga abaixo.
 
 Cargo: ${cargo}
@@ -298,6 +358,15 @@ export async function avaliarResposta(
   jobDescription?: string,
   avaliarIdioma?: boolean
 ): Promise<AvaliacaoResposta> {
+  // Prompt injection checks
+  if (jobDescription && detectarPromptInjection(jobDescription)) {
+    console.warn('[LLM] Prompt injection detectado no jobDescription — sanitizando');
+    jobDescription = jobDescription.replace(/\b(ignore|disregard|pretend|act as if)\b/gi, '[REDACTED]');
+  }
+  if (transcricao && detectarPromptInjection(transcricao)) {
+    console.warn('[LLM] Prompt injection detectado na transcrição — sanitizando');
+    transcricao = transcricao.replace(/\b(ignore|disregard|pretend|act as if)\b/gi, '[REDACTED]');
+  }
   const hasFrames = frames && frames.length > 0;
   const hasCurriculo = curriculoTexto && curriculoTexto.trim().length > 0;
   const hasJD = jobDescription && jobDescription.trim().length > 0;
@@ -309,7 +378,7 @@ proporcionalidade e calibragem pela senioridade da vaga.
 Pergunta: ${pergunta}
 Criterios de avaliacao: ${criterios}
 Requisitos formais da vaga (use como base p/ competenciasEssenciais): ${requisitosVaga.join('; ')}
-${hasJD ? `\nJob Description completa (fonte de verdade — priorize sobre a lista de requisitos quando houver conflito):\n"""${jobDescription.trim().slice(0, 3000)}"""\n` : ''}
+${hasJD ? `\nJob Description completa (fonte de verdade — priorize sobre a lista de requisitos quando houver conflito):\n"""${jobDescription!.trim().slice(0, 3000)}"""\n` : ''}
 ${hasCurriculo ? `\nCurriculo/LinkedIn do candidato (use como contexto adicional — verifique se a experiencia declarada na resposta e coerente com o perfil):\n"""${curriculoTexto.trim().slice(0, 3000)}"""\n` : ''}
 
 Transcricao da resposta do candidato:

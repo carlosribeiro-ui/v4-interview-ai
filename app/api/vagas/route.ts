@@ -8,7 +8,13 @@ import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const bloqueado = aplicarRateLimit(req, 'vagas-read', LIMITES.publicRead);
+  // Auth: apenas admin/talent (a listagem pública é /api/vagas/publicas)
+  const sessao = await lerSessao(req);
+  if (!sessao || (sessao.role !== 'admin' && sessao.role !== 'talent')) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  }
+
+  const bloqueado = await aplicarRateLimit(req, 'vagas-read', LIMITES.publicRead);
   if (bloqueado) return bloqueado;
 
   return NextResponse.json(await getVagas());
@@ -36,6 +42,7 @@ export async function POST(req: NextRequest) {
     await registrarLog('vaga_criada', { vagaId: vaga.id, cargo: vaga.cargo }, sessao.email);
     return NextResponse.json(vaga, { status: 201 });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message ?? 'Erro ao gerar roteiro' }, { status: 500 });
+    console.error('[Vagas] Erro ao criar vaga:', err);
+    return NextResponse.json({ error: 'Erro ao criar vaga' }, { status: 500 });
   }
 }

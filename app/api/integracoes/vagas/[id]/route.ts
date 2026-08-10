@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
-import { getVaga, saveVaga, deleteVaga, getCandidaturas } from '@/lib/store';
+import { getVaga, updateVaga, deleteVaga, getCandidaturas } from '@/lib/store';
 import { checarChaveExterna } from '@/lib/auth-externa';
 import { registrarLog } from '@/lib/logs';
 
@@ -26,16 +26,17 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   const body = await req.json().catch(() => ({}));
 
-  if (typeof body.cargo === 'string') vaga.cargo = body.cargo;
-  if (typeof body.senioridade === 'string') vaga.senioridade = body.senioridade;
-  if (typeof body.segmento === 'string') vaga.segmento = body.segmento;
-  if (typeof body.jobDescription === 'string') vaga.jobDescription = body.jobDescription;
-  if (typeof body.ativa === 'boolean') vaga.ativa = body.ativa;
-  if (typeof body.externalId === 'string') vaga.externalId = body.externalId;
-  if (typeof body.origem === 'string') vaga.origem = body.origem;
-  if (Array.isArray(body.requisitos)) vaga.requisitos = body.requisitos;
+  const fields: Record<string, unknown> = {};
+  if (typeof body.cargo === 'string') fields.cargo = body.cargo;
+  if (typeof body.senioridade === 'string') fields.senioridade = body.senioridade;
+  if (typeof body.segmento === 'string') fields.segmento = body.segmento;
+  if (typeof body.jobDescription === 'string') fields.jobDescription = body.jobDescription;
+  if (typeof body.ativa === 'boolean') fields.ativa = body.ativa;
+  if (typeof body.externalId === 'string') fields.externalId = body.externalId;
+  if (typeof body.origem === 'string') fields.origem = body.origem;
+  if (Array.isArray(body.requisitos)) fields.requisitos = body.requisitos;
   if (Array.isArray(body.perguntas)) {
-    vaga.perguntas = body.perguntas.map(
+    fields.perguntas = body.perguntas.map(
       (p: { id?: string; texto: string; criterios: string; tipo?: 'principal' | 'adicional' }) => ({
         id: p.id || randomUUID(),
         texto: p.texto,
@@ -44,10 +45,17 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       })
     );
   }
-  if (Array.isArray(body.fases) && body.fases.length > 0) vaga.fases = body.fases;
+  if (Array.isArray(body.fases) && body.fases.length > 0) fields.fases = body.fases;
 
-  await saveVaga(vaga);
-  return NextResponse.json(vaga);
+  if (Object.keys(fields).length === 0) {
+    return NextResponse.json(vaga);
+  }
+
+  const atualizada = await updateVaga(params.id, vaga.version, fields);
+  if (!atualizada) {
+    return NextResponse.json({ error: 'Concorrência detectada — recarregue e tente novamente.' }, { status: 409 });
+  }
+  return NextResponse.json(atualizada);
 }
 
 /** Remove a vaga e todas as candidaturas associadas — irreversível. */

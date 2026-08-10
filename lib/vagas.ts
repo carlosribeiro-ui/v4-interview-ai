@@ -55,6 +55,7 @@ export async function criarVaga(opts: {
     requisitos,
     perguntas,
     createdAt: new Date().toISOString(),
+    version: 0,
     fases: fases && fases.length > 0 ? fases : FASES_PADRAO.map((f) => ({ ...f })),
     ativa: ativa ?? true,
     ...(jobDescription ? { jobDescription } : {}),

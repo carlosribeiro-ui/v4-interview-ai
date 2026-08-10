@@ -1,21 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
-import { getVaga, saveCandidatura, findCandidaturaPorEmail } from '@/lib/store';
+import { getVaga, findCandidaturaPorEmail, criarCandidaturaAtomica } from '@/lib/store';
 import type { Candidatura } from '@/lib/types';
 import { registrarLog } from '@/lib/logs';
 import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
+import { sanitizarCurto, sanitizarTexto } from '@/lib/sanitize';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * Cria OU retoma a candidatura.
- * Idempotente por (vagaId, email): reenviar o mesmo par nunca duplica.
+ * Idempotente por (vagaId, email): criarCandidaturaAtomica usa insertOne com
+ * unique index, garantindo que duplo-submit nunca duplica.
  *  - nao existe            -> cria (201)
  *  - existe em_andamento   -> devolve a existente (200, retomada:true)
  *  - existe concluida      -> 409, entrevista ja finalizada
  */
 export async function POST(req: NextRequest) {
-  const bloqueado = aplicarRateLimit(req, 'candidatura', LIMITES.candidaturaWrite);
+  const bloqueado = await aplicarRateLimit(req, 'candidatura', LIMITES.candidaturaWrite);
   if (bloqueado) return bloqueado;
 
   const body = await req.json();
@@ -36,8 +38,6 @@ export async function POST(req: NextRequest) {
         { status: 409 }
       );
     }
-    // Retomar uma candidatura já iniciada continua liberado mesmo se a vaga for
-    // inativada no meio do processo — só bloqueia gente nova entrando.
     return NextResponse.json({ ...existente, retomada: true }, { status: 200 });
   }
 
@@ -48,31 +48,33 @@ export async function POST(req: NextRequest) {
   const candidatura: Candidatura = {
     id: randomUUID(),
     vagaId,
-    nome,
-    email,
+    nome: sanitizarCurto(nome),
+    email: email.trim().toLowerCase(),
     status: 'em_andamento',
     fase: 'triagem',
     respostas: [],
     scoreMedio: null,
     createdAt: new Date().toISOString(),
-    ...(linkedin ? { linkedin } : {}),
-    ...(telefone ? { telefone } : {}),
-    ...(pretensaoSalarial ? { pretensaoSalarial } : {}),
-    ...(segmento ? { segmento } : {}),
-    ...(nivelProfissional ? { nivelProfissional } : {}),
-    ...(formacao ? { formacao } : {}),
-    ...(pais ? { pais } : {}),
-    ...(estado ? { estado } : {}),
-    ...(cidade ? { cidade } : {}),
-    ...(idioma ? { idioma } : {})
+    version: 0,
+    ...(linkedin ? { linkedin: sanitizarTexto(linkedin, 500) } : {}),
+    ...(telefone ? { telefone: sanitizarCurto(telefone, 30) } : {}),
+    ...(pretensaoSalarial ? { pretensaoSalarial: sanitizarCurto(pretensaoSalarial, 50) } : {}),
+    ...(segmento ? { segmento: sanitizarCurto(segmento) } : {}),
+    ...(nivelProfissional ? { nivelProfissional: sanitizarCurto(nivelProfissional) } : {}),
+    ...(formacao ? { formacao: sanitizarCurto(formacao) } : {}),
+    ...(pais ? { pais: sanitizarCurto(pais) } : {}),
+    ...(estado ? { estado: sanitizarCurto(estado) } : {}),
+    ...(cidade ? { cidade: sanitizarCurto(cidade) } : {}),
+    ...(idioma ? { idioma: sanitizarCurto(idioma) } : {})
   };
 
-  await saveCandidatura(candidatura);
+  const { created, doc } = await criarCandidaturaAtomica(candidatura);
   await registrarLog('candidatura_criada', {
-    candidaturaId: candidatura.id,
+    candidaturaId: doc.id,
     vagaId,
     email,
+    retomada: !created,
     teste: email.trim().toLowerCase().startsWith('teste+')
   });
-  return NextResponse.json(candidatura, { status: 201 });
+  return NextResponse.json(doc, { status: created ? 201 : 200 });
 }

@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
  * sempre corresponde ao texto atual da pergunta.
  */
 export async function POST(req: NextRequest) {
-  const bloqueado = aplicarRateLimit(req, 'tts', LIMITES.tts);
+  const bloqueado = await aplicarRateLimit(req, 'tts', LIMITES.tts);
   if (bloqueado) return bloqueado;
 
   const body = await req.json().catch(() => ({}));
@@ -32,6 +32,8 @@ export async function POST(req: NextRequest) {
       if (vaga && pergunta) {
         const url = await uploadParaR2(`tts/${vagaId}/${perguntaId}.wav`, wav, 'audio/wav');
         pergunta.audioUrl = url;
+        // Nota: saveVaga aqui é aceitável porque audioUrl é idempotente (último write vence)
+        // e a operação é de baixa concorrência (só dispara quando candidato clica "Ouvir pergunta").
         await saveVaga(vaga);
         return NextResponse.json({ audioUrl: url });
       }

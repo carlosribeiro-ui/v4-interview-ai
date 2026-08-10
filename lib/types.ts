@@ -16,6 +16,8 @@ export type Vaga = {
   requisitos: string[];
   perguntas: Pergunta[];
   createdAt: string;
+  /** Controle de concorrência optimistic locking — incrementa a cada update. */
+  version: number;
   /** ID do registro correspondente num sistema externo (ex: card do Pipefy) — usado para correlação, não é gerado aqui. */
   externalId?: string;
   /** Nome do sistema externo que criou a vaga via API (ex: "pipefy", "n8n"). Ausente = criada pelo admin local. */
@@ -137,6 +139,8 @@ export type Candidatura = {
   respostas: Resposta[];
   scoreMedio: number | null;
   createdAt: string;
+  /** Controle de concorrência optimistic locking — incrementa a cada update. */
+  version: number;
   /** Campos opcionais de ATS, preenchidos pelo candidato no formulário inicial. */
   linkedin?: string;
   telefone?: string;

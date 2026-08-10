@@ -1,24 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCandidatura, saveCandidatura } from '@/lib/store';
+import { getCandidatura, finalizarCandidaturaAtomica } from '@/lib/store';
+import { lerSessao, extrairCandidaturaId } from '@/lib/auth';
+import { comFila } from '@/lib/queue';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
-  const candidatura = await getCandidatura(params.id);
-  if (!candidatura) return NextResponse.json({ error: 'Candidatura não encontrada' }, { status: 404 });
-
-  if (candidatura.respostas.length === 0) {
-    return NextResponse.json({ error: 'Nenhuma resposta registrada ainda' }, { status: 400 });
+export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+  // Auth: admin/talent OU candidato dono
+  const sessao = await lerSessao(req);
+  const candidatoId = await extrairCandidaturaId(req);
+  if ((!sessao || (sessao.role !== 'admin' && sessao.role !== 'talent')) && candidatoId !== params.id) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
 
-  // Respostas ainda "avaliando" (processamento em background) não entram na média
-  // ainda — o job de background recalcula sozinho quando cada uma terminar.
-  const avaliadas = candidatura.respostas.filter((r) => !r.avaliando);
-  candidatura.scoreMedio = avaliadas.length
-    ? Math.round((avaliadas.reduce((sum, r) => sum + r.score, 0) / avaliadas.length) * 10) / 10
-    : null;
-  candidatura.status = 'concluida';
-  await saveCandidatura(candidatura);
+  return comFila(`candidatura:${params.id}`, async () => {
+    const candidatura = await getCandidatura(params.id);
+    if (!candidatura) return NextResponse.json({ error: 'Candidatura não encontrada' }, { status: 404 });
 
-  return NextResponse.json(candidatura);
+    if (candidatura.status === 'concluida') {
+      return NextResponse.json(candidatura);
+    }
+
+    if (candidatura.respostas.length === 0) {
+      return NextResponse.json({ error: 'Nenhuma resposta registrada ainda' }, { status: 400 });
+    }
+
+    const avaliadas = candidatura.respostas.filter((r) => !r.avaliando);
+    const scoreMedio = avaliadas.length
+      ? Math.round((avaliadas.reduce((sum, r) => sum + r.score, 0) / avaliadas.length) * 10) / 10
+      : null;
+
+    const atualizada = await finalizarCandidaturaAtomica(params.id, candidatura.version, scoreMedio);
+    if (!atualizada) {
+      const atual = await getCandidatura(params.id);
+      if (atual?.status === 'concluida') {
+        return NextResponse.json(atual);
+      }
+      return NextResponse.json({ error: 'Concorrência detectada — recarregue e tente novamente.' }, { status: 409 });
+    }
+
+    return NextResponse.json(atualizada);
+  });
 }

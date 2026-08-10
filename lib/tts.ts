@@ -1,6 +1,8 @@
 const GEMINI_TTS_URL =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent';
 
+import { medir } from './metrics';
+
 /** PCM 16-bit mono a 24kHz — formato fixo devolvido pelo Gemini TTS. */
 function pcmParaWav(pcm: Buffer, sampleRate = 24000): Buffer {
   const header = Buffer.alloc(44);
@@ -23,37 +25,53 @@ function pcmParaWav(pcm: Buffer, sampleRate = 24000): Buffer {
 
 /** Sintetiza `texto` em voz natural (pt-BR) via Gemini TTS e devolve um WAV pronto pra tocar no navegador. */
 export async function sintetizarFala(texto: string): Promise<Buffer> {
+  return medir('gemini.tts', async () => {
   const apiKey = process.env.GEMINI_API_KEY || '';
   if (!apiKey) throw new Error('GEMINI_API_KEY nao configurada no .env.local');
 
-  const res = await fetch(`${GEMINI_TTS_URL}?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: `Leia em voz alta, em portugues do Brasil, num tom natural e conversacional, como se estivesse falando com uma pessoa: ${texto}` }]
-        }
-      ],
-      generationConfig: {
-        responseModalities: ['AUDIO'],
-        speechConfig: {
-          voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } }
-        }
-      }
-    })
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30_000);
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`Gemini TTS HTTP ${res.status}: ${text}`);
+  try {
+    const res = await fetch(`${GEMINI_TTS_URL}?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: `Leia em voz alta, em portugues do Brasil, num tom natural e conversacional, como se estivesse falando com uma pessoa: ${texto}` }]
+          }
+        ],
+        generationConfig: {
+          responseModalities: ['AUDIO'],
+          speechConfig: {
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } }
+          }
+        }
+      }),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`Gemini TTS HTTP ${res.status}: ${text}`);
+    }
+
+    const json = await res.json();
+    const parte = json?.candidates?.[0]?.content?.parts?.[0]?.inlineData;
+    if (!parte?.data) throw new Error('Gemini TTS nao devolveu audio');
+
+    const pcm = Buffer.from(parte.data, 'base64');
+    return pcmParaWav(pcm);
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error('Gemini TTS timeout (30s) — texto muito longo ou rede lenta');
+    }
+    throw err;
   }
-
-  const json = await res.json();
-  const parte = json?.candidates?.[0]?.content?.parts?.[0]?.inlineData;
-  if (!parte?.data) throw new Error('Gemini TTS nao devolveu audio');
-
-  const pcm = Buffer.from(parte.data, 'base64');
-  return pcmParaWav(pcm);
+  }, { textoLength: texto.length });
 }

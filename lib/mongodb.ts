@@ -15,7 +15,12 @@ function getClientPromise(): Promise<MongoClient> {
     // (AWS Lambda/Vercel) que resolvem o SRV do Atlas via IPv6.
     globalForMongo._mongoClientPromise = new MongoClient(uri, {
       family: 4,
-      serverSelectionTimeoutMS: 10000
+      serverSelectionTimeoutMS: 10000,
+      // Pool tuning para Vercel serverless: funções são single-threaded,
+      // 10 conexões por instância é suficiente. Atlas M0 suporta ~500 total.
+      maxPoolSize: 10,
+      minPoolSize: 2,
+      maxIdleTimeMS: 30_000
     }).connect();
   }
   clientPromise = globalForMongo._mongoClientPromise;
@@ -24,5 +29,18 @@ function getClientPromise(): Promise<MongoClient> {
 
 export async function getDb(): Promise<Db> {
   const client = await getClientPromise();
-  return client.db('v4-interview-ai');
+  const db = client.db('v4-interview-ai');
+
+  // Lazy init: cria indexes na primeira conexão (idempotente)
+  if (!global._indexesEnsured) {
+    global._indexesEnsured = true;
+    import('./store').then(({ ensureIndexes }) => ensureIndexes()).catch(() => {});
+  }
+
+  return db;
+}
+
+// Augment global for indexes flag
+declare global {
+  var _indexesEnsured: boolean | undefined;
 }

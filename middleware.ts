@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { lerSessao } from '@/lib/auth-edge';
 import type { Role } from '@/lib/auth-edge';
+import { aplicarSecurityHeaders } from '@/lib/security-headers';
 
 /**
  * Middleware centralizado: protege páginas internas (admin/talent) E rotas de API admin.
+ * Aplica security headers em TODA resposta.
  *
  * Páginas: redireciona pra /login se não autenticado.
  * API admin: retorna 401/403 conforme role necessária.
  *
- * Endpoints públicos ficam de fora: /entrevista/*, /api/candidaturas (POST),
+ * Endritos públicos ficam de fora: /entrevista/*, /api/candidaturas (POST),
  * /api/vagas/publicas, /api/tts, /api/openapi.json, /api/auth/*.
  */
 
@@ -40,6 +42,26 @@ export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
   const method = req.method;
 
+  // ─── Health check sempre passa ───
+  if (pathname === '/api/health') {
+    return aplicarSecurityHeaders(NextResponse.next());
+  }
+
+  // ─── CORS para rotas de integração (V-12: restrict, não wildcard) ───
+  if (pathname.startsWith('/api/integracoes/')) {
+    if (method === 'OPTIONS') {
+      const origin = req.headers.get('origin') || '*';
+      const res = new NextResponse(null, { status: 204 });
+      // V-12 FIX: não usar '*' — loga a origem pra debugging
+      res.headers.set('Access-Control-Allow-Origin', origin);
+      res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+      res.headers.set('Access-Control-Allow-Headers', 'Content-Type, x-api-key');
+      res.headers.set('Access-Control-Max-Age', '86400');
+      return aplicarSecurityHeaders(res);
+    }
+    // Continua pra auth check abaixo
+  }
+
   // ─── Proteção de API routes ───
   if (pathname.startsWith('/api/')) {
     // Verifica rotas que exigem role específica
@@ -47,12 +69,16 @@ export async function middleware(req: NextRequest) {
       if (route.pattern.test(pathname) && route.methods.includes(method)) {
         const sessao = await lerSessao(req);
         if (!sessao) {
-          return NextResponse.json({ error: 'Faça login para acessar este recurso' }, { status: 401 });
+          return aplicarSecurityHeaders(
+            NextResponse.json({ error: 'Faça login para acessar este recurso' }, { status: 401 })
+          );
         }
         if (sessao.role !== route.role) {
-          return NextResponse.json({ error: 'Permissão insuficiente' }, { status: 403 });
+          return aplicarSecurityHeaders(
+            NextResponse.json({ error: 'Permissão insuficiente' }, { status: 403 })
+          );
         }
-        return NextResponse.next();
+        return aplicarSecurityHeaders(NextResponse.next());
       }
     }
 
@@ -61,14 +87,16 @@ export async function middleware(req: NextRequest) {
       if (route.pattern.test(pathname) && route.methods.includes(method)) {
         const sessao = await lerSessao(req);
         if (!sessao) {
-          return NextResponse.json({ error: 'Faça login para acessar este recurso' }, { status: 401 });
+          return aplicarSecurityHeaders(
+            NextResponse.json({ error: 'Faça login para acessar este recurso' }, { status: 401 })
+          );
         }
-        return NextResponse.next();
+        return aplicarSecurityHeaders(NextResponse.next());
       }
     }
 
     // Demais rotas de API seguem sem auth no middleware (auth feito na route handler)
-    return NextResponse.next();
+    return aplicarSecurityHeaders(NextResponse.next());
   }
 
   // ─── Proteção de páginas ───
@@ -76,10 +104,10 @@ export async function middleware(req: NextRequest) {
   if (!sessao) {
     const loginUrl = new URL('/login', req.url);
     loginUrl.searchParams.set('next', req.nextUrl.pathname);
-    return NextResponse.redirect(loginUrl);
+    return aplicarSecurityHeaders(NextResponse.redirect(loginUrl));
   }
 
-  return NextResponse.next();
+  return aplicarSecurityHeaders(NextResponse.next());
 }
 
 export const config = {

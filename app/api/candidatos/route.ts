@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCandidaturas, getVagas } from '@/lib/store';
+import { lerSessao } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,6 +50,12 @@ function paraCsv(linhas: CandidatoEnriquecido[]): string {
 }
 
 export async function GET(req: NextRequest) {
+  // Auth: apenas admin/talent pode ver o kanban global de candidatos
+  const sessao = await lerSessao(req);
+  if (!sessao || (sessao.role !== 'admin' && sessao.role !== 'talent')) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  }
+
   const params = req.nextUrl.searchParams;
   const status = params.get('status'); // 'concluida' | 'em_andamento' | null
   const q = params.get('q')?.trim().toLowerCase();

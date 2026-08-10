@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
  * expõe o mínimo (nada de requisitos/critérios/JD/fases internas).
  */
 export async function GET(req: NextRequest) {
-  const bloqueado = aplicarRateLimit(req, 'vagas-publicas', LIMITES.publicRead);
+  const bloqueado = await aplicarRateLimit(req, 'vagas-publicas', LIMITES.publicRead);
   if (bloqueado) return bloqueado;
 
   const todasVagas = await getVagas();
@@ -22,5 +22,8 @@ export async function GET(req: NextRequest) {
       senioridade: v.senioridade,
       segmento: v.segmento
     }));
-  return NextResponse.json(vagas);
+  // CDN: cache público por 60s, stale 120s
+  const res = NextResponse.json(vagas);
+  res.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120');
+  return res;
 }

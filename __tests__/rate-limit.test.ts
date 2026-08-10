@@ -1,31 +1,31 @@
 import { describe, it, expect } from 'vitest';
-import { rateLimit, extrairIP } from '../lib/rate-limit';
+import { rateLimitSync, extrairIP } from '../lib/rate-limit';
 
 describe('rate-limit', () => {
   it('permite requisições dentro do limite', () => {
-    const result = rateLimit('test-key', 3, 60000);
+    const result = rateLimitSync('test-key', 3, 60000);
     expect(result.allowed).toBe(true);
     expect(result.remaining).toBe(2);
   });
 
   it('bloqueia quando excede o limite', () => {
     const key = 'test-block-' + Date.now();
-    rateLimit(key, 2, 60000);
-    rateLimit(key, 2, 60000);
-    const result = rateLimit(key, 2, 60000);
+    rateLimitSync(key, 2, 60000);
+    rateLimitSync(key, 2, 60000);
+    const result = rateLimitSync(key, 2, 60000);
     expect(result.allowed).toBe(false);
     expect(result.remaining).toBe(0);
   });
 
   it('reseta após janela de tempo', async () => {
     const key = 'test-reset-' + Date.now();
-    rateLimit(key, 1, 100); // 100ms window
-    const blocked = rateLimit(key, 1, 100);
+    rateLimitSync(key, 1, 100); // 100ms window
+    const blocked = rateLimitSync(key, 1, 100);
     expect(blocked.allowed).toBe(false);
 
     // Wait for window to expire
     await new Promise((r) => setTimeout(r, 150));
-    const after = rateLimit(key, 1, 100);
+    const after = rateLimitSync(key, 1, 100);
     expect(after.allowed).toBe(true);
   });
 });

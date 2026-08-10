@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
-import { getVaga, getCandidaturas, saveVaga, deleteVaga } from '@/lib/store';
+import { getVaga, getCandidaturas, updateVaga, deleteVaga } from '@/lib/store';
 import { lerSessao } from '@/lib/auth';
 import { registrarLog } from '@/lib/logs';
 import { deletarPrefixoR2 } from '@/lib/r2';
+import { comFila } from '@/lib/queue';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,40 +23,48 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   return NextResponse.json({ vaga, candidaturas });
 }
 
+/**
+ * PATCH com fila — serializa updates concorrentes para a mesma vaga.
+ */
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const sessao = await lerSessao(req);
-  if (!sessao || sessao.role !== 'admin') {
-    return NextResponse.json({ error: 'Apenas admin pode editar a vaga' }, { status: 403 });
-  }
+  return comFila(`vaga:${params.id}`, async () => {
+    const sessao = await lerSessao(req);
+    if (!sessao || sessao.role !== 'admin') {
+      return NextResponse.json({ error: 'Apenas admin pode editar a vaga' }, { status: 403 });
+    }
 
-  const vaga = await getVaga(params.id);
-  if (!vaga) return NextResponse.json({ error: 'Vaga não encontrada' }, { status: 404 });
+    const vaga = await getVaga(params.id);
+    if (!vaga) return NextResponse.json({ error: 'Vaga não encontrada' }, { status: 404 });
 
-  const body = await req.json();
+    const body = await req.json();
 
-  if (body.requisitos) vaga.requisitos = body.requisitos;
+    const fields: Record<string, unknown> = {};
+    if (body.requisitos) fields.requisitos = body.requisitos;
+    if (body.perguntas) {
+      fields.perguntas = body.perguntas.map(
+        (p: { id?: string; texto: string; criterios: string; tipo?: 'principal' | 'adicional' }) => ({
+          id: p.id || randomUUID(),
+          texto: p.texto,
+          criterios: p.criterios,
+          tipo: p.tipo ?? 'principal'
+        })
+      );
+    }
+    if (body.cargo) fields.cargo = body.cargo;
+    if (body.senioridade) fields.senioridade = body.senioridade;
+    if (body.segmento) fields.segmento = body.segmento;
+    if (typeof body.jobDescription === 'string') fields.jobDescription = body.jobDescription;
+    if (typeof body.ativa === 'boolean') fields.ativa = body.ativa;
+    if (typeof body.prioritaria === 'boolean') fields.prioritaria = body.prioritaria;
+    if (typeof body.avaliarIdioma === 'boolean') fields.avaliarIdioma = body.avaliarIdioma;
 
-  if (body.perguntas) {
-    vaga.perguntas = body.perguntas.map(
-      (p: { id?: string; texto: string; criterios: string; tipo?: 'principal' | 'adicional' }) => ({
-        id: p.id || randomUUID(),
-        texto: p.texto,
-        criterios: p.criterios,
-        tipo: p.tipo ?? 'principal'
-      })
-    );
-  }
+    const atualizada = await updateVaga(params.id, vaga.version, fields);
+    if (!atualizada) {
+      return NextResponse.json({ error: 'Concorrência detectada — recarregue e tente novamente.' }, { status: 409 });
+    }
 
-  if (body.cargo) vaga.cargo = body.cargo;
-  if (body.senioridade) vaga.senioridade = body.senioridade;
-  if (body.segmento) vaga.segmento = body.segmento;
-  if (typeof body.jobDescription === 'string') vaga.jobDescription = body.jobDescription;
-  if (typeof body.ativa === 'boolean') vaga.ativa = body.ativa;
-  if (typeof body.prioritaria === 'boolean') vaga.prioritaria = body.prioritaria;
-  if (typeof body.avaliarIdioma === 'boolean') vaga.avaliarIdioma = body.avaliarIdioma;
-
-  await saveVaga(vaga);
-  return NextResponse.json(vaga);
+    return NextResponse.json(atualizada);
+  });
 }
 
 /** Remove a vaga e todas as candidaturas associadas — irreversível. */
@@ -70,7 +79,6 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
   const candidaturas = await getCandidaturas(params.id);
   await deleteVaga(params.id);
-  // Cleanup best-effort: remove vídeos e CVs de todas as candidaturas da vaga
   for (const c of candidaturas) {
     await deletarPrefixoR2(`${c.id}/`);
   }
