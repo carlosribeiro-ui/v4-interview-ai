@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useToast } from '@/app/components/Toast';
+import { ESTADOS_CIDADES, PAISES } from '@/lib/brasil-estados-cidades';
 
 /* ─── Constantes ─── */
 
@@ -352,29 +353,63 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
                   </div>
                   <div>
                     <label className="block text-sm text-white/60 mb-1">País</label>
-                    <input
+                    <select
                       value={pais}
-                      onChange={(e) => setPais(e.target.value)}
+                      onChange={(e) => {
+                        setPais(e.target.value);
+                        if (e.target.value !== 'Brasil') { setEstado(''); setCidade(''); }
+                      }}
                       className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
-                    />
+                    >
+                      {PAISES.map((p) => (
+                        <option key={p.value} value={p.value}>{p.label}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm text-white/60 mb-1">Estado</label>
-                    <input
-                      value={estado}
-                      onChange={(e) => setEstado(e.target.value)}
-                      placeholder="Ex: SP"
-                      className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
-                    />
+                    {pais === 'Brasil' ? (
+                      <select
+                        value={estado}
+                        onChange={(e) => { setEstado(e.target.value); setCidade(''); }}
+                        className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                      >
+                        <option value="">Selecione o estado</option>
+                        {ESTADOS_CIDADES.map((uf) => (
+                          <option key={uf.sigla} value={uf.sigla}>{uf.sigla} — {uf.nome}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        value={estado}
+                        onChange={(e) => setEstado(e.target.value)}
+                        placeholder="Ex: SP"
+                        className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                      />
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm text-white/60 mb-1">Cidade</label>
-                    <input
-                      value={cidade}
-                      onChange={(e) => setCidade(e.target.value)}
-                      placeholder="Ex: São Paulo"
-                      className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
-                    />
+                    {pais === 'Brasil' && estado ? (
+                      <select
+                        value={cidade}
+                        onChange={(e) => setCidade(e.target.value)}
+                        className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                      >
+                        <option value="">Selecione a cidade</option>
+                        {ESTADOS_CIDADES.find((uf) => uf.sigla === estado)?.cidades.map((cid) => (
+                          <option key={cid} value={cid}>{cid}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        value={cidade}
+                        onChange={(e) => setCidade(e.target.value)}
+                        placeholder={pais === 'Brasil' ? 'Selecione o estado primeiro' : 'Ex: São Paulo'}
+                        disabled={pais === 'Brasil' && !estado}
+                        className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red disabled:opacity-40"
+                      />
+                    )}
                   </div>
                 </div>
 
