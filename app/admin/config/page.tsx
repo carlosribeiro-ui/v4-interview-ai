@@ -125,6 +125,22 @@ function AbaUsuarios({ usuarioAtualId }: { usuarioAtualId?: string }) {
     carregar();
   }
 
+  async function mudarRole(u: Usuario, novaRole: 'admin' | 'talent') {
+    const acao = novaRole === 'admin' ? 'promover a admin' : 'rebaixar a talent';
+    if (!confirm(`${acao} o usuário ${u.nome} (${u.email})?`)) return;
+    const res = await fetch(`/api/usuarios/${u.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: novaRole })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error ?? 'Erro ao alterar permissão');
+      return;
+    }
+    carregar();
+  }
+
   if (loading) return <p className="text-white/50">Carregando…</p>;
 
   return (
@@ -137,7 +153,18 @@ function AbaUsuarios({ usuarioAtualId }: { usuarioAtualId?: string }) {
               <div className="text-xs text-white/40 truncate">{u.email}</div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-white/50 text-xs capitalize">{u.role}</span>
+              <span className={`px-2 py-0.5 rounded-full text-xs capitalize font-medium ${
+                u.role === 'admin' ? 'bg-v4red/20 text-v4red' : 'bg-v4green/20 text-v4green'
+              }`}>{u.role}</span>
+              {u.id !== usuarioAtualId && (
+                <button
+                  onClick={() => mudarRole(u, u.role === 'admin' ? 'talent' : 'admin')}
+                  className="text-white/40 hover:text-v4yellow text-xs px-1.5 transition"
+                  title={u.role === 'admin' ? 'Rebaixar a talent' : 'Promover a admin'}
+                >
+                  {u.role === 'admin' ? '⬇' : '⬆'}
+                </button>
+              )}
               <button
                 onClick={() => remover(u)}
                 disabled={u.id === usuarioAtualId}

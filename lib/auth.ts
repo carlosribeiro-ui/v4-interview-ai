@@ -163,6 +163,18 @@ export async function excluirUsuario(id: string): Promise<void> {
 }
 
 /**
+ * Altera a role de um usuário (admin ↔ talent).
+ * Incrementa tokenVersion pra revogar sessões antigas com permissão antiga.
+ */
+export async function atualizarRole(id: string, novaRole: Role): Promise<void> {
+  const col = await usuariosCollection();
+  await col.updateOne(
+    { id },
+    { $set: { role: novaRole }, $inc: { tokenVersion: 1 } }
+  );
+}
+
+/**
  * Incrementa tokenVersion de um usuário — chamado quando a senha muda
  * ou quando o admin quer forçar logout de todos os dispositivos.
  */

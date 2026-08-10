@@ -6,6 +6,7 @@ export type LogEvento =
   | 'login_falhou'
   | 'usuario_criado'
   | 'usuario_removido'
+  | 'role_alterada'
   | 'fase_alterada'
   | 'candidatura_criada'
   | 'candidatura_removida'
