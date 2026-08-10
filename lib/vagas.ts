@@ -11,8 +11,9 @@ export type PerguntaEntrada = { id?: string; texto: string; criterios: string; t
  * no admin local (app/api/vagas) quanto pela API externa
  * (app/api/integracoes/vagas), pra não duplicar a lógica.
  *
- * Se `perguntas` E `requisitos` vierem prontos (caso da API externa "integrar tudo"),
- * usa direto sem chamar a IA — a geração automática só entra pra preencher o que faltar.
+ * Se `perguntas` E `requisitos` vierem prontos (caso da API externa "integrar tudo"
+ * ou do formulário de Nova vaga), usa direto sem chamar a IA. A geração automática
+ * só entra quando NENHUM dos dois foi informado.
  */
 export async function criarVaga(opts: {
   cargo: string;
@@ -25,8 +26,28 @@ export async function criarVaga(opts: {
   perguntas?: PerguntaEntrada[];
   fases?: FaseDef[];
   ativa?: boolean;
+  /** Campos do wizard */
+  identificador?: string;
+  responsabilidades?: string;
+  formacaoAcademica?: string;
+  pais?: string;
+  estado?: string;
+  cidade?: string;
+  idiomaEntrevista?: string;
+  numeroPerguntas?: number;
+  dataFechamento?: string;
+  numeroEntrevistas?: number;
+  vagaPrivada?: boolean;
+  mensagemRejeicao?: string;
+  mensagemBoasVindas?: string;
+  mensagemAgradecimento?: string;
 }): Promise<Vaga> {
-  const { cargo, senioridade, segmento, jobDescription, externalId, origem, fases, ativa } = opts;
+  const {
+    cargo, senioridade, segmento, jobDescription, externalId, origem, fases, ativa,
+    identificador, responsabilidades, formacaoAcademica, pais, estado, cidade,
+    idiomaEntrevista, numeroPerguntas, dataFechamento, numeroEntrevistas,
+    vagaPrivada, mensagemRejeicao, mensagemBoasVindas, mensagemAgradecimento
+  } = opts;
 
   let requisitos = opts.requisitos;
   let perguntas: Pergunta[] | undefined = opts.perguntas?.map((p) => ({
@@ -60,7 +81,21 @@ export async function criarVaga(opts: {
     ativa: ativa ?? true,
     ...(jobDescription ? { jobDescription } : {}),
     ...(externalId ? { externalId } : {}),
-    ...(origem ? { origem } : {})
+    ...(origem ? { origem } : {}),
+    ...(identificador ? { identificador } : {}),
+    ...(responsabilidades ? { responsabilidades } : {}),
+    ...(formacaoAcademica ? { formacaoAcademica } : {}),
+    ...(pais ? { pais } : {}),
+    ...(estado ? { estado } : {}),
+    ...(cidade ? { cidade } : {}),
+    ...(idiomaEntrevista ? { idiomaEntrevista } : {}),
+    ...(numeroPerguntas != null ? { numeroPerguntas } : {}),
+    ...(dataFechamento ? { dataFechamento } : {}),
+    ...(numeroEntrevistas != null ? { numeroEntrevistas } : {}),
+    ...(vagaPrivada != null ? { vagaPrivada } : {}),
+    ...(mensagemRejeicao ? { mensagemRejeicao } : {}),
+    ...(mensagemBoasVindas ? { mensagemBoasVindas } : {}),
+    ...(mensagemAgradecimento ? { mensagemAgradecimento } : {})
   };
 
   await saveVaga(vaga);

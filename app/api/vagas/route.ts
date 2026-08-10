@@ -28,7 +28,12 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { cargo, senioridade, segmento, jobDescription } = body ?? {};
+  const {
+    cargo, senioridade, segmento, jobDescription, requisitos, perguntas,
+    identificador, responsabilidades, formacaoAcademica, pais, estado, cidade,
+    idiomaEntrevista, numeroPerguntas, dataFechamento, numeroEntrevistas,
+    vagaPrivada, mensagemRejeicao, mensagemBoasVindas, mensagemAgradecimento
+  } = body ?? {};
 
   if (!cargo || !senioridade || !segmento) {
     return NextResponse.json(
@@ -38,7 +43,12 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const vaga = await criarVaga({ cargo, senioridade, segmento, jobDescription });
+    const vaga = await criarVaga({
+      cargo, senioridade, segmento, jobDescription, requisitos, perguntas,
+      identificador, responsabilidades, formacaoAcademica, pais, estado, cidade,
+      idiomaEntrevista, numeroPerguntas, dataFechamento, numeroEntrevistas,
+      vagaPrivada, mensagemRejeicao, mensagemBoasVindas, mensagemAgradecimento
+    });
     await registrarLog('vaga_criada', { vagaId: vaga.id, cargo: vaga.cargo }, sessao.email);
     return NextResponse.json(vaga, { status: 201 });
   } catch (err: any) {

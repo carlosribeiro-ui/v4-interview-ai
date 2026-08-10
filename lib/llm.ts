@@ -587,3 +587,83 @@ A conclusao segue o-que/por-que/como? A recomendacao e coerente com o texto?`;
 
   return parseJson<ParecerGerado>(raw);
 }
+
+/* ─── Geração de descrição da vaga (etapa 2 do wizard) ─── */
+
+export type DescricaoVagaGerada = {
+  jobDescription: string;
+  responsabilidades: string;
+  requisitos: string[];
+};
+
+export async function gerarDescricaoVaga(opts: {
+  cargo: string;
+  senioridade: string;
+  segmento: string;
+  formacaoAcademica?: string;
+  idiomaEntrevista?: string;
+  pais?: string;
+  estado?: string;
+  cidade?: string;
+}): Promise<DescricaoVagaGerada> {
+  const prompt = `Voce e um especialista em recrutamento tecnico. Gere uma descricao completa para a vaga abaixo.
+
+Cargo: ${opts.cargo}
+Senioridade: ${opts.senioridade}
+Segmento/empresa: ${opts.segmento}
+${opts.formacaoAcademica ? `Formacao academica: ${opts.formacaoAcademica}` : ''}
+${opts.idiomaEntrevista ? `Idioma da entrevista: ${opts.idiomaEntrevista}` : ''}
+${opts.pais ? `Pais: ${opts.pais}${opts.estado ? ` / ${opts.estado}` : ''}${opts.cidade ? ` / ${opts.cidade}` : ''}` : ''}
+
+Gere:
+1. jobDescription: Descricao da vaga (500-1000 caracteres) — visao geral, responsabilidades e requisitos da posicao.
+2. responsabilidades: Lista detalhada das responsabilidades do cargo (500-1000 caracteres).
+3. requisitos: Lista de 6 a 8 requisitos tecnicos e comportamentais obrigatorios.
+
+Responda SOMENTE com JSON valido:
+{"jobDescription":"...","responsabilidades":"...","requisitos":["req 1","req 2"]}`;
+
+  const raw = await geminiGenerate([{ text: prompt }], {
+    temperature: 0.7,
+    maxTokens: 4000
+  });
+
+  return parseJson<DescricaoVagaGerada>(raw);
+}
+
+/* ─── Geração de perguntas (etapa 3 do wizard) ─── */
+
+export async function gerarPerguntasVaga(opts: {
+  cargo: string;
+  senioridade: string;
+  segmento: string;
+  jobDescription?: string;
+  responsabilidades?: string;
+  requisitos: string[];
+  numeroPerguntas: number;
+}): Promise<{ texto: string; criterios: string; tipo: 'principal' | 'adicional' }[]> {
+  const { cargo, senioridade, segmento, jobDescription, responsabilidades, requisitos, numeroPerguntas } = opts;
+
+  const prompt = `Voce e um especialista em recrutamento tecnico. Gere exatamente ${numeroPerguntas} perguntas de entrevista assincrona para a vaga abaixo.
+
+Cargo: ${cargo}
+Senioridade: ${senioridade}
+Segmento: ${segmento}
+${jobDescription ? `\nJob Description:\n"""${jobDescription}"""\n` : ''}
+${responsabilidades ? `\nResponsabilidades:\n"""${responsabilidades}"""\n` : ''}
+Requisitos: ${requisitos.join('; ')}
+
+Gere exatamente ${numeroPerguntas} perguntas. Todas devem ser adequadas a resposta em video de ate 2-3 minutos. Para cada pergunta, inclua criterios detalhados de avaliacao.
+As primeiras ${Math.ceil(numeroPerguntas * 0.7)} perguntas devem ser PRINCIPAIS (tipo="principal") — cobrem os requisitos mais criticos.
+As demais devem ser ADICIONAIS (tipo="adicional") — complementares/opcionais.
+
+Responda SOMENTE com JSON array:
+[{"texto":"pergunta 1","criterios":"o que uma boa resposta deve conter","tipo":"principal"}]`;
+
+  const raw = await geminiGenerate([{ text: prompt }], {
+    temperature: 0.7,
+    maxTokens: 4000
+  });
+
+  return parseJsonArray<{ texto: string; criterios: string; tipo: 'principal' | 'adicional' }[]>(raw);
+}

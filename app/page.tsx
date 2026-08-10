@@ -6,6 +6,7 @@ import ScoreRing from '@/app/components/ScoreRing';
 import GraficoBarras from '@/app/components/GraficoBarras';
 import GraficoFunil from '@/app/components/GraficoFunil';
 import { useSessao } from '@/app/components/Sessao';
+import NovaVagaWizard from '@/app/components/NovaVagaWizard';
 
 type VagaStats = {
   id: string;
@@ -48,11 +49,6 @@ export default function DashboardPage() {
   const [mostrarForm, setMostrarForm] = useState(false);
   const [gerando, setGerando] = useState(false);
 
-  const [cargo, setCargo] = useState('');
-  const [senioridade, setSenioridade] = useState('Pleno');
-  const [segmento, setSegmento] = useState('');
-  const [jobDescription, setJobDescription] = useState('');
-
   async function carregar() {
     const res = await fetch('/api/dashboard');
     setData(await res.json());
@@ -65,14 +61,13 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, []);
 
-  async function criarVaga(e: React.FormEvent) {
-    e.preventDefault();
+  async function criarVagaHandler(data: any) {
     setGerando(true);
     try {
       const res = await fetch('/api/vagas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cargo, senioridade, segmento, jobDescription: jobDescription || undefined })
+        body: JSON.stringify(data)
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.error ?? 'Erro ao criar vaga');
@@ -142,71 +137,7 @@ export default function DashboardPage() {
       </section>
 
       {mostrarForm && (
-        <section className="bg-v4surface border border-v4border rounded-2xl p-6 shadow-card v4-fade-in">
-          <h2 className="font-heading font-semibold mb-1">Nova vaga</h2>
-          <p className="text-white/50 text-sm mb-5">
-            A IA gera automaticamente os requisitos e as perguntas da entrevista. Cole a Job
-            Description completa (opcional) para a IA usar como fonte de verdade em vez de inferir
-            do cargo/segmento — ela também passa a valer na avaliação das respostas.
-          </p>
-
-          <form onSubmit={criarVaga} className="grid gap-4 sm:grid-cols-3">
-            <div className="sm:col-span-3">
-              <label className="block text-sm text-white/60 mb-1">Job Description (opcional)</label>
-              <textarea
-                value={jobDescription}
-                onChange={(e) => setJobDescription(e.target.value)}
-                rows={6}
-                placeholder="Cole aqui a descrição completa da vaga (sobre a vaga, responsabilidades, requisitos)…"
-                className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
-              />
-            </div>
-            <div className="sm:col-span-1">
-              <label className="block text-sm text-white/60 mb-1">Cargo</label>
-              <input
-                required
-                value={cargo}
-                onChange={(e) => setCargo(e.target.value)}
-                placeholder="Ex: Desenvolvedor Backend"
-                className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-v4red"
-              />
-            </div>
-            <div className="sm:col-span-1">
-              <label className="block text-sm text-white/60 mb-1">Senioridade</label>
-              <select
-                value={senioridade}
-                onChange={(e) => setSenioridade(e.target.value)}
-                className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-v4red"
-              >
-                <option>Estágio</option>
-                <option>Júnior</option>
-                <option>Pleno</option>
-                <option>Sênior</option>
-                <option>Especialista</option>
-              </select>
-            </div>
-            <div className="sm:col-span-1">
-              <label className="block text-sm text-white/60 mb-1">Segmento / empresa</label>
-              <input
-                required
-                value={segmento}
-                onChange={(e) => setSegmento(e.target.value)}
-                placeholder="Ex: Recrutamento e seleção (RH tech)"
-                className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-v4red"
-              />
-            </div>
-
-            <div className="sm:col-span-3 flex items-center gap-3">
-              <button
-                type="submit"
-                disabled={gerando}
-                className="rounded bg-v4red hover:bg-v4redDark disabled:opacity-50 text-white uppercase font-bold px-4 py-2 text-sm transition"
-              >
-                {gerando ? 'Gerando roteiro (Gemini Flash)…' : 'Gerar roteiro de entrevista'}
-              </button>
-            </div>
-          </form>
-        </section>
+        <NovaVagaWizard onCriar={criarVagaHandler} />
       )}
 
       <section>

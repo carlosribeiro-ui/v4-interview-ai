@@ -32,6 +32,35 @@ export type Vaga = {
   avaliarIdioma?: boolean;
   /** Se true, a vaga aparece no topo da listagem. */
   prioritaria?: boolean;
+  /** ─── Campos do wizard Coploy (etapas 1-5) ─── */
+  /** Código/exemplo opcional (ex: "DEV-2025-01") para referência interna. */
+  identificador?: string;
+  /** Responsabilidades da vaga — seção separada da job description no wizard. */
+  responsabilidades?: string;
+  /** Formação acadêmica exigida (ex: "Superior completo em TI", "Não exigido"). */
+  formacaoAcademica?: string;
+  /** País da vaga (default "Brasil"). */
+  pais?: string;
+  /** Estado/UF da vaga. */
+  estado?: string;
+  /** Cidade da vaga. */
+  cidade?: string;
+  /** Idioma em que a entrevista será conduzida. */
+  idiomaEntrevista?: string;
+  /** Número de perguntas que o wizard deve gerar (default 7). */
+  numeroPerguntas?: number;
+  /** Data de fechamento encerramento da vaga (ISO string). */
+  dataFechamento?: string;
+  /** Limite máximo de entrevistas aceitas (0 = ilimitado). */
+  numeroEntrevistas?: number;
+  /** true = vaga não aparece no banco público de vagas. */
+  vagaPrivada?: boolean;
+  /** Mensagem automática de rejeição enviada por e-mail ao candidato. */
+  mensagemRejeicao?: string;
+  /** Mensagem de boas-vindas exibida ao candidato ao iniciar a entrevista. */
+  mensagemBoasVindas?: string;
+  /** Mensagem de agradecimento exibida ao candidato ao finalizar a entrevista. */
+  mensagemAgradecimento?: string;
 };
 
 /** Cor semântica de uma fase — mapeia pra um token fixo da paleta V4 (nunca hex livre). */
