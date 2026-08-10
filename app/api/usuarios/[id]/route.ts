@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { lerSessao, buscarUsuarioPorId, excluirUsuario, contarAdmins } from '@/lib/auth';
+import { lerSessao, buscarUsuarioPorId, excluirUsuario, contarAdmins, verificarTokenVersion } from '@/lib/auth';
 import { registrarLog } from '@/lib/logs';
 
 export const dynamic = 'force-dynamic';
@@ -8,6 +8,10 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   const sessao = await lerSessao(req);
   if (!sessao || sessao.role !== 'admin') {
     return NextResponse.json({ error: 'Apenas admin pode gerenciar usuários' }, { status: 403 });
+  }
+  // V-SEC: Verifica tokenVersion em operações destrutivas
+  if (!(await verificarTokenVersion(sessao))) {
+    return NextResponse.json({ error: 'Sessão expirada — faça login novamente' }, { status: 401 });
   }
 
   const alvo = await buscarUsuarioPorId(params.id);

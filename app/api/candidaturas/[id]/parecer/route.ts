@@ -3,6 +3,8 @@ import { getCandidatura, getVaga, salvarParecerAtomico } from '@/lib/store';
 import { gerarParecer } from '@/lib/llm';
 import { gerarParecerPdfBuffer } from '@/lib/parecer-pdf';
 import { comFila } from '@/lib/queue';
+import { lerSessao } from '@/lib/auth';
+import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
 import type { Parecer } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -66,6 +68,16 @@ async function obterOuGerarParecer(candidaturaId: string) {
 }
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  // Auth: apenas admin/talent pode acessar pareceres (contém dados sensíveis do candidato)
+  const sessao = await lerSessao(req);
+  if (!sessao || (sessao.role !== 'admin' && sessao.role !== 'talent')) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  }
+
+  // V-SEC: Rate limit — gerar parecer é caro (chama Gemini)
+  const bloqueado = await aplicarRateLimit(req, 'parecer', LIMITES.admin);
+  if (bloqueado) return bloqueado;
+
   const formato = req.nextUrl.searchParams.get('formato');
 
   try {

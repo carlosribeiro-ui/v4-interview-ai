@@ -3,6 +3,7 @@ import { sintetizarFala } from '@/lib/tts';
 import { uploadParaR2 } from '@/lib/r2';
 import { getVaga, saveVaga } from '@/lib/store';
 import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
+import { lerSessao, extrairCandidaturaId } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,8 +13,17 @@ export const dynamic = 'force-dynamic';
  * BUG FIX: SEMPRE regenera o áudio quando chamado — nunca serve cache obsoleto.
  * O frontend agora sempre chama a API (não toca audioUrl direto), então o áudio
  * sempre corresponde ao texto atual da pergunta.
+ *
+ * V-SEC: Auth check — TTS tem custo por chamada. Requer sessão OU candidato token.
  */
 export async function POST(req: NextRequest) {
+  // Auth: sessão (admin/talent) OU candidato token (scoped a uma candidatura)
+  const sessao = await lerSessao(req);
+  const candidatoId = await extrairCandidaturaId(req);
+  if ((!sessao || (sessao.role !== 'admin' && sessao.role !== 'talent')) && !candidatoId) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  }
+
   const bloqueado = await aplicarRateLimit(req, 'tts', LIMITES.tts);
   if (bloqueado) return bloqueado;
 

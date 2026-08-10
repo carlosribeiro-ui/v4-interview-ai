@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { lerSessao } from '@/lib/auth';
+import { lerSessao, verificarTokenVersion } from '@/lib/auth';
 import { listarUsuarios, criarUsuario } from '@/lib/auth';
 import { registrarLog } from '@/lib/logs';
 
@@ -10,6 +10,10 @@ export async function GET(req: NextRequest) {
   if (!sessao || sessao.role !== 'admin') {
     return NextResponse.json({ error: 'Apenas admin pode gerenciar usuários' }, { status: 403 });
   }
+  // V-SEC: Verifica tokenVersion — previne uso de sessão revogada
+  if (!(await verificarTokenVersion(sessao))) {
+    return NextResponse.json({ error: 'Sessão expirada — faça login novamente' }, { status: 401 });
+  }
   return NextResponse.json(await listarUsuarios());
 }
 
@@ -17,6 +21,10 @@ export async function POST(req: NextRequest) {
   const sessao = await lerSessao(req);
   if (!sessao || sessao.role !== 'admin') {
     return NextResponse.json({ error: 'Apenas admin pode gerenciar usuários' }, { status: 403 });
+  }
+  // V-SEC: Verifica tokenVersion
+  if (!(await verificarTokenVersion(sessao))) {
+    return NextResponse.json({ error: 'Sessão expirada — faça login novamente' }, { status: 401 });
   }
 
   const body = await req.json().catch(() => ({}));

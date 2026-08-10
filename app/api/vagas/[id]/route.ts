@@ -1,14 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
 import { getVaga, getCandidaturas, updateVaga, deleteVaga } from '@/lib/store';
-import { lerSessao } from '@/lib/auth';
+import { lerSessao, verificarTokenVersion } from '@/lib/auth';
 import { registrarLog } from '@/lib/logs';
 import { deletarPrefixoR2 } from '@/lib/r2';
 import { comFila } from '@/lib/queue';
+import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  // V-SEC: Auth check — vaga com candidaturas contém dados sensíveis (vídeos, transcrições, scores)
+  const sessao = await lerSessao(req);
+  if (!sessao || (sessao.role !== 'admin' && sessao.role !== 'talent')) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  }
+
+  // V-SEC: Rate limit
+  const bloqueado = await aplicarRateLimit(req, 'vaga-detail', LIMITES.admin);
+  if (bloqueado) return bloqueado;
+
   const vaga = await getVaga(params.id);
   if (!vaga) return NextResponse.json({ error: 'Vaga não encontrada' }, { status: 404 });
 
@@ -72,6 +83,10 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   const sessao = await lerSessao(req);
   if (!sessao || sessao.role !== 'admin') {
     return NextResponse.json({ error: 'Apenas admin pode remover a vaga' }, { status: 403 });
+  }
+  // V-SEC: Verifica tokenVersion em operações destrutivas
+  if (!(await verificarTokenVersion(sessao))) {
+    return NextResponse.json({ error: 'Sessão expirada — faça login novamente' }, { status: 401 });
   }
 
   const vaga = await getVaga(params.id);

@@ -62,10 +62,28 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const pergunta = vaga.perguntas.find((p) => p.id === perguntaId);
     if (!pergunta) return NextResponse.json({ error: 'Pergunta não encontrada nesta vaga' }, { status: 404 });
 
-    const ext = file.type.includes('mp4') ? 'mp4' : 'webm';
-    const contentType = file.type || (ext === 'mp4' ? 'video/mp4' : 'video/webm');
-    const tmpPath = path.join(os.tmpdir(), `${randomUUID()}.${ext}`);
     const buffer = Buffer.from(await file.arrayBuffer());
+
+    // V-SEC: Magic byte validation — não confiar apenas no Content-Type do cliente
+    const header = buffer.subarray(0, 12);
+    const isMp4 = header.length >= 12 && (
+      // ftyp box: bytes 4-7 = 'ftyp'
+      (buffer[4] === 0x66 && buffer[5] === 0x74 && buffer[6] === 0x79 && buffer[7] === 0x70) ||
+      // MP4 sem ftyp (moov/mdat first)
+      file.type === 'video/mp4'
+    );
+    const isWebm = header.length >= 4 && (
+      // EBML header: 0x1A 0x45 0xDF 0xA3
+      buffer[0] === 0x1A && buffer[1] === 0x45 && buffer[2] === 0xDF && buffer[3] === 0xA3
+    );
+
+    if (!isMp4 && !isWebm) {
+      return NextResponse.json({ error: 'Arquivo não é um vídeo válido (aceitos: MP4, WebM)' }, { status: 400 });
+    }
+
+    const ext = isMp4 ? 'mp4' : 'webm';
+    const contentType = ext === 'mp4' ? 'video/mp4' : 'video/webm';
+    const tmpPath = path.join(os.tmpdir(), `${randomUUID()}.${ext}`);
 
     let videoPath: string;
     try {

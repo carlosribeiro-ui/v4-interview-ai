@@ -20,15 +20,8 @@ const nextConfig = {
           { key: 'X-XSS-Protection', value: '1; mode=block' },
         ],
       },
-      // CORS para rotas de integração (V-12: refletir origem, não wildcard)
-      {
-        source: '/api/integracoes/:path*',
-        headers: [
-          { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PATCH, DELETE, OPTIONS' },
-          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, x-api-key' },
-        ],
-      },
+      // CORS para rotas de integração — headers dinâmicos aplicados no middleware
+      // (next.config.js NÃO deve setar CORS estático — o middleware reflete a origem)
     ];
   },
 };

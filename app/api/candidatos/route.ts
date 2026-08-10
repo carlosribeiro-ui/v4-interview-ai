@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCandidaturas, getVagas } from '@/lib/store';
 import { lerSessao } from '@/lib/auth';
+import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,6 +56,10 @@ export async function GET(req: NextRequest) {
   if (!sessao || (sessao.role !== 'admin' && sessao.role !== 'talent')) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
+
+  // V-SEC: Rate limit em endpoint de leitura em massa
+  const bloqueado = await aplicarRateLimit(req, 'candidatos-list', LIMITES.admin);
+  if (bloqueado) return bloqueado;
 
   const params = req.nextUrl.searchParams;
   const status = params.get('status'); // 'concluida' | 'em_andamento' | null

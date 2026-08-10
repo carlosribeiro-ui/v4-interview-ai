@@ -31,6 +31,9 @@ const envSchema = z.object({
 
   // ─── Sentry (opcional) ───
   SENTRY_DSN: z.string().optional(),
+
+  // ─── CORS (allowlist de origins para rotas de integração) ───
+  CORS_ALLOWED_ORIGINS: z.string().optional(),
 });
 
 // Validação lazy — só roda na primeira chamada

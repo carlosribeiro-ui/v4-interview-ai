@@ -14,6 +14,16 @@ import { aplicarSecurityHeaders } from '@/lib/security-headers';
  * /api/vagas/publicas, /api/tts, /api/openapi.json, /api/auth/*.
  */
 
+/**
+ * V-SEC: Allowlist de origins permitidas para CORS nas rotas de integração.
+ * Adicione domínios conhecidos (n8n, Pipefy, etc.) via env var CORS_ALLOWED_ORIGINS
+ * separados por vírgula. Se não configurado, bloqueia CORS (mais seguro).
+ */
+const CORS_ALLOWED_ORIGINS = (process.env.CORS_ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 /** Rotas de API que exigem role específica (checado no middleware). */
 const API_ADMIN_ROUTES: { pattern: RegExp; methods: string[]; role: Role }[] = [
   // Gerenciamento de usuários — admin only
@@ -47,17 +57,28 @@ export async function middleware(req: NextRequest) {
     return aplicarSecurityHeaders(NextResponse.next());
   }
 
-  // ─── CORS para rotas de integração (V-12: restrict, não wildcard) ───
+  // ─── CORS para rotas de integração (V-SEC: allowlist, não wildcard) ───
   if (pathname.startsWith('/api/integracoes/')) {
+    const origin = req.headers.get('origin') || '';
+    const originPermitida = CORS_ALLOWED_ORIGINS.includes(origin);
+
     if (method === 'OPTIONS') {
-      const origin = req.headers.get('origin') || '*';
       const res = new NextResponse(null, { status: 204 });
-      // V-12 FIX: não usar '*' — loga a origem pra debugging
-      res.headers.set('Access-Control-Allow-Origin', origin);
-      res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
-      res.headers.set('Access-Control-Allow-Headers', 'Content-Type, x-api-key');
-      res.headers.set('Access-Control-Max-Age', '86400');
+      if (originPermitida) {
+        res.headers.set('Access-Control-Allow-Origin', origin);
+        res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+        res.headers.set('Access-Control-Allow-Headers', 'Content-Type, x-api-key');
+        res.headers.set('Access-Control-Max-Age', '86400');
+      }
       return aplicarSecurityHeaders(res);
+    }
+
+    // V-SEC: Se origin não está na allowlist, não aplica headers CORS
+    // (o request ainda passa — auth por x-api-key — mas o browser bloqueia a resposta)
+    if (!originPermitida && origin) {
+      return aplicarSecurityHeaders(
+        NextResponse.json({ error: 'Origin não permitida' }, { status: 403 })
+      );
     }
     // Continua pra auth check abaixo
   }

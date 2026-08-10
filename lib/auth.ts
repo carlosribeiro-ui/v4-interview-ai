@@ -92,6 +92,24 @@ export async function autenticar(email: string, senha: string): Promise<Usuario 
   return usuario;
 }
 
+/**
+ * Verifica se o tokenVersion da sessão bate com o do DB.
+ * Necessário porque lerSessao (Edge) não acessa MongoDB — sessões de usuários
+ * deletados ou com senha alterada permanecem válidas até expirar (7 dias)
+ * sem esta checagem.
+ *
+ * Retorna true se a sessão é válida (tokenVersion bate ou usuário não existe mais).
+ * Retorna false se tokenVersion diverge (sessão revogada).
+ */
+export async function verificarTokenVersion(sessao: { sub: string; tv?: number }): Promise<boolean> {
+  const col = await usuariosCollection();
+  const usuario = await col.findOne({ id: sessao.sub });
+  if (!usuario) return false; // Usuário deletado — sessão inválida
+  const tvSessao = sessao.tv ?? 0;
+  const tvDb = usuario.tokenVersion ?? 0;
+  return tvSessao >= tvDb;
+}
+
 export type UsuarioPublico = Omit<Usuario, 'senha'>;
 
 export async function listarUsuarios(): Promise<UsuarioPublico[]> {
