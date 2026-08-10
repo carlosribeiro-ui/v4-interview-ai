@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useToast } from '@/app/components/Toast';
-import { UFS, fetchCidades, PAISES } from '@/lib/brasil-estados-cidades';
-import type { Cidade } from '@/lib/brasil-estados-cidades';
+import { UFS, PAISES } from '@/lib/cidades-brasil';
+import BuscaCidade from '@/app/components/BuscaCidade';
 
 /* ─── Constantes ─── */
 
@@ -73,8 +73,6 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
   const [pais, setPais] = useState('Brasil');
   const [estado, setEstado] = useState('');
   const [cidade, setCidade] = useState('');
-  const [cidades, setCidades] = useState<Cidade[]>([]);
-  const [carregandoCidades, setCarregandoCidades] = useState(false);
   const [idiomaEntrevista, setIdiomaEntrevista] = useState('Português');
   const [avaliarIdioma, setAvaliarIdioma] = useState(false);
 
@@ -103,18 +101,6 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
   const [msgAgradecimento, setMsgAgradecimento] = useState('');
   const [boasVindasAtiva, setBoasVindasAtiva] = useState(false);
   const [agradecimentoAtivo, setAgradecimentoAtivo] = useState(false);
-
-  /* ─── Buscar cidades do IBGE quando estado muda ─── */
-
-  useEffect(() => {
-    if (pais !== 'Brasil' || !estado) { setCidades([]); return; }
-    let cancelado = false;
-    setCarregandoCidades(true);
-    fetchCidades(estado).then((lista) => {
-      if (!cancelado) { setCidades(lista); setCarregandoCidades(false); }
-    });
-    return () => { cancelado = true; };
-  }, [pais, estado]);
 
   /* ─── Validação ─── */
 
@@ -406,19 +392,12 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
                   <div>
                     <label className="block text-sm text-white/60 mb-1">Cidade</label>
                     {pais === 'Brasil' && estado ? (
-                      <select
+                      <BuscaCidade
+                        uf={estado}
                         value={cidade}
-                        onChange={(e) => setCidade(e.target.value)}
-                        disabled={carregandoCidades}
-                        className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red disabled:opacity-50"
-                      >
-                        <option value="">
-                          {carregandoCidades ? 'Carregando cidades…' : 'Selecione a cidade'}
-                        </option>
-                        {cidades.map((cid) => (
-                          <option key={cid.id} value={cid.nome}>{cid.nome}</option>
-                        ))}
-                      </select>
+                        onChange={setCidade}
+                        placeholder="Digite para buscar a cidade…"
+                      />
                     ) : (
                       <input
                         value={cidade}
