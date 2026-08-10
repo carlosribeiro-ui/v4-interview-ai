@@ -4,12 +4,22 @@ import { adicionarNotaAtomica } from '@/lib/store';
 import type { NotaInterna } from '@/lib/types';
 import { sanitizarTexto } from '@/lib/sanitize';
 import { comFila } from '@/lib/queue';
+import { lerSessao, verificarTokenVersion } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 /** Comentários internos do recrutador sobre a candidatura — nunca visível ao candidato. */
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   return comFila(`candidatura:${params.id}`, async () => {
+    // V-SEC: Auth check + tokenVersion
+    const sessao = await lerSessao(req);
+    if (!sessao || (sessao.role !== 'admin' && sessao.role !== 'talent')) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+    if (!(await verificarTokenVersion(sessao))) {
+      return NextResponse.json({ error: 'Sessão expirada — faça login novamente' }, { status: 401 });
+    }
+
     const body = await req.json();
     const textoRaw = typeof body?.texto === 'string' ? body.texto.trim() : '';
     if (!textoRaw) return NextResponse.json({ error: 'texto é obrigatório' }, { status: 400 });

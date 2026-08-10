@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getVaga, getCandidatura, alterarFaseAtomica } from '@/lib/store';
-import { lerSessao } from '@/lib/auth';
+import { lerSessao, verificarTokenVersion } from '@/lib/auth';
 import { registrarLog } from '@/lib/logs';
 import { comFila } from '@/lib/queue';
 
@@ -8,6 +8,15 @@ export const dynamic = 'force-dynamic';
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   return comFila(`candidatura:${params.id}`, async () => {
+    // V-SEC: Auth check + tokenVersion
+    const sessao = await lerSessao(req);
+    if (!sessao || (sessao.role !== 'admin' && sessao.role !== 'talent')) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+    if (!(await verificarTokenVersion(sessao))) {
+      return NextResponse.json({ error: 'Sessão expirada — faça login novamente' }, { status: 401 });
+    }
+
     const candidatura = await getCandidatura(params.id);
     if (!candidatura) return NextResponse.json({ error: 'Candidatura não encontrada' }, { status: 404 });
 
@@ -29,7 +38,6 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       return NextResponse.json({ error: 'Concorrência detectada — recarregue e tente novamente.' }, { status: 409 });
     }
 
-    const sessao = await lerSessao(req);
     await registrarLog(
       'fase_alterada',
       { candidaturaId: params.id, vagaId: vaga.id, de: faseAnterior, para: fase },

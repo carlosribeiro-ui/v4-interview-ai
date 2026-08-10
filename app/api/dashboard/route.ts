@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getVagas, getCandidaturas } from '@/lib/store';
-import { listarUsuarios } from '@/lib/auth';
+import { listarUsuarios, lerSessao } from '@/lib/auth';
 import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const bloqueado = await aplicarRateLimit(req, 'dashboard', LIMITES.publicRead);
+  // V-SEC: Auth check — dashboard expõe dados sensíveis (nomes, emails, scores, métricas por recrutador)
+  const sessao = await lerSessao(req);
+  if (!sessao || (sessao.role !== 'admin' && sessao.role !== 'talent')) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  }
+
+  const bloqueado = await aplicarRateLimit(req, 'dashboard', LIMITES.admin);
   if (bloqueado) return bloqueado;
 
   const params = req.nextUrl.searchParams;

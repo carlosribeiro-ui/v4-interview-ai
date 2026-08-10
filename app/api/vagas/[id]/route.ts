@@ -43,6 +43,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (!sessao || sessao.role !== 'admin') {
       return NextResponse.json({ error: 'Apenas admin pode editar a vaga' }, { status: 403 });
     }
+    // V-SEC: Verifica tokenVersion — previne uso de sessão revogada
+    if (!(await verificarTokenVersion(sessao))) {
+      return NextResponse.json({ error: 'Sessão expirada — faça login novamente' }, { status: 401 });
+    }
 
     const vaga = await getVaga(params.id);
     if (!vaga) return NextResponse.json({ error: 'Vaga não encontrada' }, { status: 404 });

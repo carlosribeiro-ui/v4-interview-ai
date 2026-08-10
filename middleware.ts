@@ -146,7 +146,9 @@ export const config = {
     '/api/usuarios/:path*',
     '/api/logs',
     '/api/vagas/:path*/fases',
+    '/api/vagas/:path*',
     '/api/candidaturas/:path*/notas',
     '/api/candidaturas/:path*/fase',
+    '/api/candidaturas/:path*',
   ]
 };

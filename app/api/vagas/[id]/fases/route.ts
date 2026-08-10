@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getVaga, updateVaga, getCandidaturas } from '@/lib/store';
-import { lerSessao } from '@/lib/auth';
+import { lerSessao, verificarTokenVersion } from '@/lib/auth';
 import { comFila } from '@/lib/queue';
 import type { FaseDef, CorFase } from '@/lib/types';
 
@@ -43,6 +43,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const sessao = await lerSessao(req);
     if (!sessao || sessao.role !== 'admin') {
       return NextResponse.json({ error: 'Apenas admin pode gerenciar fases' }, { status: 403 });
+    }
+    // V-SEC: Verifica tokenVersion — previne uso de sessão revogada
+    if (!(await verificarTokenVersion(sessao))) {
+      return NextResponse.json({ error: 'Sessão expirada — faça login novamente' }, { status: 401 });
     }
 
     const vaga = await getVaga(params.id);

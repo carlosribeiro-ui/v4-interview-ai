@@ -59,6 +59,14 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const authErro = await checarAuth(req, params.id);
     if (authErro) return authErro;
 
+    // V-SEC: Verifica tokenVersion para admin/talent — previne uso de sessão revogada
+    const sessao = await lerSessao(req);
+    if (sessao && (sessao.role === 'admin' || sessao.role === 'talent')) {
+      if (!(await verificarTokenVersion(sessao))) {
+        return NextResponse.json({ error: 'Sessão expirada — faça login novamente' }, { status: 401 });
+      }
+    }
+
     const candidatura = await getCandidatura(params.id);
     if (!candidatura) return NextResponse.json({ error: 'Candidatura não encontrada' }, { status: 404 });
 
