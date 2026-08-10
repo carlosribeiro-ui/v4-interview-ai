@@ -121,7 +121,7 @@ function CandidatosPageInner() {
   }
 
   useEffect(() => {
-    fetch('/api/usuarios').then((r) => r.json()).then((d) => setTalents(d));
+    fetch('/api/usuarios').then((r) => r.json()).then((d) => setTalents(Array.isArray(d) ? d : []));
     carregar();
   }, [busca, vagaFiltro, faixaScore, mostrarTestes, faSegmento, faNivel, faFormacao, faPais, faEstado, faCidade, faIdioma]);
 
