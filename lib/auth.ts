@@ -22,17 +22,20 @@ async function usuariosCollection() {
   return db.collection<Usuario>('usuarios');
 }
 
+const SCRYPT_N = 16384;
+const SCRYPT_R = 8;
+const SCRYPT_P = 1;
+
 function hashSenha(senhaPlana: string): string {
   const salt = randomBytes(16).toString('hex');
-  // V-15 FIX: N=65536, r=8, p=1 — work factor adequado pra 2026
-  const hash = scryptSync(senhaPlana, salt, 64, { N: 65536, r: 8, p: 1 }).toString('hex');
+  const hash = scryptSync(senhaPlana, salt, 64, { N: SCRYPT_N, r: SCRYPT_R, p: SCRYPT_P }).toString('hex');
   return `${salt}:${hash}`;
 }
 
 function verificarSenha(senhaPlana: string, armazenada: string): boolean {
   const [salt, hash] = armazenada.split(':');
   if (!salt || !hash) return false;
-  const hashTentativa = scryptSync(senhaPlana, salt, 64, { N: 65536, r: 8, p: 1 });
+  const hashTentativa = scryptSync(senhaPlana, salt, 64, { N: SCRYPT_N, r: SCRYPT_R, p: SCRYPT_P });
   const hashArmazenado = Buffer.from(hash, 'hex');
   if (hashTentativa.length !== hashArmazenado.length) return false;
   return timingSafeEqual(hashTentativa, hashArmazenado);
