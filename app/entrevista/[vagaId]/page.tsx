@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { Vaga, Candidatura } from '@/lib/types';
+import { UFS, PAISES } from '@/lib/cidades-brasil';
+import BuscaCidade from '@/app/components/BuscaCidade';
 
 type Fase = 'carregando' | 'form' | 'onboarding' | 'entrevista' | 'csat' | 'concluido' | 'erro';
 
@@ -42,7 +44,7 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
   const [segmento, setSegmento] = useState('');
   const [nivelProfissional, setNivelProfissional] = useState('');
   const [formacao, setFormacao] = useState('');
-  const [pais, setPais] = useState('');
+  const [pais, setPais] = useState('Brasil');
   const [estado, setEstado] = useState('');
   const [cidade, setCidade] = useState('');
   const [idioma, setIdioma] = useState('');
@@ -351,15 +353,59 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
             <div className="grid grid-cols-3 gap-3 mt-3">
               <div>
                 <label className="block text-xs text-white/50 mb-1">País</label>
-                <input value={pais} onChange={(e) => setPais(e.target.value)} placeholder="Ex: Brasil" className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red" />
+                <select
+                  value={pais}
+                  onChange={(e) => {
+                    setPais(e.target.value);
+                    if (e.target.value !== 'Brasil') { setEstado(''); setCidade(''); }
+                  }}
+                  className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                >
+                  {PAISES.map((p) => (
+                    <option key={p.value} value={p.value}>{p.label}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-xs text-white/50 mb-1">Estado</label>
-                <input value={estado} onChange={(e) => setEstado(e.target.value)} placeholder="Ex: SP" className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red" />
+                {pais === 'Brasil' ? (
+                  <select
+                    value={estado}
+                    onChange={(e) => { setEstado(e.target.value); setCidade(''); }}
+                    className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                  >
+                    <option value="">Selecione</option>
+                    {UFS.map((uf) => (
+                      <option key={uf.sigla} value={uf.sigla}>{uf.sigla} — {uf.nome}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    value={estado}
+                    onChange={(e) => setEstado(e.target.value)}
+                    placeholder="Ex: SP"
+                    className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                  />
+                )}
               </div>
               <div>
                 <label className="block text-xs text-white/50 mb-1">Cidade</label>
-                <input value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="Ex: São Paulo" className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red" />
+                {pais === 'Brasil' && estado ? (
+                  <BuscaCidade
+                    uf={estado}
+                    value={cidade}
+                    onChange={setCidade}
+                    placeholder="Digite para buscar…"
+                  />
+                ) : (
+                  <input
+                    value={cidade}
+                    onChange={(e) => setCidade(e.target.value)}
+                    placeholder={pais === 'Brasil' ? 'Selecione o estado' : 'Ex: São Paulo'}
+                    disabled={pais === 'Brasil' && !estado}
+                    className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red disabled:opacity-40"
+                  />
+                )}
               </div>
             </div>
           </div>
