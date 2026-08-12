@@ -5,6 +5,7 @@ import type { Candidatura } from '@/lib/types';
 import { registrarLog } from '@/lib/logs';
 import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
 import { sanitizarCurto, sanitizarTexto } from '@/lib/sanitize';
+import { lerSessao } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,8 +24,20 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const { vagaId, nome, email, linkedin, telefone, pretensaoSalarial, segmento, nivelProfissional, formacao, pais, estado, cidade, idioma } = body ?? {};
 
-  if (!vagaId || !nome || !email || !linkedin || !telefone) {
-    return NextResponse.json({ error: 'vagaId, nome, email, linkedin e telefone são obrigatórios' }, { status: 400 });
+  if (!vagaId || !nome || !email) {
+    return NextResponse.json({ error: 'vagaId, nome e email são obrigatórios' }, { status: 400 });
+  }
+
+  // "Testar entrevista" (admin/perguntas) cria a candidatura direto, sem passar pelo form do
+  // candidato — não faz sentido exigir linkedin/telefone reais de quem só quer validar as
+  // perguntas. Exceção restrita: precisa de sessão staff E do prefixo teste+ já usado em todo
+  // o app pra marcar dado de teste (oculto por padrão no kanban/relatórios).
+  const sessao = await lerSessao(req);
+  const ehStaff = sessao?.role === 'admin' || sessao?.role === 'talent';
+  const ehTeste = ehStaff && typeof email === 'string' && email.trim().toLowerCase().startsWith('teste+');
+
+  if (!ehTeste && (!linkedin || !telefone)) {
+    return NextResponse.json({ error: 'linkedin e telefone são obrigatórios' }, { status: 400 });
   }
 
   // V-SEC: Valida tipos antes de usar em filtro Mongo (findOne) ou sanitize —
@@ -40,7 +53,8 @@ export async function POST(req: NextRequest) {
   }
 
   // Telefone: só dígitos/espaço/parênteses/traço/"+" — nunca letras — e pelo menos 8 dígitos.
-  if (!/^[+()\d\s-]+$/.test(telefone) || telefone.replace(/\D/g, '').length < 8) {
+  // Só valida formato se foi preenchido (em modo teste ele pode vir ausente).
+  if (telefone && (!/^[+()\d\s-]+$/.test(telefone) || telefone.replace(/\D/g, '').length < 8)) {
     return NextResponse.json({ error: 'Telefone inválido — use apenas números' }, { status: 400 });
   }
 
@@ -73,8 +87,8 @@ export async function POST(req: NextRequest) {
     scoreMedio: null,
     createdAt: new Date().toISOString(),
     version: 0,
-    linkedin: sanitizarTexto(linkedin, 500),
-    telefone: sanitizarCurto(telefone, 30),
+    ...(linkedin ? { linkedin: sanitizarTexto(linkedin, 500) } : {}),
+    ...(telefone ? { telefone: sanitizarCurto(telefone, 30) } : {}),
     ...(pretensaoSalarial ? { pretensaoSalarial: sanitizarCurto(pretensaoSalarial, 50) } : {}),
     ...(segmento ? { segmento: sanitizarCurto(segmento) } : {}),
     ...(nivelProfissional ? { nivelProfissional: sanitizarCurto(nivelProfissional) } : {}),

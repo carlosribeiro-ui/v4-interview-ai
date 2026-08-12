@@ -158,3 +158,62 @@ export async function extrairCandidaturaId(req: NextRequest): Promise<string | n
   }
   return null;
 }
+
+// ─── Token de gravação (anti-fraude: prova que a resposta passou pelo fluxo real) ──────
+
+/**
+ * Emitido quando a gravação de uma pergunta específica começa de verdade no navegador
+ * (MediaRecorder.start()) — o upload da resposta (POST .../respostas) exige esse token.
+ * Não prova biometricamente que é uma câmera real (JS no browser sempre pode ser
+ * manipulado), mas fecha a brecha óbvia: enviar um vídeo qualquer direto pra API sem
+ * nunca ter passado pelo fluxo de gravação da tela — precisa, no mínimo, ter chamado
+ * o endpoint de início pra essa candidatura+pergunta específica e esperado um tempo
+ * plausível (curva de leitura + gravação) antes do upload ser aceito.
+ */
+export type GravacaoPayload = { candidaturaId: string; perguntaId: string; iniciadoEm: number; exp: number };
+
+const GRAVACAO_TTL_MS = 10 * 60 * 1000; // 10min — cobre leitura (20s) + resposta (até 180s) + upload lento
+const GRAVACAO_MIN_ELAPSED_MS = 2000; // upload em menos de 2s do início é fisicamente implausível
+
+export async function criarTokenGravacao(candidaturaId: string, perguntaId: string): Promise<string> {
+  const agora = Date.now();
+  const payload: GravacaoPayload = { candidaturaId, perguntaId, iniciadoEm: agora, exp: agora + GRAVACAO_TTL_MS };
+  const corpo = base64urlEncode(new TextEncoder().encode(JSON.stringify(payload)));
+  const chave = await chaveHmac();
+  const assinaturaBuf = await crypto.subtle.sign('HMAC', chave, new TextEncoder().encode(corpo));
+  const assinatura = base64urlEncode(new Uint8Array(assinaturaBuf));
+  return `${corpo}.${assinatura}`;
+}
+
+export async function validarTokenGravacao(
+  token: string,
+  candidaturaId: string,
+  perguntaId: string
+): Promise<{ ok: true } | { ok: false; erro: string }> {
+  const [corpo, assinatura] = token.split('.');
+  if (!corpo || !assinatura) return { ok: false, erro: 'Token de gravação ausente ou inválido' };
+  try {
+    const chave = await chaveHmac();
+    const valido = await crypto.subtle.verify(
+      'HMAC',
+      chave,
+      base64urlDecode(assinatura) as BufferSource,
+      new TextEncoder().encode(corpo)
+    );
+    if (!valido) return { ok: false, erro: 'Token de gravação inválido' };
+
+    const payload: GravacaoPayload = JSON.parse(new TextDecoder().decode(base64urlDecode(corpo)));
+    if (payload.candidaturaId !== candidaturaId || payload.perguntaId !== perguntaId) {
+      return { ok: false, erro: 'Token de gravação não corresponde a esta pergunta' };
+    }
+    if (payload.exp < Date.now()) {
+      return { ok: false, erro: 'Tempo de resposta expirado — recarregue a página e responda novamente' };
+    }
+    if (Date.now() - payload.iniciadoEm < GRAVACAO_MIN_ELAPSED_MS) {
+      return { ok: false, erro: 'Resposta enviada rápido demais — grave a resposta em tempo real' };
+    }
+    return { ok: true };
+  } catch {
+    return { ok: false, erro: 'Token de gravação inválido' };
+  }
+}

@@ -11,7 +11,7 @@ import { extractarFrames } from '@/lib/video';
 import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
 import { reportarErro } from '@/lib/monitoring';
 import { comFila } from '@/lib/queue';
-import { lerSessao, extrairCandidaturaId } from '@/lib/auth';
+import { lerSessao, extrairCandidaturaId, validarTokenGravacao } from '@/lib/auth';
 import type { Resposta } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -46,9 +46,21 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const formData = await req.formData();
     const perguntaId = formData.get('perguntaId');
     const file = formData.get('video');
+    const tokenGravacao = formData.get('tokenGravacao');
 
     if (typeof perguntaId !== 'string' || !(file instanceof File)) {
       return NextResponse.json({ error: 'perguntaId e video são obrigatórios' }, { status: 400 });
+    }
+
+    // V-SEC (anti-fraude): exige prova de que a gravação passou pelo fluxo real da tela —
+    // fecha a brecha de enviar um vídeo qualquer direto pra API sem nunca ter gravado nada.
+    // Ver lib/auth-edge.ts (criarTokenGravacao/validarTokenGravacao).
+    if (typeof tokenGravacao !== 'string' || !tokenGravacao) {
+      return NextResponse.json({ error: 'Token de gravação ausente — recarregue a página e responda em tempo real' }, { status: 400 });
+    }
+    const validacaoGravacao = await validarTokenGravacao(tokenGravacao, candidaturaId, perguntaId);
+    if (!validacaoGravacao.ok) {
+      return NextResponse.json({ error: validacaoGravacao.erro }, { status: 400 });
     }
 
     // V-08: File size limit

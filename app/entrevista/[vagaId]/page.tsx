@@ -754,6 +754,7 @@ function Gravador({
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const tokenGravacaoRef = useRef<string | null>(null);
   const [estado, setEstado] = useState<'preparando' | 'leitura' | 'gravando' | 'enviando' | 'erro'>(
     'preparando'
   );
@@ -762,11 +763,31 @@ function Gravador({
   const [segundosResposta, setSegundosResposta] = useState(TEMPO_MAX_RESPOSTA_SEG);
   const stopTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
+  // Pede o token de gravação assim que a leitura começa (bem antes de precisar dele no
+  // upload) — anti-fraude: prova que essa resposta passou pelo fluxo real da tela, não um
+  // vídeo qualquer mandado direto pra API. Ver lib/auth-edge.ts (criarTokenGravacao).
+  async function obterTokenGravacao() {
+    try {
+      const res = await fetch(`/candidaturas/${candidaturaId}/respostas/iniciar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ perguntaId })
+      });
+      if (!res.ok) throw new Error();
+      const { token } = await res.json();
+      tokenGravacaoRef.current = token;
+    } catch {
+      // Sem token, o upload no fim vai ser rejeitado pelo servidor — erro fica claro lá.
+      tokenGravacaoRef.current = null;
+    }
+  }
+
   async function enviar(blob: Blob) {
     setEstado('enviando');
     const formData = new FormData();
     formData.append('perguntaId', perguntaId);
     formData.append('video', blob, 'resposta.webm');
+    formData.append('tokenGravacao', tokenGravacaoRef.current ?? '');
     const res = await fetch(`/candidaturas/${candidaturaId}/respostas`, {
       method: 'POST',
       body: formData
@@ -814,6 +835,7 @@ function Gravador({
           videoRef.current.muted = true;
           videoRef.current.play().catch(() => {});
         }
+        obterTokenGravacao();
         setEstado('leitura');
       })
       .catch(() => {

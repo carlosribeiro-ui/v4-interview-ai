@@ -5,6 +5,7 @@ import { getDb } from './mongodb';
 export type { Role, SessaoPayload } from './auth-edge';
 export { criarTokenSessao, lerSessao, NOME_COOKIE_SESSAO } from './auth-edge';
 export { criarTokenCandidato, validarTokenCandidato, extrairCandidaturaId } from './auth-edge';
+export { criarTokenGravacao, validarTokenGravacao } from './auth-edge';
 
 export type Usuario = {
   id: string;
