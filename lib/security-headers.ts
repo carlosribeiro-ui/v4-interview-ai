@@ -14,8 +14,10 @@ export function aplicarSecurityHeaders(res: NextResponse): NextResponse {
   // Controle de referrer
   res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
-  // Restringe features do navegador (câmera/mic só no entrevista)
-  res.headers.set('Permissions-Policy', 'camera=(), microphone=(self), geolocation=(), payment=()');
+  // Restringe features do navegador — câmera/mic liberados só pro próprio site (não terceiros
+  // embedados via iframe). V-BUG: "camera=()" (sem "self") bloqueia câmera pra TODAS as origens,
+  // inclusive o próprio site — quebrava a página de entrevista inteira. Corrigido 2026-08-12.
+  res.headers.set('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=(), payment=()');
 
   // XSS legacy (defense-in-depth para navegadores antigos)
   res.headers.set('X-XSS-Protection', '1; mode=block');
