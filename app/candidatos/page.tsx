@@ -2,6 +2,15 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import {
+  DndContext,
+  PointerSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors
+} from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
 import ScoreRing from '@/app/components/ScoreRing';
 import Pill from '@/app/components/Pill';
 import ExportButtons from '@/app/components/ExportButtons';
@@ -23,11 +32,20 @@ function colunaDo(c: CandidatoEnriquecido): 'em_andamento' | 'concluido' | 'apro
   return 'concluido';
 }
 
+/**
+ * `droppable` marca as colunas que aceitam soltar um card arrastado. As duas
+ * primeiras (em_andamento/concluido) são estados derivados do status da
+ * candidatura + fase original de cada vaga (que variam por vaga) — não têm
+ * uma única fase-id pra mapear um "solte aqui" sem ambiguidade. Aprovado/
+ * reprovado são fases padrão garantidas em toda vaga (FASES_PADRAO), então
+ * são os alvos válidos de arrasto — mesmo par de opções já exposto no
+ * dropdown "Mover para…" da seleção em massa.
+ */
 const COLUNAS = [
-  { id: 'em_andamento', nome: 'Em andamento', cor: 'bg-v4yellow/10 border-v4yellow/30', dot: 'bg-v4yellow' },
-  { id: 'concluido', nome: 'Aguardando análise', cor: 'bg-white/[0.04] border-white/10', dot: 'bg-white/40' },
-  { id: 'aprovado', nome: 'Aprovados', cor: 'bg-v4green/10 border-v4green/30', dot: 'bg-v4green' },
-  { id: 'reprovado', nome: 'Reprovados', cor: 'bg-v4red/10 border-v4red/30', dot: 'bg-v4red' }
+  { id: 'em_andamento', nome: 'Em andamento', cor: 'bg-v4yellow/10 border-v4yellow/30', dot: 'bg-v4yellow', droppable: false },
+  { id: 'concluido', nome: 'Aguardando análise', cor: 'bg-white/[0.04] border-white/10', dot: 'bg-white/40', droppable: false },
+  { id: 'aprovado', nome: 'Aprovados', cor: 'bg-v4green/10 border-v4green/30', dot: 'bg-v4green', droppable: true },
+  { id: 'reprovado', nome: 'Reprovados', cor: 'bg-v4red/10 border-v4red/30', dot: 'bg-v4red', droppable: true }
 ] as const;
 
 type Talent = { id: string; nome: string; email: string; role: string };
@@ -66,6 +84,32 @@ function CandidatosPageInner() {
   const [faIdioma, setFaIdioma] = useState('');
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
   const [modoSelecao, setModoSelecao] = useState(false);
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+
+  async function moverFaseUnica(candidaturaId: string, fase: string) {
+    const res = await fetch(`/api/candidaturas/${candidaturaId}/fase`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fase })
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error ?? 'Erro ao mover candidato');
+      return;
+    }
+    carregar();
+  }
+
+  function aoSoltarCard(event: DragEndEvent) {
+    const candidaturaId = String(event.active.id);
+    const colunaAlvo = event.over?.id ? String(event.over.id) : null;
+    if (colunaAlvo !== 'aprovado' && colunaAlvo !== 'reprovado') return;
+
+    const atual = candidatos.find((c) => c.id === candidaturaId);
+    if (!atual || colunaDo(atual) === colunaAlvo) return;
+    moverFaseUnica(candidaturaId, colunaAlvo);
+  }
 
   function toggleSelecao(id: string) {
     setSelecionados((atual) => {
@@ -306,111 +350,36 @@ function CandidatosPageInner() {
           )}
         </div>
 
-        <div className="overflow-x-auto pb-3">
-          <div className="flex gap-4 min-w-max">
-            {COLUNAS.map((col) => (
-              <div key={col.id} className="w-72 shrink-0 flex flex-col">
-                {/* Cabeçalho da coluna */}
-                <div className={`flex items-center gap-2 px-3 py-2.5 rounded-t-xl border ${col.cor}`}>
-                  <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${col.dot}`} />
-                  <h3 className="text-sm font-semibold text-white/80 flex-1 truncate">{col.nome}</h3>
-                  <span className="text-xs font-medium text-white/40 bg-white/5 px-2 py-0.5 rounded-full">
-                    {porColuna[col.id].length}
-                  </span>
-                </div>
-
-                {/* Cards */}
-                <div className={`flex-1 space-y-2.5 p-2 rounded-b-xl border border-t-0 min-h-[6rem] ${col.cor}`}>
+        <DndContext sensors={sensors} onDragEnd={aoSoltarCard}>
+          <div className="overflow-x-auto pb-3">
+            <div className="flex gap-4 min-w-max">
+              {COLUNAS.map((col) => (
+                <ColunaCandidatos key={col.id} col={col} total={porColuna[col.id].length}>
                   {porColuna[col.id].length === 0 ? (
                     <div className="flex items-center justify-center h-16 text-xs text-white/20 border border-dashed border-white/10 rounded-lg">
-                      Nenhum candidato
+                      {col.droppable ? 'Arraste candidatos aqui' : 'Nenhum candidato'}
                     </div>
                   ) : (
                     porColuna[col.id].map((c) => (
-                      <div
+                      <CardCandidatoKanban
                         key={c.id}
-                        onClick={() => modoSelecao ? toggleSelecao(c.id) : abrirPerfil(c)}
-                        className={`group relative rounded-xl border bg-v4surface hover:bg-white/[0.06] hover:border-white/15 p-3 transition shadow-card cursor-pointer ${
-                          selecionados.has(c.id) ? 'border-v4red ring-1 ring-v4red/30' : 'border-v4border'
-                        }`}
-                      >
-                          {isAdmin && !modoSelecao && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); removerCandidatura(c); }}
-                              aria-label="Remover candidatura"
-                              title="Remover candidatura"
-                              className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-white/30 hover:text-v4red hover:bg-v4red/10 opacity-0 group-hover:opacity-100 transition"
-                            >
-                              🗑
-                            </button>
-                          )}
-                          <div className="flex items-center gap-2.5">
-                            {modoSelecao && (
-                              <input
-                                type="checkbox"
-                                checked={selecionados.has(c.id)}
-                                onChange={() => toggleSelecao(c.id)}
-                                onClick={(e) => e.stopPropagation()}
-                                className="accent-v4red shrink-0"
-                              />
-                            )}
-                            <div className="w-9 h-9 shrink-0 rounded-full bg-v4red/15 text-v4red flex items-center justify-center text-xs font-bold">
-                              {iniciais(c.nome)}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-sm truncate">{c.nome}</div>
-                              <div className="text-xs text-white/40 truncate">{c.vagaCargo}</div>
-                            </div>
-                            <ScoreRing score={c.scoreMedio} size={38} strokeWidth={3} />
-                          </div>
-                        {/* Dados principais visíveis direto no card — sem precisar abrir o perfil */}
-                        {(c.email || c.nivelProfissional || c.cidade || c.estado || c.pais || c.idioma) && (
-                          <div className="mt-1.5 space-y-0.5">
-                            {c.email && (
-                              <div className="text-[10px] text-white/35 truncate" title={c.email}>{c.email}</div>
-                            )}
-                            {(c.nivelProfissional || c.cidade || c.estado || c.pais || c.idioma) && (
-                              <div className="flex flex-wrap items-center gap-x-1 text-[10px] text-white/45">
-                                {c.nivelProfissional && <span>{c.nivelProfissional}</span>}
-                                {(c.cidade || c.estado || c.pais) && (
-                                  <span>· {[c.cidade, c.estado].filter(Boolean).join('/') || c.pais}</span>
-                                )}
-                                {c.idioma && <span>· {c.idioma}</span>}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        <div className="flex items-center gap-1.5 mt-2">
-                          <Pill tom={c.status === 'concluida' ? 'verde' : 'amarelo'}>
-                            {c.status === 'concluida' ? 'Concluída' : 'Em andamento'}
-                          </Pill>
-                          {c.teste && <Pill tom="neutro">🧪</Pill>}
-                          <span className="text-[10px] text-white/25 ml-auto">
-                            {new Date(c.createdAt).toLocaleDateString('pt-BR')}
-                          </span>
-                        </div>
-                        {/* Atribuição de talent */}
-                        <div className="mt-2 pt-2 border-t border-white/5">
-                          <select
-                            value={c.talentResponsavel ?? ''}
-                            onChange={(e) => { e.stopPropagation(); atribuirTalent(c.id, e.target.value); }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="w-full text-[11px] rounded bg-black/30 border border-white/10 px-2 py-1 outline-none focus:border-v4red text-white/60"
-                          >
-                            <option value="">Sem talent atribuído</option>
-                            {talents.map((t) => (
-                              <option key={t.email} value={t.email}>{t.nome}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
+                        c={c}
+                        talents={talents}
+                        isAdmin={isAdmin}
+                        modoSelecao={modoSelecao}
+                        selecionado={selecionados.has(c.id)}
+                        onClickCard={() => modoSelecao ? toggleSelecao(c.id) : abrirPerfil(c)}
+                        onToggleSelecao={() => toggleSelecao(c.id)}
+                        onRemover={() => removerCandidatura(c)}
+                        onAtribuirTalent={(email) => atribuirTalent(c.id, email)}
+                      />
                     ))
                   )}
-                </div>
-              </div>
-            ))}
+                </ColunaCandidatos>
+              ))}
+            </div>
           </div>
-        </div>
+        </DndContext>
         </div>
       )}
 
@@ -466,6 +435,148 @@ function CandidatosPageInner() {
           onDeleted={() => { setCandidaturaAberta(null); setVagaAberta(null); carregar(); }}
         />
       )}
+    </div>
+  );
+}
+
+/** Coluna do kanban global — droppable só quando `col.droppable` (aprovado/reprovado). */
+function ColunaCandidatos({
+  col, total, children
+}: {
+  col: (typeof COLUNAS)[number];
+  total: number;
+  children: React.ReactNode;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: col.id, disabled: !col.droppable });
+
+  return (
+    <div className="w-72 shrink-0 flex flex-col">
+      {/* Cabeçalho da coluna */}
+      <div className={`flex items-center gap-2 px-3 py-2.5 rounded-t-xl border ${col.cor}`}>
+        <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${col.dot}`} />
+        <h3 className="text-sm font-semibold text-white/80 flex-1 truncate">{col.nome}</h3>
+        <span className="text-xs font-medium text-white/40 bg-white/5 px-2 py-0.5 rounded-full">{total}</span>
+      </div>
+
+      {/* Cards */}
+      <div
+        ref={setNodeRef}
+        className={`flex-1 space-y-2.5 p-2 rounded-b-xl border border-t-0 min-h-[6rem] transition ${
+          col.droppable && isOver ? 'border-v4red/40 bg-v4red/5' : col.cor
+        }`}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** Card do kanban global — arrastável (⠿) pra Aprovados/Reprovados; clique abre o perfil. */
+function CardCandidatoKanban({
+  c, talents, isAdmin, modoSelecao, selecionado, onClickCard, onToggleSelecao, onRemover, onAtribuirTalent
+}: {
+  c: CandidatoEnriquecido;
+  talents: Talent[];
+  isAdmin: boolean;
+  modoSelecao: boolean;
+  selecionado: boolean;
+  onClickCard: () => void;
+  onToggleSelecao: () => void;
+  onRemover: () => void;
+  onAtribuirTalent: (email: string) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: c.id });
+  const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      onClick={onClickCard}
+      className={`group relative rounded-xl border bg-v4surface hover:bg-white/[0.06] hover:border-white/15 p-3 transition shadow-card cursor-pointer ${
+        selecionado ? 'border-v4red ring-1 ring-v4red/30' : 'border-v4border'
+      } ${isDragging ? 'opacity-40 relative z-10' : ''}`}
+    >
+      {isAdmin && !modoSelecao && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onRemover(); }}
+          aria-label="Remover candidatura"
+          title="Remover candidatura"
+          className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-white/30 hover:text-v4red hover:bg-v4red/10 opacity-0 group-hover:opacity-100 transition"
+        >
+          🗑
+        </button>
+      )}
+      <div className="flex items-center gap-2">
+        {modoSelecao ? (
+          <input
+            type="checkbox"
+            checked={selecionado}
+            onChange={onToggleSelecao}
+            onClick={(e) => e.stopPropagation()}
+            className="accent-v4red shrink-0"
+          />
+        ) : (
+          <button
+            {...listeners}
+            {...attributes}
+            onClick={(e) => e.stopPropagation()}
+            aria-label="Arrastar candidato para aprovar/reprovar"
+            title="Arrastar para Aprovados/Reprovados"
+            className="shrink-0 cursor-grab active:cursor-grabbing text-white/25 hover:text-white/60 touch-none select-none -ml-1"
+          >
+            ⠿
+          </button>
+        )}
+        <div className="w-9 h-9 shrink-0 rounded-full bg-v4red/15 text-v4red flex items-center justify-center text-xs font-bold">
+          {iniciais(c.nome)}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="font-medium text-sm truncate">{c.nome}</div>
+          <div className="text-xs text-white/40 truncate">{c.vagaCargo}</div>
+        </div>
+        <ScoreRing score={c.scoreMedio} size={38} strokeWidth={3} />
+      </div>
+      {/* Dados principais visíveis direto no card — sem precisar abrir o perfil */}
+      {(c.email || c.nivelProfissional || c.cidade || c.estado || c.pais || c.idioma) && (
+        <div className="mt-1.5 space-y-0.5">
+          {c.email && (
+            <div className="text-[10px] text-white/35 truncate" title={c.email}>{c.email}</div>
+          )}
+          {(c.nivelProfissional || c.cidade || c.estado || c.pais || c.idioma) && (
+            <div className="flex flex-wrap items-center gap-x-1 text-[10px] text-white/45">
+              {c.nivelProfissional && <span>{c.nivelProfissional}</span>}
+              {(c.cidade || c.estado || c.pais) && (
+                <span>· {[c.cidade, c.estado].filter(Boolean).join('/') || c.pais}</span>
+              )}
+              {c.idioma && <span>· {c.idioma}</span>}
+            </div>
+          )}
+        </div>
+      )}
+      <div className="flex items-center gap-1.5 mt-2">
+        <Pill tom={c.status === 'concluida' ? 'verde' : 'amarelo'}>
+          {c.status === 'concluida' ? 'Concluída' : 'Em andamento'}
+        </Pill>
+        {c.teste && <Pill tom="neutro">🧪</Pill>}
+        <span className="text-[10px] text-white/25 ml-auto">
+          {new Date(c.createdAt).toLocaleDateString('pt-BR')}
+        </span>
+      </div>
+      {/* Atribuição de talent */}
+      <div className="mt-2 pt-2 border-t border-white/5">
+        <select
+          value={c.talentResponsavel ?? ''}
+          onChange={(e) => { e.stopPropagation(); onAtribuirTalent(e.target.value); }}
+          onClick={(e) => e.stopPropagation()}
+          className="w-full text-[11px] rounded bg-black/30 border border-white/10 px-2 py-1 outline-none focus:border-v4red text-white/60"
+        >
+          <option value="">Sem talent atribuído</option>
+          {talents.map((t) => (
+            <option key={t.email} value={t.email}>{t.nome}</option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 }
