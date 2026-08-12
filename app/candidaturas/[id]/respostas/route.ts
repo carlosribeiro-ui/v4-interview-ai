@@ -145,7 +145,7 @@ async function processarRespostaIA(
       })
     );
   } catch (err) {
-    reportarErro(err, { route: '/api/candidaturas/[id]/respostas', candidaturaId, extra: { perguntaId, fase: 'background' } });
+    reportarErro(err, { route: '/candidaturas/[id]/respostas', candidaturaId, extra: { perguntaId, fase: 'background' } });
     await comFila(`candidatura:${candidaturaId}`, () =>
       atualizarRespostaAtomica(candidaturaId, perguntaId, {
         transcricao: '', score: 0,
@@ -159,7 +159,7 @@ async function processarRespostaIA(
 }
 
 /**
- * GET /api/candidaturas/[id]/respostas?perguntaId=X
+ * GET /candidaturas/[id]/respostas?perguntaId=X
  * Auth: session OU candidato token.
  */
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {

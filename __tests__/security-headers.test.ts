@@ -25,10 +25,10 @@ describe('security-headers', () => {
     expect(res.headers.get('Referrer-Policy')).toBe('strict-origin-when-cross-origin');
   });
 
-  it('aplica Permissions-Policy com camera negada', () => {
+  it('aplica Permissions-Policy com camera liberada same-origin (entrevista precisa de getUserMedia)', () => {
     const res = aplicarSecurityHeaders(new NextResponse());
     const pp = res.headers.get('Permissions-Policy');
-    expect(pp).toContain('camera=()');
+    expect(pp).toContain('camera=(self)');
     expect(pp).toContain('geolocation=()');
   });
 

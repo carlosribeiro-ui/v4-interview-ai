@@ -12,7 +12,7 @@ export default function EsqueciSenhaPage() {
     e.preventDefault();
     setEnviando(true);
     try {
-      await fetch('/api/auth/esqueci-senha', {
+      await fetch('/auth/esqueci-senha', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })

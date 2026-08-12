@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { timingSafeEqual } from 'crypto';
 
 /**
- * Autenticação das rotas /api/integracoes/* (chamadas por sistemas externos,
+ * Autenticação das rotas /integracoes/* (chamadas por sistemas externos,
  * ex: n8n). Chave fixa via header — suficiente pro estágio local/MVP, não é
  * um esquema de auth completo (sem rotação, sem escopos).
  *

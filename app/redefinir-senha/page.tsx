@@ -35,7 +35,7 @@ function RedefinirSenhaForm() {
     }
     setEnviando(true);
     try {
-      const res = await fetch('/api/auth/redefinir-senha', {
+      const res = await fetch('/auth/redefinir-senha', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, novaSenha })

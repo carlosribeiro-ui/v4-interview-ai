@@ -15,7 +15,7 @@ const USERS = [
 const SENHA_DEFAULT = 'V4Entrevista2026';
 
 async function login() {
-  const res = await fetch(`${BASE}/api/auth/login`, {
+  const res = await fetch(`${BASE}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: 'admin@v4company.com', senha: 'v4admin2026' })
@@ -26,7 +26,7 @@ async function login() {
 }
 
 async function criarUser(cookie, user) {
-  const res = await fetch(`${BASE}/api/usuarios`, {
+  const res = await fetch(`${BASE}/usuarios`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Cookie': cookie },
     body: JSON.stringify({ ...user, senha: SENHA_DEFAULT })

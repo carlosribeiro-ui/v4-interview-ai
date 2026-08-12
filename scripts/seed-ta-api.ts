@@ -25,7 +25,7 @@ async function main() {
   console.log(`[Seed TA] Conectando em ${BASE_URL}`);
 
   // 1. Login as admin to get session cookie
-  const loginRes = await fetch(`${BASE_URL}/api/auth/login`, {
+  const loginRes = await fetch(`${BASE_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: ADMIN_EMAIL, senha: ADMIN_SENHA }),
@@ -50,7 +50,7 @@ async function main() {
   let skipped = 0;
 
   for (const ta of TA_USERS) {
-    const res = await fetch(`${BASE_URL}/api/usuarios`, {
+    const res = await fetch(`${BASE_URL}/usuarios`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

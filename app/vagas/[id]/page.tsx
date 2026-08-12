@@ -116,7 +116,7 @@ export default function VagaPage({ params }: { params: { id: string } }) {
 
   async function moverFase(candidaturaId: string, fase: string) {
     setCandidaturas((atual) => atual.map((c) => (c.id === candidaturaId ? { ...c, fase } : c)));
-    const res = await fetch(`/api/candidaturas/${candidaturaId}/fase`, {
+    const res = await fetch(`/candidaturas/${candidaturaId}/fase`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ fase })
@@ -128,7 +128,7 @@ export default function VagaPage({ params }: { params: { id: string } }) {
   }
 
   async function adicionarNota(candidaturaId: string, texto: string) {
-    const res = await fetch(`/api/candidaturas/${candidaturaId}/notas`, {
+    const res = await fetch(`/candidaturas/${candidaturaId}/notas`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ texto })
@@ -796,7 +796,7 @@ function PerfilCandidatoModal({
     setFormatoExportando(formato);
     setErroExport('');
     try {
-      const res = await fetch(`/api/candidaturas/${c.id}/parecer?formato=${formato}`);
+      const res = await fetch(`/candidaturas/${c.id}/parecer?formato=${formato}`);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error ?? 'Erro ao gerar parecer');

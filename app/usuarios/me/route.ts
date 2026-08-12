@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 /**
  * Self-service: qualquer usuário logado (admin OU talent) edita o próprio
  * nome/e-mail e/ou troca a própria senha. Diferente da rota admin-only
- * /api/usuarios/[id], aqui não dá pra mudar role/ativo de ninguém —
+ * /usuarios/[id], aqui não dá pra mudar role/ativo de ninguém —
  * só os dados de si mesmo, e senha exige a senha atual.
  */
 export async function GET(req: NextRequest) {

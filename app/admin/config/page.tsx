@@ -155,7 +155,7 @@ function AbaUsuarios({ usuarioAtualId }: { usuarioAtualId?: string }) {
 
   function carregar() {
     setLoading(true);
-    fetch('/api/usuarios')
+    fetch('/usuarios')
       .then((r) => r.json())
       .then((data: Usuario[]) => {
         setUsuarios(data);
@@ -170,7 +170,7 @@ function AbaUsuarios({ usuarioAtualId }: { usuarioAtualId?: string }) {
     setErro('');
     setSalvando(true);
     try {
-      const res = await fetch('/api/usuarios', {
+      const res = await fetch('/usuarios', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nome, email, senha, role })
@@ -192,7 +192,7 @@ function AbaUsuarios({ usuarioAtualId }: { usuarioAtualId?: string }) {
 
   async function remover(u: Usuario) {
     if (!confirm(`Remover o usuário ${u.nome} (${u.email})? Essa ação não pode ser desfeita.`)) return;
-    const res = await fetch(`/api/usuarios/${u.id}`, { method: 'DELETE' });
+    const res = await fetch(`/usuarios/${u.id}`, { method: 'DELETE' });
     const data = await res.json();
     if (!res.ok) {
       alert(data.error ?? 'Erro ao remover usuário');
@@ -204,7 +204,7 @@ function AbaUsuarios({ usuarioAtualId }: { usuarioAtualId?: string }) {
   async function alternarAtivo(u: Usuario) {
     const acao = u.ativo ? 'desativar' : 'reativar';
     if (!confirm(`Confirma ${acao} o usuário ${u.nome} (${u.email})?`)) return;
-    const res = await fetch(`/api/usuarios/${u.id}`, {
+    const res = await fetch(`/usuarios/${u.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ativo: !u.ativo })
@@ -393,7 +393,7 @@ function ModalEditarUsuario({
         return;
       }
 
-      const res = await fetch(`/api/usuarios/${usuario.id}`, {
+      const res = await fetch(`/usuarios/${usuario.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
@@ -504,7 +504,7 @@ function AbaLogs() {
 
   function carregar() {
     setLoading(true);
-    fetch(`/api/logs?${montarParams().toString()}`)
+    fetch(`/logs?${montarParams().toString()}`)
       .then((r) => r.json())
       .then((data: LogEntry[]) => {
         setLogs(data);
@@ -515,7 +515,7 @@ function AbaLogs() {
   useEffect(carregar, [evento, ator, q, desde, ate]);
 
   function exportar(formato: 'csv' | 'pdf') {
-    window.location.href = `/api/logs?${montarParams({ formato }).toString()}`;
+    window.location.href = `/logs?${montarParams({ formato }).toString()}`;
   }
 
   function limparFiltros() {
@@ -680,7 +680,7 @@ function AbaWebhooks() {
 
   function carregar() {
     setLoading(true);
-    fetch('/api/config/webhooks')
+    fetch('/config/webhooks')
       .then((r) => r.json())
       .then((data: Webhook[]) => {
         setWebhooks(Array.isArray(data) ? data : []);
@@ -691,7 +691,7 @@ function AbaWebhooks() {
   useEffect(carregar, []);
 
   async function alternarAtivo(w: Webhook) {
-    const res = await fetch(`/api/config/webhooks/${w.id}`, {
+    const res = await fetch(`/config/webhooks/${w.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ativo: !w.ativo })
@@ -706,7 +706,7 @@ function AbaWebhooks() {
 
   async function remover(w: Webhook) {
     if (!confirm(`Remover o webhook "${w.nome}"?`)) return;
-    const res = await fetch(`/api/config/webhooks/${w.id}`, { method: 'DELETE' });
+    const res = await fetch(`/config/webhooks/${w.id}`, { method: 'DELETE' });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       alert(data.error ?? 'Erro ao remover webhook');
@@ -822,7 +822,7 @@ function ModalWebhookForm({
     try {
       const body = { nome, url, eventos: Array.from(eventosSelecionados) };
       const res = await fetch(
-        editandoExistente ? `/api/config/webhooks/${webhook!.id}` : '/api/config/webhooks',
+        editandoExistente ? `/config/webhooks/${webhook!.id}` : '/config/webhooks',
         {
           method: editandoExistente ? 'PATCH' : 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -918,7 +918,7 @@ function AbaModelosEmail() {
 
   function carregar() {
     setLoading(true);
-    fetch('/api/config/email-templates')
+    fetch('/config/email-templates')
       .then((r) => r.json())
       .then((data: EmailTemplate[]) => {
         setTemplates(Array.isArray(data) ? data : []);
@@ -929,7 +929,7 @@ function AbaModelosEmail() {
   useEffect(carregar, []);
 
   async function alternarAtivo(t: EmailTemplate) {
-    const res = await fetch(`/api/config/email-templates/${t.id}`, {
+    const res = await fetch(`/config/email-templates/${t.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ativo: !t.ativo })
@@ -944,7 +944,7 @@ function AbaModelosEmail() {
 
   async function remover(t: EmailTemplate) {
     if (!confirm(`Remover o modelo de "${RÓTULO_EVENTO[t.evento] ?? t.evento}"?`)) return;
-    const res = await fetch(`/api/config/email-templates/${t.id}`, { method: 'DELETE' });
+    const res = await fetch(`/config/email-templates/${t.id}`, { method: 'DELETE' });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       alert(data.error ?? 'Erro ao remover modelo');
@@ -1057,7 +1057,7 @@ function ModalTemplateForm({
     try {
       const body = editandoExistente ? { assunto, corpoHtml } : { evento, assunto, corpoHtml };
       const res = await fetch(
-        editandoExistente ? `/api/config/email-templates/${template!.id}` : '/api/config/email-templates',
+        editandoExistente ? `/config/email-templates/${template!.id}` : '/config/email-templates',
         {
           method: editandoExistente ? 'PATCH' : 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1172,7 +1172,7 @@ function AbaCaixaSaida() {
     const params = new URLSearchParams();
     if (evento) params.set('evento', evento);
     if (status) params.set('status', status);
-    fetch(`/api/config/emails-enviados?${params.toString()}`)
+    fetch(`/config/emails-enviados?${params.toString()}`)
       .then((r) => r.json())
       .then((data: EmailEnviado[]) => {
         setEnviados(Array.isArray(data) ? data : []);

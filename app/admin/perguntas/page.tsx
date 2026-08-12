@@ -60,7 +60,7 @@ export default function AdminAnalisarPerguntas() {
 
     setLoading(true);
     try {
-      const res = await fetch('/api/analisar-perguntas', {
+      const res = await fetch('/analisar-perguntas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ perguntas: validas, cargo, senioridade, segmento })

@@ -19,7 +19,7 @@ export function SessaoProvider({ children }: { children: React.ReactNode }) {
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
-    fetch('/api/auth/me')
+    fetch('/auth/me')
       .then((r) => (r.ok ? r.json() : { usuario: null }))
       .then((d) => setUsuario(d.usuario))
       .finally(() => setCarregando(false));
@@ -48,7 +48,7 @@ export function UserBadge() {
   if (!usuario) return null;
 
   async function sair() {
-    await fetch('/api/auth/logout', { method: 'POST' });
+    await fetch('/auth/logout', { method: 'POST' });
     router.push('/login');
     router.refresh();
   }

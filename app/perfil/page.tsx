@@ -42,7 +42,7 @@ export default function PerfilPage() {
     setSucessoDados(false);
     setSalvandoDados(true);
     try {
-      const res = await fetch('/api/usuarios/me', {
+      const res = await fetch('/usuarios/me', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nome, email })
@@ -68,7 +68,7 @@ export default function PerfilPage() {
     }
     setSalvandoSenha(true);
     try {
-      const res = await fetch('/api/usuarios/me', {
+      const res = await fetch('/usuarios/me', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ senhaAtual, novaSenha })

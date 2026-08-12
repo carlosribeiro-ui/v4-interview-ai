@@ -10,9 +10,25 @@ import { aplicarSecurityHeaders } from '@/lib/security-headers';
  * Páginas: redireciona pra /login se não autenticado.
  * API admin: retorna 401/403 conforme role necessária.
  *
- * Endritos públicos ficam de fora: /entrevista/*, /api/candidaturas (POST),
- * /api/vagas/publicas, /api/tts, /api/openapi.json, /api/auth/*.
+ * Endpoints públicos ficam de fora: /entrevista/*, /candidaturas (POST),
+ * /api/vagas/publicas, /tts, /openapi.json, /auth/*.
+ *
+ * Nomenclatura: só as rotas que colidem de verdade com uma página (mesmo path
+ * exato) ficam sob /api/ — candidatos, dashboard, relatorios, vagas. O resto
+ * (auth, candidaturas, config, integracoes, usuarios, health, logs, tts,
+ * openapi.json, analisar-perguntas) vive na raiz. Ver ehRotaApi() abaixo.
  */
+
+/** Namespaces de API que vivem fora de /api/ — usado tanto pra identificar "isso é API, não página" quanto no matcher abaixo. */
+const PREFIXOS_API_BARE = [
+  '/auth', '/candidaturas', '/config', '/integracoes', '/usuarios',
+  '/health', '/logs', '/openapi.json', '/tts', '/analisar-perguntas'
+];
+
+function ehRotaApi(pathname: string): boolean {
+  if (pathname.startsWith('/api/')) return true;
+  return PREFIXOS_API_BARE.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
 
 /**
  * V-SEC: Allowlist de origins permitidas para CORS nas rotas de integração.
@@ -27,18 +43,22 @@ const CORS_ALLOWED_ORIGINS = (process.env.CORS_ALLOWED_ORIGINS || '')
 /** Rotas de API que exigem role específica (checado no middleware). */
 const API_ADMIN_ROUTES: { pattern: RegExp; methods: string[]; role: Role }[] = [
   // Gerenciamento de usuários — admin only
-  { pattern: /^\/api\/usuarios(?:\/.*)?$/, methods: ['POST', 'DELETE'], role: 'admin' },
+  { pattern: /^\/usuarios(?:\/.*)?$/, methods: ['POST', 'DELETE'], role: 'admin' },
   // Logs de auditoria — admin only
-  { pattern: /^\/api\/logs$/, methods: ['GET'], role: 'admin' },
+  { pattern: /^\/logs$/, methods: ['GET'], role: 'admin' },
   // Config de webhooks de log — admin only
-  { pattern: /^\/api\/config\/webhooks$/, methods: ['GET', 'POST'], role: 'admin' },
-  { pattern: /^\/api\/config\/webhooks\/[^/]+$/, methods: ['PATCH', 'DELETE'], role: 'admin' },
+  { pattern: /^\/config\/webhooks$/, methods: ['GET', 'POST'], role: 'admin' },
+  { pattern: /^\/config\/webhooks\/[^/]+$/, methods: ['PATCH', 'DELETE'], role: 'admin' },
+  // Templates de e-mail e caixa de saída — admin only
+  { pattern: /^\/config\/email-templates$/, methods: ['GET', 'POST'], role: 'admin' },
+  { pattern: /^\/config\/email-templates\/[^/]+$/, methods: ['PATCH', 'DELETE'], role: 'admin' },
+  { pattern: /^\/config\/emails-enviados$/, methods: ['GET'], role: 'admin' },
   // Editar/deletar vaga — admin only
   { pattern: /^\/api\/vagas\/[^/]+$/, methods: ['PATCH', 'DELETE'], role: 'admin' },
   // Gerenciar fases da vaga — admin only
   { pattern: /^\/api\/vagas\/[^/]+\/fases$/, methods: ['PATCH'], role: 'admin' },
   // Deletar candidatura — admin only
-  { pattern: /^\/api\/candidaturas\/[^/]+$/, methods: ['DELETE'], role: 'admin' },
+  { pattern: /^\/candidaturas\/[^/]+$/, methods: ['DELETE'], role: 'admin' },
 ];
 
 /** Rotas de API que exigem qualquer sessão autenticada (admin ou talent). */
@@ -46,9 +66,9 @@ const API_AUTH_ROUTES: { pattern: RegExp; methods: string[] }[] = [
   // Criar vaga — admin/talent
   { pattern: /^\/api\/vagas$/, methods: ['POST'] },
   // Notas internas — admin/talent
-  { pattern: /^\/api\/candidaturas\/[^/]+\/notas$/, methods: ['POST'] },
+  { pattern: /^\/candidaturas\/[^/]+\/notas$/, methods: ['POST'] },
   // Mover fase do candidato — admin/talent
-  { pattern: /^\/api\/candidaturas\/[^/]+\/fase$/, methods: ['PATCH'] },
+  { pattern: /^\/candidaturas\/[^/]+\/fase$/, methods: ['PATCH'] },
 ];
 
 export async function middleware(req: NextRequest) {
@@ -56,12 +76,12 @@ export async function middleware(req: NextRequest) {
   const method = req.method;
 
   // ─── Health check sempre passa ───
-  if (pathname === '/api/health') {
+  if (pathname === '/health') {
     return aplicarSecurityHeaders(NextResponse.next());
   }
 
   // ─── CORS para rotas de integração (V-SEC: allowlist, não wildcard) ───
-  if (pathname.startsWith('/api/integracoes/')) {
+  if (pathname.startsWith('/integracoes/')) {
     const origin = req.headers.get('origin') || '';
     const originPermitida = CORS_ALLOWED_ORIGINS.includes(origin);
 
@@ -87,7 +107,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // ─── Proteção de API routes ───
-  if (pathname.startsWith('/api/')) {
+  if (ehRotaApi(pathname)) {
     // Verifica rotas que exigem role específica
     for (const route of API_ADMIN_ROUTES) {
       if (route.pattern.test(pathname) && route.methods.includes(method)) {
@@ -146,14 +166,16 @@ export const config = {
     '/admin/:path*',
     '/perfil/:path*',
     '/docs/:path*',
-    // API routes protegidas por RBAC
-    '/api/usuarios/:path*',
-    '/api/logs',
-    '/api/config/:path*',
+    // API routes protegidas por RBAC ou que precisam do check de CORS/health acima
+    '/usuarios/:path*',
+    '/logs',
+    '/config/:path*',
     '/api/vagas/:path*/fases',
     '/api/vagas/:path*',
-    '/api/candidaturas/:path*/notas',
-    '/api/candidaturas/:path*/fase',
-    '/api/candidaturas/:path*',
+    '/candidaturas/:path*/notas',
+    '/candidaturas/:path*/fase',
+    '/candidaturas/:path*',
+    '/health',
+    '/integracoes/:path*',
   ]
 };

@@ -6,7 +6,7 @@ import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
 export const dynamic = 'force-dynamic';
 
 /**
- * POST /api/candidaturas/[id]/csat
+ * POST /candidaturas/[id]/csat
  * Auth: candidato dono (token) ou admin/talent.
  */
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {

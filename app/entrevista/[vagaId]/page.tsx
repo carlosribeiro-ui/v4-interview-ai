@@ -97,7 +97,7 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
     }
     setCarregandoAudio(true);
     try {
-      const res = await fetch('/api/tts', {
+      const res = await fetch('/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ texto: pergunta.texto, vagaId: params.vagaId, perguntaId: pergunta.id })
@@ -144,7 +144,7 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
         return;
       }
 
-      const resCand = await fetch(`/api/candidaturas/${salvo}`);
+      const resCand = await fetch(`/candidaturas/${salvo}`);
       if (!resCand.ok) {
         // candidatura sumiu do servidor (data/ limpo): descarta a sessão órfã
         localStorage.removeItem(chaveSessao(params.vagaId));
@@ -189,7 +189,7 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
   async function iniciar(e: React.FormEvent) {
     e.preventDefault();
     setErro('');
-    const res = await fetch('/api/candidaturas', {
+    const res = await fetch('/candidaturas', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ vagaId: params.vagaId, nome, email, linkedin, telefone, pretensaoSalarial, segmento, nivelProfissional, formacao, pais, estado, cidade, idioma })
@@ -203,7 +203,7 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
     if (curriculo) {
       const formData = new FormData();
       formData.append('curriculo', curriculo);
-      await fetch(`/api/candidaturas/${data.id}/curriculo`, { method: 'POST', body: formData }).catch(() => {});
+      await fetch(`/candidaturas/${data.id}/curriculo`, { method: 'POST', body: formData }).catch(() => {});
     }
 
     localStorage.setItem(chaveSessao(params.vagaId), data.id);
@@ -227,7 +227,7 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
     if (indice + 1 < vaga.perguntas.length) {
       setIndice(indice + 1);
     } else {
-      await fetch(`/api/candidaturas/${candidaturaId}/finalizar`, { method: 'POST' });
+      await fetch(`/candidaturas/${candidaturaId}/finalizar`, { method: 'POST' });
       localStorage.removeItem(chaveSessao(params.vagaId));
       setFase('csat');
     }
@@ -678,7 +678,7 @@ function Gravador({
     const formData = new FormData();
     formData.append('perguntaId', perguntaId);
     formData.append('video', blob, 'resposta.webm');
-    const res = await fetch(`/api/candidaturas/${candidaturaId}/respostas`, {
+    const res = await fetch(`/candidaturas/${candidaturaId}/respostas`, {
       method: 'POST',
       body: formData
     });
@@ -950,7 +950,7 @@ function FormCSAT({ candidaturaId, nome, onConcluir }: { candidaturaId: string; 
     setEnviando(true);
     setErro('');
     try {
-      const res = await fetch(`/api/candidaturas/${candidaturaId}/csat`, {
+      const res = await fetch(`/candidaturas/${candidaturaId}/csat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...notas, comentario })

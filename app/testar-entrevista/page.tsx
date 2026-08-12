@@ -63,7 +63,7 @@ export default function TestarEntrevistaPage() {
       // (nunca esbarra no bloqueio de "e-mail já concluiu essa vaga"), mantendo o prefixo teste+
       // que separa esses cards dos candidatos reais em /candidatos e nos relatórios.
       const execucao = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
-      const res = await fetch('/api/candidaturas', {
+      const res = await fetch('/candidaturas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

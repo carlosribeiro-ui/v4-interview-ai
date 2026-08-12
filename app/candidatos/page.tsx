@@ -88,7 +88,7 @@ function CandidatosPageInner() {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   async function moverFaseUnica(candidaturaId: string, fase: string) {
-    const res = await fetch(`/api/candidaturas/${candidaturaId}/fase`, {
+    const res = await fetch(`/candidaturas/${candidaturaId}/fase`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ fase })
@@ -133,7 +133,7 @@ function CandidatosPageInner() {
 
   async function moverEmMassa(fase: string) {
     const promessas = Array.from(selecionados).map((id) =>
-      fetch(`/api/candidaturas/${id}/fase`, {
+      fetch(`/candidaturas/${id}/fase`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fase })
@@ -147,7 +147,7 @@ function CandidatosPageInner() {
 
   async function removerCandidatura(c: CandidatoEnriquecido) {
     if (!confirm(`Remover a candidatura de ${c.nome} (${c.email})? Essa ação não pode ser desfeita.`)) return;
-    const res = await fetch(`/api/candidaturas/${c.id}`, { method: 'DELETE' });
+    const res = await fetch(`/candidaturas/${c.id}`, { method: 'DELETE' });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       alert(data.error ?? 'Erro ao remover candidatura');
@@ -160,7 +160,7 @@ function CandidatosPageInner() {
     const n = selecionados.size;
     if (!confirm(`Remover ${n} candidatura(s) selecionada(s)? Essa ação não pode ser desfeita.`)) return;
     const resultados = await Promise.all(
-      Array.from(selecionados).map((id) => fetch(`/api/candidaturas/${id}`, { method: 'DELETE' }))
+      Array.from(selecionados).map((id) => fetch(`/candidaturas/${id}`, { method: 'DELETE' }))
     );
     const falhas = resultados.filter((r) => !r.ok).length;
     setSelecionados(new Set());
@@ -193,15 +193,15 @@ function CandidatosPageInner() {
   }
 
   useEffect(() => {
-    // /api/usuarios/atribuiveis (não /api/usuarios) — essa é liberada pra admin E talent,
+    // /usuarios/atribuiveis (não /usuarios) — essa é liberada pra admin E talent,
     // já que os dois papéis usam o kanban e atribuem candidatos entre si.
-    fetch('/api/usuarios/atribuiveis').then((r) => r.json()).then((d) => setTalents(Array.isArray(d) ? d : []));
+    fetch('/usuarios/atribuiveis').then((r) => r.json()).then((d) => setTalents(Array.isArray(d) ? d : []));
     carregar();
   }, [busca, vagaFiltro, faixaScore, mostrarTestes, faSegmento, faNivel, faFormacao, faPais, faEstado, faCidade, faIdioma]);
 
   async function atribuirTalent(candidaturaId: string, email: string) {
     setCandidatos((atual) => atual.map((c) => c.id === candidaturaId ? { ...c, talentResponsavel: email || undefined } : c));
-    const res = await fetch(`/api/candidaturas/${candidaturaId}`, {
+    const res = await fetch(`/candidaturas/${candidaturaId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ talentResponsavel: email })
@@ -215,7 +215,7 @@ function CandidatosPageInner() {
     setVagaAberta(null);
     try {
       const [resCand, resVaga] = await Promise.all([
-        fetch(`/api/candidaturas/${c.id}`),
+        fetch(`/candidaturas/${c.id}`),
         fetch(`/api/vagas/${c.vagaId}`)
       ]);
       if (resCand.ok) {
@@ -605,7 +605,7 @@ function PerfilCandidatoModal({
     if (!confirm(`Remover a candidatura de ${c.nome} (${c.email})? Essa ação não pode ser desfeita.`)) return;
     setRemovendo(true);
     try {
-      const res = await fetch(`/api/candidaturas/${c.id}`, { method: 'DELETE' });
+      const res = await fetch(`/candidaturas/${c.id}`, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         alert(data.error ?? 'Erro ao remover candidatura');

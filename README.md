@@ -35,19 +35,19 @@ Todo export tabular da aplicação sai tanto em CSV quanto em PDF, via `?formato
 | `/dashboard` | — | (sem export ainda — só KPIs em tela) |
 | `/relatorios` | `/api/relatorios` | Top candidatos com score/fase/talent |
 | `/candidatos` | `/api/candidatos` | Kanban global completo |
-| `/admin/config` → Logs | `/api/logs` | Auditoria filtrada |
-| `/vagas/[id]` → perfil do candidato | `/api/candidaturas/{id}/parecer` | Parecer consolidado (uma linha por pergunta no CSV) |
+| `/admin/config` → Logs | `/logs` | Auditoria filtrada |
+| `/vagas/[id]` → perfil do candidato | `/candidaturas/{id}/parecer` | Parecer consolidado (uma linha por pergunta no CSV) |
 
 PDF usa um componente de tabela genérico (`lib/tabela-pdf.tsx`, cabeçalho V4 repetido em toda página) reaproveitado pelos quatro exports tabulares; o parecer tem seu próprio layout de relatório (`lib/parecer-pdf.tsx` + `lib/parecer-csv.ts`).
 
 ## Segurança (v0.2.0)
 
-- **RBAC centralizado:** Middleware protege rotas admin (editar/deletar vagas, remover candidaturas, gerenciar usuários, logs, config de webhooks) e rotas que exigem sessão (criar vaga, notas internas, mover fase, `/api/usuarios/me`). Candidatos não logam — o ID da candidatura funciona como token implícito.
+- **RBAC centralizado:** Middleware protege rotas admin (editar/deletar vagas, remover candidaturas, gerenciar usuários, logs, config de webhooks) e rotas que exigem sessão (criar vaga, notas internas, mover fase, `/usuarios/me`). Candidatos não logam — o ID da candidatura funciona como token implícito.
 - **Usuário ativo/inativo:** admin desativa um usuário sem apagar (bloqueia login, revoga sessões na hora, preserva histórico/logs). Não dá pra desativar/remover o próprio usuário nem o último admin restante.
 - **Self-service de perfil:** qualquer usuário troca a própria senha (exige senha atual) e edita nome/e-mail em `/perfil`; a troca de senha reemite o cookie de sessão na hora (senão o próprio usuário se derrubaria).
 - **Rate limiting:** Endpoints públicos têm limite por IP (10/min pra candidaturas, 5/min pra upload de vídeo, 15/min pra TTS, 5/min pra login). Proteção contra abuse e brute force.
 - **Session auth:** Cookie HMAC-SHA256, 7 dias, roles `admin`/`talent`. Senhas com scrypt (64 bytes).
-- **Input validation (anti-NoSQL injection):** Campos do body que alimentam filtro Mongo (`vagaId`, `email`, etc. em `/api/candidaturas` e `/api/auth/login`) são validados com `typeof === 'string'` antes de chegar no `findOne` — bloqueia operadores (`$ne`, `$gt`) enviados no lugar de valores simples. Achado em pentest 2026-08-12.
+- **Input validation (anti-NoSQL injection):** Campos do body que alimentam filtro Mongo (`vagaId`, `email`, etc. em `/candidaturas` e `/auth/login`) são validados com `typeof === 'string'` antes de chegar no `findOne` — bloqueia operadores (`$ne`, `$gt`) enviados no lugar de valores simples. Achado em pentest 2026-08-12.
 - **Cleanup R2:** Ao deletar candidatura/vaga, arquivos órfãos são removidos do R2 (best-effort).
 - **Monitoramento:** Wrapper estruturado de erros (`lib/monitoring.ts`), pronto pra Sentry (DSN configurado = ativo).
 
@@ -94,16 +94,16 @@ npm run typecheck    # Verifica tipos TypeScript
 
 ## API externa
 
-Vagas podem ser criadas/consultadas por sistemas externos via `/api/integracoes/*`, autenticado por `x-api-key`:
+Vagas podem ser criadas/consultadas por sistemas externos via `/integracoes/*`, autenticado por `x-api-key`:
 
 ```bash
 # Criar vaga
-curl -X POST https://v4-interview-ai.vercel.app/api/integracoes/vagas \
+curl -X POST https://v4-interview-ai.vercel.app/integracoes/vagas \
   -H "x-api-key: SUA_CHAVE" -H "Content-Type: application/json" \
   -d '{"cargo":"Dev Backend","senioridade":"Pleno","segmento":"Tech"}'
 
 # Listar candidaturas de uma vaga
-curl "https://v4-interview-ai.vercel.app/api/integracoes/candidaturas?vagaExternalId=xxx" \
+curl "https://v4-interview-ai.vercel.app/integracoes/candidaturas?vagaExternalId=xxx" \
   -H "x-api-key: SUA_CHAVE"
 ```
 

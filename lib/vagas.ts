@@ -9,7 +9,7 @@ export type PerguntaEntrada = { id?: string; texto: string; criterios: string; t
 /**
  * Gera o roteiro via IA e grava a vaga. Usada tanto pela criação
  * no admin local (app/api/vagas) quanto pela API externa
- * (app/api/integracoes/vagas), pra não duplicar a lógica.
+ * (app/integracoes/vagas), pra não duplicar a lógica.
  *
  * Se `perguntas` E `requisitos` vierem prontos (caso da API externa "integrar tudo"
  * ou do formulário de Nova vaga), usa direto sem chamar a IA. A geração automática

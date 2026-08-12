@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * Lista mínima de usuários pra popular o dropdown "atribuir talent" no kanban
- * (/candidatos). Diferente de GET /api/usuarios (que é admin-only e devolve o
+ * (/candidatos). Diferente de GET /usuarios (que é admin-only e devolve o
  * usuário completo pra tela de gestão), esta rota é liberada pra qualquer
  * sessão admin/talent — o kanban é usado pelos dois papéis — e devolve só
  * nome/email/role, sem tokenVersion nem o flag `ativo`.

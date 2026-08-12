@@ -17,7 +17,7 @@ const SENTRY_DSN = process.env.SENTRY_DSN || '';
 // }
 
 type ErrorContext = {
-  /** Rota onde o erro ocorreu (ex: /api/candidaturas/[id]/respostas) */
+  /** Rota onde o erro ocorreu (ex: /candidaturas/[id]/respostas) */
   route?: string;
   /** ID da candidatura afetada */
   candidaturaId?: string;

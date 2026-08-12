@@ -180,7 +180,7 @@ export function logsParaCsv(logs: LogEntry[]): string {
 
 /**
  * Rede de segurança de erro em produção sem depender de conta externa (Sentry etc).
- * Grava o erro na própria coleção `logs` (visível em /api/logs e na aba Configurações)
+ * Grava o erro na própria coleção `logs` (visível em /logs e na aba Configurações)
  * e, se ALERT_WEBHOOK_URL estiver setada (ex: webhook do Slack ou de um workflow n8n),
  * dispara um POST fire-and-forget — nunca aguarda nem derruba o fluxo por causa disso.
  * Chamada pelo instrumentation.ts (onRequestError), que o Next.js invoca automaticamente
