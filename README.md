@@ -11,6 +11,7 @@ Clone funcional da Coploy: entrevistas assíncronas em vídeo avaliadas por IA. 
 3. **Candidato responde** (`/entrevista/[vagaId]`): preenche nome/e-mail (+ LinkedIn, telefone, pretensão salarial e CV em PDF opcionais). A gravação é automática — sem botões, sem controle manual. Cada resposta é processada em background enquanto o candidato lê a próxima pergunta.
 4. **IA avalia automaticamente**: Gemini transcreve o áudio, analisa frames do vídeo (detecção de teleprompter), e gera nota 0-10 + feedback técnico calibrado por senioridade. Quando disponível, o CV/LinkedIn do candidato é usado como contexto adicional na avaliação.
 5. **Admin acompanha o pipeline** (`/vagas/[id]`): kanban com drag-and-drop, nota, vídeo, transcrição, feedback detalhado e parecer final consolidado (exportável em PDF).
+6. **Admin gerencia candidatos globalmente** (`/candidatos`): kanban de todas as vagas, filtros avançados, atribuição de talent, ação em massa e remoção de candidaturas (individual ou em lote — admin only).
 
 ## Stack
 
@@ -24,9 +25,10 @@ Clone funcional da Coploy: entrevistas assíncronas em vídeo avaliadas por IA. 
 
 ## Segurança (v0.2.0)
 
-- **RBAC centralizado:** Middleware protege rotas admin (editar/deletar vagas, gerenciar usuários, logs) e rotas que exigem sessão (criar vaga, notas internas, mover fase). Candidatos não logam — o ID da candidatura funciona como token implícito.
+- **RBAC centralizado:** Middleware protege rotas admin (editar/deletar vagas, remover candidaturas, gerenciar usuários, logs) e rotas que exigem sessão (criar vaga, notas internas, mover fase). Candidatos não logam — o ID da candidatura funciona como token implícito.
 - **Rate limiting:** Endpoints públicos têm limite por IP (10/min pra candidaturas, 5/min pra upload de vídeo, 15/min pra TTS, 5/min pra login). Proteção contra abuse e brute force.
 - **Session auth:** Cookie HMAC-SHA256, 7 dias, roles `admin`/`talent`. Senhas com scrypt (64 bytes).
+- **Input validation (anti-NoSQL injection):** Campos do body que alimentam filtro Mongo (`vagaId`, `email`, etc. em `/api/candidaturas` e `/api/auth/login`) são validados com `typeof === 'string'` antes de chegar no `findOne` — bloqueia operadores (`$ne`, `$gt`) enviados no lugar de valores simples. Achado em pentest 2026-08-12.
 - **Cleanup R2:** Ao deletar candidatura/vaga, arquivos órfãos são removidos do R2 (best-effort).
 - **Monitoramento:** Wrapper estruturado de erros (`lib/monitoring.ts`), pronto pra Sentry (DSN configurado = ativo).
 

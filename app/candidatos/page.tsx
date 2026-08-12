@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ScoreRing from '@/app/components/ScoreRing';
 import Pill from '@/app/components/Pill';
+import { useSessao } from '@/app/components/Sessao';
 import type { CandidatoEnriquecido } from '@/app/api/candidatos/route';
 
 type FiltroStatus = 'todos' | 'em_andamento' | 'concluida';
@@ -40,6 +41,8 @@ export default function CandidatosPage() {
 
 function CandidatosPageInner() {
   const searchParams = useSearchParams();
+  const { usuario } = useSessao();
+  const isAdmin = usuario?.role === 'admin';
 
   const [candidatos, setCandidatos] = useState<CandidatoEnriquecido[]>([]);
   const [vagas, setVagas] = useState<{ id: string; cargo: string }[]>([]);
@@ -95,6 +98,30 @@ function CandidatosPageInner() {
     setSelecionados(new Set());
     setModoSelecao(false);
     carregar();
+  }
+
+  async function removerCandidatura(c: CandidatoEnriquecido) {
+    if (!confirm(`Remover a candidatura de ${c.nome} (${c.email})? Essa ação não pode ser desfeita.`)) return;
+    const res = await fetch(`/api/candidaturas/${c.id}`, { method: 'DELETE' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      alert(data.error ?? 'Erro ao remover candidatura');
+      return;
+    }
+    carregar();
+  }
+
+  async function removerEmMassa() {
+    const n = selecionados.size;
+    if (!confirm(`Remover ${n} candidatura(s) selecionada(s)? Essa ação não pode ser desfeita.`)) return;
+    const resultados = await Promise.all(
+      Array.from(selecionados).map((id) => fetch(`/api/candidaturas/${id}`, { method: 'DELETE' }))
+    );
+    const falhas = resultados.filter((r) => !r.ok).length;
+    setSelecionados(new Set());
+    setModoSelecao(false);
+    carregar();
+    if (falhas > 0) alert(`${falhas} de ${n} não puderam ser removidas.`);
   }
 
   async function carregar() {
@@ -269,6 +296,14 @@ function CandidatosPageInner() {
                 <option value="aprovado">Aprovado</option>
                 <option value="reprovado">Reprovado</option>
               </select>
+              {isAdmin && (
+                <button
+                  onClick={removerEmMassa}
+                  className="rounded-full bg-v4red/15 text-v4red hover:bg-v4red/25 px-3 py-1.5 text-sm font-medium transition"
+                >
+                  🗑 Remover selecionados
+                </button>
+              )}
             </>
           )}
         </div>
@@ -297,10 +332,20 @@ function CandidatosPageInner() {
                       <div
                         key={c.id}
                         onClick={() => modoSelecao ? toggleSelecao(c.id) : abrirPerfil(c)}
-                        className={`rounded-xl border bg-v4surface hover:bg-white/[0.06] hover:border-white/15 p-3 transition shadow-card cursor-pointer ${
+                        className={`group relative rounded-xl border bg-v4surface hover:bg-white/[0.06] hover:border-white/15 p-3 transition shadow-card cursor-pointer ${
                           selecionados.has(c.id) ? 'border-v4red ring-1 ring-v4red/30' : 'border-v4border'
                         }`}
                       >
+                          {isAdmin && !modoSelecao && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); removerCandidatura(c); }}
+                              aria-label="Remover candidatura"
+                              title="Remover candidatura"
+                              className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-white/30 hover:text-v4red hover:bg-v4red/10 opacity-0 group-hover:opacity-100 transition"
+                            >
+                              🗑
+                            </button>
+                          )}
                           <div className="flex items-center gap-2.5">
                             {modoSelecao && (
                               <input
@@ -401,7 +446,9 @@ function CandidatosPageInner() {
         <PerfilCandidatoModal
           c={candidaturaAberta}
           vaga={vagaAberta}
+          isAdmin={isAdmin}
           onClose={() => { setCandidaturaAberta(null); setVagaAberta(null); }}
+          onDeleted={() => { setCandidaturaAberta(null); setVagaAberta(null); carregar(); }}
         />
       )}
     </div>
@@ -410,13 +457,16 @@ function CandidatosPageInner() {
 
 /** Modal com perfil completo do candidato — vídeo, transcrição, feedback, notas. */
 function PerfilCandidatoModal({
-  c, vaga, onClose
+  c, vaga, isAdmin, onClose, onDeleted
 }: {
   c: any;
   vaga: any;
+  isAdmin: boolean;
   onClose: () => void;
+  onDeleted: () => void;
 }) {
   const [detalheAberto, setDetalheAberto] = useState<Record<string, boolean>>({});
+  const [removendo, setRemovendo] = useState(false);
 
   useEffect(() => {
     function aoTeclar(e: KeyboardEvent) { if (e.key === 'Escape') onClose(); }
@@ -424,6 +474,22 @@ function PerfilCandidatoModal({
     document.body.style.overflow = 'hidden';
     return () => { document.removeEventListener('keydown', aoTeclar); document.body.style.overflow = ''; };
   }, [onClose]);
+
+  async function remover() {
+    if (!confirm(`Remover a candidatura de ${c.nome} (${c.email})? Essa ação não pode ser desfeita.`)) return;
+    setRemovendo(true);
+    try {
+      const res = await fetch(`/api/candidaturas/${c.id}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error ?? 'Erro ao remover candidatura');
+        return;
+      }
+      onDeleted();
+    } finally {
+      setRemovendo(false);
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex flex-col v4-fade-in" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
@@ -443,6 +509,17 @@ function PerfilCandidatoModal({
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <ScoreRing score={c.scoreMedio} size={56} strokeWidth={4.5} />
+            {isAdmin && (
+              <button
+                onClick={remover}
+                disabled={removendo}
+                aria-label="Remover candidatura"
+                title="Remover candidatura"
+                className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-v4red hover:bg-v4red/10 text-base transition disabled:opacity-40"
+              >
+                🗑
+              </button>
+            )}
             <button onClick={onClose} aria-label="Fechar" className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 text-lg transition">✕</button>
           </div>
         </div>
