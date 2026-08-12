@@ -127,7 +127,10 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
     let ativo = true;
 
     async function carregar() {
-      const res = await fetch(`/api/vagas/${params.vagaId}`);
+      // Endpoint público — o candidato não está logado. GET /api/vagas/[id] (sem
+      // /publica) exige sessão admin/talent de propósito, pois devolve as
+      // candidaturas de todo mundo que já se aplicou pra essa vaga.
+      const res = await fetch(`/api/vagas/${params.vagaId}/publica`);
       if (!res.ok) throw new Error('Vaga não encontrada');
       const data = await res.json();
       const vagaCarregada: Vaga = ordenarPerguntas(data.vaga);
