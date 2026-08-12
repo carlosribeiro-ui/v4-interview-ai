@@ -20,11 +20,23 @@ export async function POST(req: NextRequest) {
   const bloqueado = await aplicarRateLimit(req, 'candidatura', LIMITES.candidaturaWrite);
   if (bloqueado) return bloqueado;
 
-  const body = await req.json();
+  const body = await req.json().catch(() => ({}));
   const { vagaId, nome, email, linkedin, telefone, pretensaoSalarial, segmento, nivelProfissional, formacao, pais, estado, cidade, idioma } = body ?? {};
 
   if (!vagaId || !nome || !email) {
     return NextResponse.json({ error: 'vagaId, nome e email são obrigatórios' }, { status: 400 });
+  }
+
+  // V-SEC: Valida tipos antes de usar em filtro Mongo (findOne) ou sanitize —
+  // previne NoSQL injection via operadores ($ne, $gt etc.) enviados no lugar de string.
+  const camposString: Record<string, unknown> = {
+    vagaId, nome, email, linkedin, telefone, pretensaoSalarial,
+    segmento, nivelProfissional, formacao, pais, estado, cidade, idioma
+  };
+  for (const [campo, valor] of Object.entries(camposString)) {
+    if (valor !== undefined && typeof valor !== 'string') {
+      return NextResponse.json({ error: `Campo '${campo}' deve ser texto` }, { status: 400 });
+    }
   }
 
   const vaga = await getVaga(vagaId);

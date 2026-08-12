@@ -18,7 +18,9 @@ export async function POST(req: NextRequest) {
     await garantirUsuariosSeed();
 
     const { email, senha } = await req.json();
-    if (!email || !senha) {
+    // V-SEC: Valida tipo antes de usar em findOne (Mongo) — previne NoSQL injection
+    // via operadores ($ne, $gt etc.) enviados no lugar de string.
+    if (!email || !senha || typeof email !== 'string' || typeof senha !== 'string') {
       return NextResponse.json({ error: 'E-mail e senha são obrigatórios' }, { status: 400 });
     }
 
