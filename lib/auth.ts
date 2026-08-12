@@ -15,6 +15,8 @@ export type Usuario = {
   senha: string;
   /** Versão do token — incrementada em delete/password change pra revogar sessões antigas. */
   tokenVersion?: number;
+  /** Usuário inativo não consegue logar. Ausente = ativo (default true, compat com registros antigos). */
+  ativo?: boolean;
 };
 
 async function usuariosCollection() {
@@ -91,6 +93,7 @@ export async function autenticar(email: string, senha: string): Promise<Usuario 
   const col = await usuariosCollection();
   const usuario = await col.findOne({ email: email.trim().toLowerCase() });
   if (!usuario) return null;
+  if (usuario.ativo === false) return null; // V-SEC: usuário desativado não loga
   if (!verificarSenha(senha, usuario.senha)) return null;
   return usuario;
 }
@@ -118,7 +121,7 @@ export type UsuarioPublico = Omit<Usuario, 'senha'>;
 export async function listarUsuarios(): Promise<UsuarioPublico[]> {
   const col = await usuariosCollection();
   const usuarios = await col.find({}).sort({ nome: 1 }).toArray();
-  return usuarios.map(({ senha: _senha, _id, ...resto }: any) => resto);
+  return usuarios.map(({ senha: _senha, _id, ativo, ...resto }: any) => ({ ...resto, ativo: ativo ?? true }));
 }
 
 export async function criarUsuario(dados: { nome: string; email: string; role: Role; senha: string }): Promise<UsuarioPublico> {
@@ -184,4 +187,70 @@ export async function atualizarRole(id: string, novaRole: Role): Promise<void> {
 export async function revogarSessoes(id: string): Promise<void> {
   const col = await usuariosCollection();
   await col.updateOne({ id }, { $inc: { tokenVersion: 1 } });
+}
+
+/**
+ * Ativa/desativa um usuário. Desativado não consegue mais logar (ver autenticar())
+ * e tem as sessões existentes revogadas na hora.
+ */
+export async function atualizarAtivo(id: string, ativo: boolean): Promise<void> {
+  const col = await usuariosCollection();
+  await col.updateOne({ id }, { $set: { ativo }, $inc: { tokenVersion: 1 } });
+}
+
+/**
+ * Admin edita nome/e-mail de qualquer usuário. E-mail precisa continuar único.
+ */
+export async function atualizarDadosAdmin(id: string, dados: { nome?: string; email?: string }): Promise<void> {
+  const col = await usuariosCollection();
+  const set: Record<string, string> = {};
+  if (dados.nome !== undefined) set.nome = dados.nome.trim();
+  if (dados.email !== undefined) set.email = dados.email.trim().toLowerCase();
+  if (Object.keys(set).length === 0) return;
+  try {
+    await col.updateOne({ id }, { $set: set });
+  } catch (err: any) {
+    if (err?.code === 11000) throw new Error('Já existe um usuário com este e-mail');
+    throw err;
+  }
+}
+
+/**
+ * Admin reseta a senha de qualquer usuário sem precisar da senha atual.
+ * Revoga sessões existentes (força novo login com a senha nova).
+ */
+export async function resetarSenhaAdmin(id: string, novaSenha: string): Promise<void> {
+  const col = await usuariosCollection();
+  await col.updateOne({ id }, { $set: { senha: hashSenha(novaSenha) }, $inc: { tokenVersion: 1 } });
+}
+
+/**
+ * Usuário edita o próprio nome/e-mail (qualquer role — admin ou talent).
+ */
+export async function atualizarPerfilProprio(id: string, dados: { nome?: string; email?: string }): Promise<Usuario> {
+  await atualizarDadosAdmin(id, dados);
+  const col = await usuariosCollection();
+  const atualizado = await col.findOne({ id });
+  if (!atualizado) throw new Error('Usuário não encontrado');
+  return atualizado;
+}
+
+/**
+ * Usuário troca a própria senha — exige a senha atual correta.
+ * Retorna o novo tokenVersion (pro caller reemitir o cookie de sessão,
+ * já que a troca revoga o token que acabou de ser usado nesta mesma request).
+ */
+export async function alterarSenhaPropria(
+  id: string,
+  senhaAtual: string,
+  novaSenha: string
+): Promise<{ ok: true; usuario: Usuario } | { ok: false; erro: string }> {
+  const col = await usuariosCollection();
+  const usuario = await col.findOne({ id });
+  if (!usuario) return { ok: false, erro: 'Usuário não encontrado' };
+  if (!verificarSenha(senhaAtual, usuario.senha)) return { ok: false, erro: 'Senha atual incorreta' };
+
+  const novoTokenVersion = (usuario.tokenVersion ?? 0) + 1;
+  await col.updateOne({ id }, { $set: { senha: hashSenha(novaSenha), tokenVersion: novoTokenVersion } });
+  return { ok: true, usuario: { ...usuario, senha: hashSenha(novaSenha), tokenVersion: novoTokenVersion } };
 }

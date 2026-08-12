@@ -6,7 +6,7 @@ import { useSessao } from '@/app/components/Sessao';
 
 type Aba = 'usuarios' | 'logs';
 
-type Usuario = { id: string; nome: string; email: string; role: 'admin' | 'talent' };
+type Usuario = { id: string; nome: string; email: string; role: 'admin' | 'talent'; ativo: boolean };
 type LogEntry = { id: string; evento: string; ator?: string; detalhes?: Record<string, unknown>; criadoEm: string };
 
 const RÓTULO_EVENTO: Record<string, string> = {
@@ -14,11 +14,23 @@ const RÓTULO_EVENTO: Record<string, string> = {
   login_falhou: 'Login falhou',
   usuario_criado: 'Usuário criado',
   usuario_removido: 'Usuário removido',
+  usuario_editado: 'Usuário editado',
+  usuario_ativado: 'Usuário ativado',
+  usuario_desativado: 'Usuário desativado',
+  senha_resetada: 'Senha resetada (admin)',
+  senha_alterada: 'Senha alterada (próprio usuário)',
+  role_alterada: 'Permissão alterada',
   fase_alterada: 'Fase alterada',
   candidatura_criada: 'Candidatura criada',
   candidatura_removida: 'Candidatura removida',
   vaga_criada: 'Vaga criada',
-  vaga_removida: 'Vaga removida'
+  vaga_removida: 'Vaga removida',
+  rate_limit_hit: 'Rate limit atingido',
+  rbac_denial: 'Acesso negado (RBAC)',
+  auth_failure: 'Falha de autenticação',
+  session_revoked: 'Sessão revogada',
+  erro_sistema: 'Erro de sistema',
+  webhook_config_alterado: 'Webhook de logs alterado'
 };
 
 export default function AdminConfigPage() {
@@ -35,7 +47,7 @@ export default function AdminConfigPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       <div>
         <h1 className="font-heading text-2xl font-bold">⚙ Configurações</h1>
         <p className="text-white/40 text-sm mt-0.5">Usuários e trilha de auditoria — só admin.</p>
@@ -66,11 +78,14 @@ export default function AdminConfigPage() {
   );
 }
 
+/* ────────────────────────────── Usuários ────────────────────────────── */
+
 function AbaUsuarios({ usuarioAtualId }: { usuarioAtualId?: string }) {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
   const [criando, setCriando] = useState(false);
+  const [editando, setEditando] = useState<Usuario | null>(null);
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -115,7 +130,7 @@ function AbaUsuarios({ usuarioAtualId }: { usuarioAtualId?: string }) {
   }
 
   async function remover(u: Usuario) {
-    if (!confirm(`Remover o usuário ${u.nome} (${u.email})?`)) return;
+    if (!confirm(`Remover o usuário ${u.nome} (${u.email})? Essa ação não pode ser desfeita.`)) return;
     const res = await fetch(`/api/usuarios/${u.id}`, { method: 'DELETE' });
     const data = await res.json();
     if (!res.ok) {
@@ -125,17 +140,17 @@ function AbaUsuarios({ usuarioAtualId }: { usuarioAtualId?: string }) {
     carregar();
   }
 
-  async function mudarRole(u: Usuario, novaRole: 'admin' | 'talent') {
-    const acao = novaRole === 'admin' ? 'promover a admin' : 'rebaixar a talent';
-    if (!confirm(`${acao} o usuário ${u.nome} (${u.email})?`)) return;
+  async function alternarAtivo(u: Usuario) {
+    const acao = u.ativo ? 'desativar' : 'reativar';
+    if (!confirm(`Confirma ${acao} o usuário ${u.nome} (${u.email})?`)) return;
     const res = await fetch(`/api/usuarios/${u.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ role: novaRole })
+      body: JSON.stringify({ ativo: !u.ativo })
     });
     const data = await res.json();
     if (!res.ok) {
-      alert(data.error ?? 'Erro ao alterar permissão');
+      alert(data.error ?? `Erro ao ${acao} usuário`);
       return;
     }
     carregar();
@@ -145,37 +160,62 @@ function AbaUsuarios({ usuarioAtualId }: { usuarioAtualId?: string }) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-v4border bg-v4surface p-4 divide-y divide-white/5">
-        {usuarios.map((u) => (
-          <div key={u.id} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0 gap-3">
-            <div className="min-w-0">
-              <div className="text-sm font-medium truncate">{u.nome}</div>
-              <div className="text-xs text-white/40 truncate">{u.email}</div>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <span className={`px-2 py-0.5 rounded-full text-xs capitalize font-medium ${
-                u.role === 'admin' ? 'bg-v4red/20 text-v4red' : 'bg-v4green/20 text-v4green'
-              }`}>{u.role}</span>
-              {u.id !== usuarioAtualId && (
-                <button
-                  onClick={() => mudarRole(u, u.role === 'admin' ? 'talent' : 'admin')}
-                  className="text-white/40 hover:text-v4yellow text-xs px-1.5 transition"
-                  title={u.role === 'admin' ? 'Rebaixar a talent' : 'Promover a admin'}
-                >
-                  {u.role === 'admin' ? '⬇' : '⬆'}
-                </button>
-              )}
-              <button
-                onClick={() => remover(u)}
-                disabled={u.id === usuarioAtualId}
-                className="text-white/30 hover:text-v4red disabled:opacity-20 text-xs px-1.5"
-                title={u.id === usuarioAtualId ? 'Você não pode remover seu próprio usuário' : 'Remover'}
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-        ))}
+      <div className="rounded-2xl border border-v4border bg-v4surface overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs text-white/40 border-b border-white/5">
+              <th className="px-4 py-2.5 font-medium">Nome</th>
+              <th className="px-4 py-2.5 font-medium">E-mail</th>
+              <th className="px-4 py-2.5 font-medium">Papel</th>
+              <th className="px-4 py-2.5 font-medium">Status</th>
+              <th className="px-4 py-2.5 font-medium text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5">
+            {usuarios.map((u) => (
+              <tr key={u.id} className={u.ativo ? '' : 'opacity-50'}>
+                <td className="px-4 py-2.5 font-medium truncate max-w-[160px]">{u.nome}</td>
+                <td className="px-4 py-2.5 text-white/50 truncate max-w-[220px]">{u.email}</td>
+                <td className="px-4 py-2.5">
+                  <span className={`px-2 py-0.5 rounded-full text-xs capitalize font-medium ${
+                    u.role === 'admin' ? 'bg-v4red/20 text-v4red' : 'bg-v4green/20 text-v4green'
+                  }`}>{u.role}</span>
+                </td>
+                <td className="px-4 py-2.5">
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                    u.ativo ? 'bg-white/10 text-white/60' : 'bg-v4yellow/15 text-v4yellow'
+                  }`}>{u.ativo ? 'Ativo' : 'Inativo'}</span>
+                </td>
+                <td className="px-4 py-2.5">
+                  <div className="flex items-center justify-end gap-1.5">
+                    <button
+                      onClick={() => setEditando(u)}
+                      className="text-white/40 hover:text-white text-xs px-2 py-1 rounded-full hover:bg-white/10 transition"
+                    >
+                      ✎ Editar
+                    </button>
+                    {u.id !== usuarioAtualId && (
+                      <button
+                        onClick={() => alternarAtivo(u)}
+                        className="text-white/40 hover:text-v4yellow text-xs px-2 py-1 rounded-full hover:bg-white/10 transition"
+                      >
+                        {u.ativo ? 'Desativar' : 'Reativar'}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => remover(u)}
+                      disabled={u.id === usuarioAtualId}
+                      className="text-white/30 hover:text-v4red disabled:opacity-20 text-xs px-2 py-1 rounded-full hover:bg-white/10 transition"
+                      title={u.id === usuarioAtualId ? 'Você não pode remover seu próprio usuário' : 'Remover'}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {erro && <p className="text-sm text-v4red">{erro}</p>}
@@ -250,40 +290,382 @@ function AbaUsuarios({ usuarioAtualId }: { usuarioAtualId?: string }) {
           + Novo usuário
         </button>
       )}
+
+      {editando && (
+        <ModalEditarUsuario
+          usuario={editando}
+          onClose={() => setEditando(null)}
+          onSalvo={() => { setEditando(null); carregar(); }}
+        />
+      )}
     </div>
   );
 }
 
+function ModalEditarUsuario({
+  usuario, onClose, onSalvo
+}: {
+  usuario: Usuario;
+  onClose: () => void;
+  onSalvo: () => void;
+}) {
+  const [nome, setNome] = useState(usuario.nome);
+  const [email, setEmail] = useState(usuario.email);
+  const [role, setRole] = useState(usuario.role);
+  const [novaSenha, setNovaSenha] = useState('');
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState('');
+
+  async function salvar(e: React.FormEvent) {
+    e.preventDefault();
+    setErro('');
+    setSalvando(true);
+    try {
+      const body: Record<string, unknown> = {};
+      if (nome !== usuario.nome) body.nome = nome;
+      if (email !== usuario.email) body.email = email;
+      if (role !== usuario.role) body.role = role;
+      if (novaSenha) body.senha = novaSenha;
+
+      if (Object.keys(body).length === 0) {
+        onClose();
+        return;
+      }
+
+      const res = await fetch(`/api/usuarios/${usuario.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Erro ao salvar');
+      onSalvo();
+    } catch (err: any) {
+      setErro(err.message ?? 'Erro ao salvar');
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center v4-fade-in" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <form onSubmit={salvar} className="bg-v4bg border border-v4border rounded-2xl p-6 w-full max-w-md shadow-card space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-heading font-semibold text-lg">Editar usuário</h3>
+          <button type="button" onClick={onClose} className="text-white/50 hover:text-white text-lg">✕</button>
+        </div>
+        <div>
+          <label className="block text-xs text-white/50 mb-1">Nome</label>
+          <input
+            required
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-white/50 mb-1">E-mail</label>
+          <input
+            required
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-white/50 mb-1">Papel</label>
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value as 'admin' | 'talent')}
+            className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
+          >
+            <option value="talent">Talent</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs text-white/50 mb-1">Resetar senha (opcional — deixe em branco pra manter)</label>
+          <input
+            type="password"
+            minLength={8}
+            placeholder="Nova senha (mín. 8 caracteres)"
+            value={novaSenha}
+            onChange={(e) => setNovaSenha(e.target.value)}
+            className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
+          />
+        </div>
+        {erro && <p className="text-sm text-v4red">{erro}</p>}
+        <div className="flex gap-2 pt-1">
+          <button
+            type="submit"
+            disabled={salvando}
+            className="rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-white font-semibold px-4 py-2 text-sm transition"
+          >
+            {salvando ? 'Salvando…' : 'Salvar'}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-white/10 text-white/60 hover:text-white px-4 py-2 text-sm transition"
+          >
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+/* ────────────────────────────── Logs ────────────────────────────── */
+
+const EVENTOS_LISTA = Object.keys(RÓTULO_EVENTO);
+
 function AbaLogs() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mostrarWebhook, setMostrarWebhook] = useState(false);
 
-  useEffect(() => {
-    fetch('/api/logs')
+  const [evento, setEvento] = useState('');
+  const [ator, setAtor] = useState('');
+  const [q, setQ] = useState('');
+  const [desde, setDesde] = useState('');
+  const [ate, setAte] = useState('');
+
+  function montarParams(extra?: Record<string, string>) {
+    const params = new URLSearchParams();
+    if (evento) params.set('evento', evento);
+    if (ator) params.set('ator', ator);
+    if (q) params.set('q', q);
+    if (desde) params.set('desde', new Date(desde).toISOString());
+    if (ate) params.set('ate', new Date(ate).toISOString());
+    if (extra) for (const [k, v] of Object.entries(extra)) params.set(k, v);
+    return params;
+  }
+
+  function carregar() {
+    setLoading(true);
+    fetch(`/api/logs?${montarParams().toString()}`)
       .then((r) => r.json())
       .then((data: LogEntry[]) => {
         setLogs(data);
         setLoading(false);
       });
-  }, []);
+  }
 
-  if (loading) return <p className="text-white/50">Carregando…</p>;
-  if (logs.length === 0) return <p className="text-white/40 text-sm">Nenhum evento registrado ainda.</p>;
+  useEffect(carregar, [evento, ator, q, desde, ate]);
+
+  function exportarCsv() {
+    window.location.href = `/api/logs?${montarParams({ formato: 'csv' }).toString()}`;
+  }
+
+  function limparFiltros() {
+    setEvento('');
+    setAtor('');
+    setQ('');
+    setDesde('');
+    setAte('');
+  }
 
   return (
-    <div className="rounded-2xl border border-v4border bg-v4surface divide-y divide-white/5 max-h-[600px] overflow-y-auto">
-      {logs.map((l) => (
-        <div key={l.id} className="px-4 py-2.5 text-xs">
-          <div className="flex items-center justify-between gap-3">
-            <span className="font-medium">{RÓTULO_EVENTO[l.evento] ?? l.evento}</span>
-            <span className="text-white/30 shrink-0">{new Date(l.criadoEm).toLocaleString('pt-BR')}</span>
-          </div>
-          <div className="text-white/40 mt-0.5">
-            {l.ator && <span className="mr-2">por {l.ator}</span>}
-            {l.detalhes && <span className="break-all">{JSON.stringify(l.detalhes)}</span>}
-          </div>
+    <div className="space-y-4">
+      {/* Barra de filtros */}
+      <div className="flex flex-wrap gap-2 items-center">
+        <select
+          value={evento}
+          onChange={(e) => setEvento(e.target.value)}
+          className="rounded-full bg-v4surface border border-v4border px-3 py-2 text-sm outline-none focus:border-v4red"
+        >
+          <option value="">Todos os eventos</option>
+          {EVENTOS_LISTA.map((ev) => (
+            <option key={ev} value={ev}>{RÓTULO_EVENTO[ev]}</option>
+          ))}
+        </select>
+        <input
+          value={ator}
+          onChange={(e) => setAtor(e.target.value)}
+          placeholder="Filtrar por ator (e-mail)…"
+          className="rounded-full bg-v4surface border border-v4border px-3 py-2 text-sm outline-none focus:border-v4red w-48"
+        />
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Busca livre…"
+          className="rounded-full bg-v4surface border border-v4border px-3 py-2 text-sm outline-none focus:border-v4red w-40"
+        />
+        <input
+          type="datetime-local"
+          value={desde}
+          onChange={(e) => setDesde(e.target.value)}
+          className="rounded-full bg-v4surface border border-v4border px-3 py-2 text-xs outline-none focus:border-v4red text-white/70"
+          title="Desde"
+        />
+        <input
+          type="datetime-local"
+          value={ate}
+          onChange={(e) => setAte(e.target.value)}
+          className="rounded-full bg-v4surface border border-v4border px-3 py-2 text-xs outline-none focus:border-v4red text-white/70"
+          title="Até"
+        />
+        {(evento || ator || q || desde || ate) && (
+          <button onClick={limparFiltros} className="text-xs text-white/40 hover:text-white px-2">
+            ✕ Limpar
+          </button>
+        )}
+        <div className="ml-auto flex gap-2">
+          <button
+            onClick={() => setMostrarWebhook(true)}
+            className="rounded-full bg-white/[0.05] border border-white/10 text-white/60 hover:text-white hover:border-white/30 px-3.5 py-2 text-sm transition"
+          >
+            🔗 Webhook
+          </button>
+          <button
+            onClick={exportarCsv}
+            className="rounded-full bg-v4green/15 text-v4green hover:bg-v4green/25 font-semibold px-3.5 py-2 text-sm transition"
+          >
+            ⬇ Exportar CSV
+          </button>
         </div>
-      ))}
+      </div>
+
+      {loading ? (
+        <p className="text-white/50">Carregando…</p>
+      ) : logs.length === 0 ? (
+        <p className="text-white/40 text-sm">Nenhum evento encontrado com esses filtros.</p>
+      ) : (
+        <div className="rounded-2xl border border-v4border bg-v4surface divide-y divide-white/5 max-h-[600px] overflow-y-auto">
+          {logs.map((l) => (
+            <div key={l.id} className="px-4 py-2.5 text-xs">
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-medium">{RÓTULO_EVENTO[l.evento] ?? l.evento}</span>
+                <span className="text-white/30 shrink-0">{new Date(l.criadoEm).toLocaleString('pt-BR')}</span>
+              </div>
+              <div className="text-white/40 mt-0.5">
+                {l.ator && <span className="mr-2">por {l.ator}</span>}
+                {l.detalhes && <span className="break-all">{JSON.stringify(l.detalhes)}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {mostrarWebhook && <ModalWebhook onClose={() => setMostrarWebhook(false)} />}
+    </div>
+  );
+}
+
+function ModalWebhook({ onClose }: { onClose: () => void }) {
+  const [url, setUrl] = useState('');
+  const [eventosSelecionados, setEventosSelecionados] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState('');
+  const [sucesso, setSucesso] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/config/webhooks')
+      .then((r) => r.json())
+      .then((data: { url?: string; eventos?: string[] }) => {
+        setUrl(data.url ?? '');
+        setEventosSelecionados(new Set(data.eventos ?? []));
+        setLoading(false);
+      });
+  }, []);
+
+  function toggleEvento(ev: string) {
+    setEventosSelecionados((atual) => {
+      const next = new Set(atual);
+      if (next.has(ev)) next.delete(ev);
+      else next.add(ev);
+      return next;
+    });
+  }
+
+  async function salvar(e: React.FormEvent) {
+    e.preventDefault();
+    setErro('');
+    setSalvando(true);
+    try {
+      const res = await fetch('/api/config/webhooks', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, eventos: Array.from(eventosSelecionados) })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Erro ao salvar');
+      setSucesso(true);
+      setTimeout(onClose, 900);
+    } catch (err: any) {
+      setErro(err.message ?? 'Erro ao salvar webhook');
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center v4-fade-in" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <form onSubmit={salvar} className="bg-v4bg border border-v4border rounded-2xl p-6 w-full max-w-lg shadow-card space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-heading font-semibold text-lg">🔗 Webhook de logs</h3>
+            <p className="text-xs text-white/40 mt-0.5">POST em tempo real (fire-and-forget) pros eventos selecionados — ex: Slack, n8n.</p>
+          </div>
+          <button type="button" onClick={onClose} className="text-white/50 hover:text-white text-lg">✕</button>
+        </div>
+
+        {loading ? (
+          <p className="text-white/50 text-sm">Carregando…</p>
+        ) : (
+          <>
+            <div>
+              <label className="block text-xs text-white/50 mb-1">URL do webhook (deixe em branco pra desativar)</label>
+              <input
+                type="url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://hooks.slack.com/... ou https://n8n.../webhook/..."
+                className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-white/50 mb-2">Eventos que disparam o webhook</label>
+              <div className="grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto pr-1">
+                {EVENTOS_LISTA.map((ev) => (
+                  <label key={ev} className="flex items-center gap-1.5 text-xs text-white/60 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={eventosSelecionados.has(ev)}
+                      onChange={() => toggleEvento(ev)}
+                      className="accent-v4red"
+                    />
+                    {RÓTULO_EVENTO[ev]}
+                  </label>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        {erro && <p className="text-sm text-v4red">{erro}</p>}
+        {sucesso && <p className="text-sm text-v4green">✓ Salvo</p>}
+
+        <div className="flex gap-2 pt-1">
+          <button
+            type="submit"
+            disabled={salvando || loading}
+            className="rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-white font-semibold px-4 py-2 text-sm transition"
+          >
+            {salvando ? 'Salvando…' : 'Salvar'}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-white/10 text-white/60 hover:text-white px-4 py-2 text-sm transition"
+          >
+            Cancelar
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
