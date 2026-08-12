@@ -37,13 +37,17 @@ export function limparTelefone(input: string): string {
 
 /**
  * Formata progressivamente como telefone BR enquanto digita: (11) 99999-9999 ou (11) 9999-9999.
- * Números com "+" (internacional) ou muitos dígitos não são forçados no molde BR — só limpa letras.
+ * Números com "+" (internacional) usam o limite E.164 (15 dígitos); sem "+", trunca em 11
+ * (DDD + até 9 dígitos) — sem isso o campo aceitava dígitos infinitos (bug reportado).
  */
 export function formatarTelefone(input: string): string {
   const limpo = limparTelefone(input);
-  if (limpo.startsWith('+') || limpo.length > 11) return limpo;
 
-  const d = limpo;
+  if (limpo.startsWith('+')) {
+    return '+' + limpo.slice(1).slice(0, 15);
+  }
+
+  const d = limpo.slice(0, 11);
   if (d.length === 0) return '';
   if (d.length <= 2) return `(${d}`;
   if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;

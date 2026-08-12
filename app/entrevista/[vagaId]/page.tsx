@@ -301,6 +301,7 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
               <input
                 required
                 inputMode="tel"
+                maxLength={17}
                 value={telefone}
                 onChange={(e) => setTelefone(formatarTelefone(e.target.value))}
                 placeholder="(11) 99999-9999"
