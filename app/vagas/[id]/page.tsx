@@ -776,7 +776,7 @@ function PerfilCandidatoModal({
 }) {
   const [novaNota, setNovaNota] = useState('');
   const [enviandoNota, setEnviandoNota] = useState(false);
-  const [exportando, setExportando] = useState(false);
+  const [formatoExportando, setFormatoExportando] = useState<'csv' | 'pdf' | null>(null);
   const [erroExport, setErroExport] = useState('');
   const [detalheAberto, setDetalheAberto] = useState<Record<string, boolean>>({});
 
@@ -792,11 +792,11 @@ function PerfilCandidatoModal({
     };
   }, [onClose]);
 
-  async function exportarParecer() {
-    setExportando(true);
+  async function exportarParecer(formato: 'csv' | 'pdf') {
+    setFormatoExportando(formato);
     setErroExport('');
     try {
-      const res = await fetch(`/api/candidaturas/${c.id}/parecer?formato=pdf`);
+      const res = await fetch(`/api/candidaturas/${c.id}/parecer?formato=${formato}`);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error ?? 'Erro ao gerar parecer');
@@ -805,13 +805,13 @@ function PerfilCandidatoModal({
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `parecer-${c.nome.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.pdf`;
+      a.download = `parecer-${c.nome.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.${formato}`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (err: any) {
       setErroExport(err.message ?? 'Erro ao gerar parecer');
     } finally {
-      setExportando(false);
+      setFormatoExportando(null);
     }
   }
 
@@ -901,21 +901,34 @@ function PerfilCandidatoModal({
             <div className="flex items-center gap-3">
               {(() => {
                 const aindaAvaliando = c.respostas.some((r) => r.avaliando);
+                const desabilitado = formatoExportando !== null || aindaAvaliando;
+                const rotulo = c.parecer ? 'Exportar parecer' : 'Gerar e exportar parecer';
                 return (
-                  <button
-                    onClick={exportarParecer}
-                    disabled={exportando || aindaAvaliando}
-                    title={aindaAvaliando ? 'Aguarde as respostas terminarem de ser avaliadas' : undefined}
-                    className="rounded border border-v4red/40 text-v4red hover:bg-v4red/10 disabled:opacity-50 text-xs font-semibold uppercase px-3 py-2"
-                  >
-                    {aindaAvaliando
-                      ? '⏳ Aguardando avaliação…'
-                      : exportando
-                        ? 'Gerando parecer…'
-                        : c.parecer
-                          ? '📄 Exportar parecer (PDF)'
-                          : '✨ Gerar e exportar parecer (PDF)'}
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => exportarParecer('pdf')}
+                      disabled={desabilitado}
+                      title={aindaAvaliando ? 'Aguarde as respostas terminarem de ser avaliadas' : undefined}
+                      className="rounded border border-v4red/40 text-v4red hover:bg-v4red/10 disabled:opacity-50 text-xs font-semibold uppercase px-3 py-2"
+                    >
+                      {aindaAvaliando
+                        ? '⏳ Aguardando avaliação…'
+                        : formatoExportando === 'pdf'
+                          ? 'Gerando…'
+                          : c.parecer
+                            ? '📄 ' + rotulo + ' (PDF)'
+                            : '✨ ' + rotulo + ' (PDF)'}
+                    </button>
+                    {!aindaAvaliando && (
+                      <button
+                        onClick={() => exportarParecer('csv')}
+                        disabled={desabilitado}
+                        className="rounded border border-v4green/40 text-v4green hover:bg-v4green/10 disabled:opacity-50 text-xs font-semibold uppercase px-3 py-2"
+                      >
+                        {formatoExportando === 'csv' ? 'Gerando…' : '📊 ' + rotulo + ' (CSV)'}
+                      </button>
+                    )}
+                  </div>
                 );
               })()}
               {erroExport && <span className="text-v4red text-xs">{erroExport}</span>}

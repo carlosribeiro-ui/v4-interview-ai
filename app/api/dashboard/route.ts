@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getVagas, getCandidaturas } from '@/lib/store';
 import { listarUsuarios, lerSessao } from '@/lib/auth';
 import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
+import { gerarTabelaPdfBuffer } from '@/lib/tabela-pdf';
 
 export const dynamic = 'force-dynamic';
 
@@ -147,6 +148,41 @@ export async function GET(req: NextRequest) {
     .map((v) => ({ id: v.id, nome: v.cargo, motivo: 'Sem candidatos novos na semana' }));
 
   const precisaAtencao = [...altaNotaSemDecisao, ...semParecer, ...vagasSemCandidatos];
+
+  // Export (CSV/PDF) — tabela de vagas com as mesmas métricas mostradas no dashboard
+  const formato = params.get('formato');
+  if (formato === 'csv' || formato === 'pdf') {
+    const colunas = [
+      { chave: 'cargo', titulo: 'Vaga' },
+      { chave: 'senioridade', titulo: 'Senioridade' },
+      { chave: 'total', titulo: 'Total' },
+      { chave: 'concluidos', titulo: 'Concluídos' },
+      { chave: 'emAndamento', titulo: 'Em andamento' },
+      { chave: 'scoreMedio', titulo: 'Score médio' }
+    ];
+    const linhas = vagasComStats.map((v) => ({
+      cargo: v.cargo,
+      senioridade: v.senioridade,
+      total: String(v.total),
+      concluidos: String(v.concluidos),
+      emAndamento: String(v.emAndamento),
+      scoreMedio: v.scoreMedio !== null ? v.scoreMedio.toFixed(1) : '—'
+    }));
+    const subtitulo = `${vagas.length} vaga(s) · ${candidaturas.length} candidato(s) · Score médio geral: ${scoreMedioGeral ?? '—'} · Gerado em ${new Date().toLocaleString('pt-BR')}`;
+
+    if (formato === 'csv') {
+      const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
+      const corpo = linhas.map((l) => colunas.map((c) => esc(l[c.chave as keyof typeof l])).join(','));
+      return new NextResponse('﻿' + [colunas.map((c) => esc(c.titulo)).join(','), ...corpo].join('\n'), {
+        headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="dashboard.csv"' }
+      });
+    }
+
+    const buffer = await gerarTabelaPdfBuffer({ titulo: 'Dashboard — vagas', subtitulo, colunas, linhas });
+    return new NextResponse(new Uint8Array(buffer), {
+      headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment; filename="dashboard.pdf"' }
+    });
+  }
 
   return NextResponse.json({
     totais: {

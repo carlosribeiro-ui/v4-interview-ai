@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCandidaturas, getVagas } from '@/lib/store';
 import { lerSessao } from '@/lib/auth';
 import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
+import { gerarTabelaPdfBuffer } from '@/lib/tabela-pdf';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,25 +30,27 @@ export type CandidatoEnriquecido = {
   idioma?: string;
 };
 
+const COLUNAS_EXPORT = ['Nome', 'Email', 'Telefone', 'Vaga', 'Senioridade', 'Status', 'Fase', 'Score médio', 'Criado em'];
+
+/** Uma linha por candidato, na mesma ordem/campos das colunas acima — reaproveitada pelo CSV e pelo PDF. */
+function linhaExport(c: CandidatoEnriquecido): string[] {
+  return [
+    c.nome,
+    c.email,
+    c.telefone ?? '',
+    c.vagaCargo,
+    c.vagaSenioridade,
+    c.status === 'concluida' ? 'Concluída' : 'Em andamento',
+    c.fase,
+    c.scoreMedio !== null ? c.scoreMedio.toFixed(1) : '',
+    new Date(c.createdAt).toLocaleString('pt-BR')
+  ];
+}
+
 function paraCsv(linhas: CandidatoEnriquecido[]): string {
-  const header = ['Nome', 'Email', 'Telefone', 'Vaga', 'Senioridade', 'Status', 'Fase', 'Score médio', 'Criado em'];
   const escapar = (v: string) => `"${v.replace(/"/g, '""')}"`;
-  const corpo = linhas.map((c) =>
-    [
-      c.nome,
-      c.email,
-      c.telefone ?? '',
-      c.vagaCargo,
-      c.vagaSenioridade,
-      c.status === 'concluida' ? 'Concluída' : 'Em andamento',
-      c.fase,
-      c.scoreMedio !== null ? c.scoreMedio.toFixed(1) : '',
-      new Date(c.createdAt).toLocaleString('pt-BR')
-    ]
-      .map((v) => escapar(String(v)))
-      .join(',')
-  );
-  return [header.map(escapar).join(','), ...corpo].join('\n');
+  const corpo = linhas.map((c) => linhaExport(c).map((v) => escapar(String(v))).join(','));
+  return [COLUNAS_EXPORT.map(escapar).join(','), ...corpo].join('\n');
 }
 
 export async function GET(req: NextRequest) {
@@ -135,6 +138,22 @@ export async function GET(req: NextRequest) {
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
         'Content-Disposition': 'attachment; filename="candidatos.csv"'
+      }
+    });
+  }
+
+  if (formato === 'pdf') {
+    const chaves = ['nome', 'email', 'telefone', 'vaga', 'senioridade', 'status', 'fase', 'score', 'criadoEm'];
+    const buffer = await gerarTabelaPdfBuffer({
+      titulo: 'Candidatos',
+      subtitulo: `${candidatos.length} candidato(s) · Gerado em ${new Date().toLocaleString('pt-BR')}`,
+      colunas: COLUNAS_EXPORT.map((titulo, i) => ({ chave: chaves[i], titulo })),
+      linhas: candidatos.map((c) => Object.fromEntries(linhaExport(c).map((v, i) => [chaves[i], v])))
+    });
+    return new NextResponse(new Uint8Array(buffer), {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'attachment; filename="candidatos.pdf"'
       }
     });
   }

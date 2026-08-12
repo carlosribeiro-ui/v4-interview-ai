@@ -7,6 +7,7 @@ import GraficoBarras from '@/app/components/GraficoBarras';
 import GraficoFunil from '@/app/components/GraficoFunil';
 import { useSessao } from '@/app/components/Sessao';
 import NovaVagaWizard from '@/app/components/NovaVagaWizard';
+import ExportButtons from '@/app/components/ExportButtons';
 
 type VagaStats = {
   id: string;
@@ -92,12 +93,7 @@ export default function DashboardPage() {
           <p className="text-white/40 text-sm mt-0.5">Visão geral do seu funil de seleção</p>
         </div>
         <div className="flex items-center gap-2">
-          <a
-            href="/api/dashboard?formato=csv"
-            className="rounded-full bg-white/[0.06] hover:bg-white/10 text-white/70 font-medium px-4 py-2.5 text-sm transition"
-          >
-            ⬇ CSV
-          </a>
+          <ExportButtons onExport={(formato) => { window.location.href = `/api/dashboard?formato=${formato}`; }} />
           {isAdmin && (
           <button
             onClick={() => setMostrarForm((v) => !v)}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSessao } from '@/app/components/Sessao';
+import ExportButtons from '@/app/components/ExportButtons';
 
 type Aba = 'usuarios' | 'logs' | 'webhooks';
 
@@ -459,8 +460,8 @@ function AbaLogs() {
 
   useEffect(carregar, [evento, ator, q, desde, ate]);
 
-  function exportarCsv() {
-    window.location.href = `/api/logs?${montarParams({ formato: 'csv' }).toString()}`;
+  function exportar(formato: 'csv' | 'pdf') {
+    window.location.href = `/api/logs?${montarParams({ formato }).toString()}`;
   }
 
   function limparFiltros() {
@@ -516,12 +517,7 @@ function AbaLogs() {
             ✕ Limpar
           </button>
         )}
-        <button
-          onClick={exportarCsv}
-          className="ml-auto rounded-full bg-v4green/15 text-v4green hover:bg-v4green/25 font-semibold px-3.5 py-2 text-sm transition"
-        >
-          ⬇ Exportar CSV
-        </button>
+        <ExportButtons onExport={exportar} className="ml-auto" />
       </div>
 
       {loading ? (

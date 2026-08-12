@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { lerSessao } from '@/lib/auth';
 import { listarLogs, logsParaCsv, type LogEvento } from '@/lib/logs';
+import { gerarTabelaPdfBuffer } from '@/lib/tabela-pdf';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,6 +34,31 @@ export async function GET(req: NextRequest) {
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
         'Content-Disposition': 'attachment; filename="logs.csv"'
+      }
+    });
+  }
+
+  if (formato === 'pdf') {
+    const buffer = await gerarTabelaPdfBuffer({
+      titulo: 'Logs de auditoria',
+      subtitulo: `${logs.length} evento(s) · Gerado em ${new Date().toLocaleString('pt-BR')}`,
+      colunas: [
+        { chave: 'dataHora', titulo: 'Data/hora', largura: 1 },
+        { chave: 'evento', titulo: 'Evento', largura: 1 },
+        { chave: 'ator', titulo: 'Ator', largura: 1.2 },
+        { chave: 'detalhes', titulo: 'Detalhes', largura: 2.5 }
+      ],
+      linhas: logs.map((l) => ({
+        dataHora: new Date(l.criadoEm).toLocaleString('pt-BR'),
+        evento: l.evento,
+        ator: l.ator ?? '',
+        detalhes: l.detalhes ? JSON.stringify(l.detalhes) : ''
+      }))
+    });
+    return new NextResponse(new Uint8Array(buffer), {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'attachment; filename="logs.pdf"'
       }
     });
   }

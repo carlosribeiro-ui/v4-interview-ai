@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import ScoreRing from '@/app/components/ScoreRing';
+import ExportButtons from '@/app/components/ExportButtons';
 
 type RelatorioData = {
   totais: { vagas: number; candidatos: number; concluidos: number; scoreMedioGeral: number | null };
@@ -39,10 +40,10 @@ export default function RelatoriosPage() {
 
   useEffect(() => { carregar(); }, [vagaFiltro, faixaScore, periodo]);
 
-  function baixarCsv() {
+  function baixar(formato: 'csv' | 'pdf') {
     const p = new URLSearchParams();
     if (vagaFiltro) p.set('vagaId', vagaFiltro);
-    p.set('formato', 'csv');
+    p.set('formato', formato);
     window.location.href = `/api/relatorios?${p.toString()}`;
   }
 
@@ -56,7 +57,7 @@ export default function RelatoriosPage() {
           <h1 className="font-heading text-2xl font-bold">Relatórios</h1>
           <p className="text-white/40 text-sm mt-0.5">Análise profunda com filtros e exportação.</p>
         </div>
-        <button onClick={baixarCsv} className="rounded-full bg-v4green/15 text-v4green hover:bg-v4green/25 font-semibold px-4 py-2 text-sm transition">⬇ Baixar CSV</button>
+        <ExportButtons onExport={baixar} />
       </div>
 
       {/* Filtros */}

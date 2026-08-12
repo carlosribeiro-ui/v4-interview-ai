@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCandidatura, getVaga, salvarParecerAtomico } from '@/lib/store';
 import { gerarParecer } from '@/lib/llm';
 import { gerarParecerPdfBuffer } from '@/lib/parecer-pdf';
+import { gerarParecerCsv } from '@/lib/parecer-csv';
 import { comFila } from '@/lib/queue';
 import { lerSessao } from '@/lib/auth';
 import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
@@ -93,6 +94,16 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       return new NextResponse(new Uint8Array(buffer), {
         headers: {
           'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="${nomeArquivo}"`
+        }
+      });
+    }
+
+    if (formato === 'csv') {
+      const nomeArquivo = `parecer-${candidatura.nome.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.csv`;
+      return new NextResponse(gerarParecerCsv(vaga, candidatura), {
+        headers: {
+          'Content-Type': 'text/csv; charset=utf-8',
           'Content-Disposition': `attachment; filename="${nomeArquivo}"`
         }
       });

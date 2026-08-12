@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getVagas, getCandidaturas } from '@/lib/store';
 import { listarUsuarios, lerSessao } from '@/lib/auth';
 import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
+import { gerarTabelaPdfBuffer } from '@/lib/tabela-pdf';
 
 export const dynamic = 'force-dynamic';
 
@@ -99,12 +100,42 @@ export async function GET(req: NextRequest) {
     fase: vagaPorId.get(c.vagaId)?.fases.find((f) => f.id === c.fase)?.nome ?? c.fase, talent: c.talentResponsavel ?? '—'
   }));
 
+  const formato = params.get('formato');
+  const subtituloExport = `${candidaturas.length} candidato(s) · ${concluidas.length} concluído(s) · Score médio geral: ${scoreMedioGeral ?? '—'} · Gerado em ${new Date().toLocaleString('pt-BR')}`;
+
   // CSV
-  if (params.get('formato') === 'csv') {
+  if (formato === 'csv') {
     const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
     const header = ['Nome', 'Email', 'Vaga', 'Senioridade', 'Status', 'Fase', 'Score', 'Talent', 'Criado em'];
     const corpo = topCandidatos.map((c) => [c.nome, c.email, c.vaga, '', '', c.fase, c.scoreMedio?.toFixed(1) ?? '', c.talent, ''].map(esc).join(','));
     return new NextResponse('﻿' + [header.map(esc).join(','), ...corpo].join('\n'), { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="relatorios.csv"' } });
+  }
+
+  // PDF — top candidatos, mesmos dados do CSV (colunas sempre vazias no CSV — Senioridade/Status/Criado em — ficam de fora aqui)
+  if (formato === 'pdf') {
+    const buffer = await gerarTabelaPdfBuffer({
+      titulo: 'Relatório de candidatos',
+      subtitulo: subtituloExport,
+      colunas: [
+        { chave: 'nome', titulo: 'Nome', largura: 1.6 },
+        { chave: 'email', titulo: 'Email', largura: 1.8 },
+        { chave: 'vaga', titulo: 'Vaga', largura: 1.4 },
+        { chave: 'fase', titulo: 'Fase', largura: 1 },
+        { chave: 'score', titulo: 'Score', largura: 0.6 },
+        { chave: 'talent', titulo: 'Talent', largura: 1.4 }
+      ],
+      linhas: topCandidatos.map((c) => ({
+        nome: c.nome,
+        email: c.email,
+        vaga: c.vaga,
+        fase: c.fase,
+        score: c.scoreMedio?.toFixed(1) ?? '—',
+        talent: c.talent
+      }))
+    });
+    return new NextResponse(new Uint8Array(buffer), {
+      headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment; filename="relatorios.pdf"' }
+    });
   }
 
   return NextResponse.json({ totais: { vagas: vagas.length, candidatos: candidaturas.length, concluidos: concluidas.length, scoreMedioGeral }, vagas: vagasComStats, distribuicaoNotas, funil: { pendentes, aprovados, rejeitados, total: candidaturas.length }, timeline, scorePorSenioridade, topCandidatos, talentStats });

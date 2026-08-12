@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ScoreRing from '@/app/components/ScoreRing';
 import Pill from '@/app/components/Pill';
+import ExportButtons from '@/app/components/ExportButtons';
 import { useSessao } from '@/app/components/Sessao';
 import type { CandidatoEnriquecido } from '@/app/api/candidatos/route';
 
@@ -200,11 +201,11 @@ function CandidatosPageInner() {
     return grupos;
   }, [candidatos]);
 
-  function baixarCsv() {
+  function baixar(formato: 'csv' | 'pdf') {
     const params = new URLSearchParams();
     if (busca) params.set('q', busca);
     if (vagaFiltro) params.set('vagaId', vagaFiltro);
-    params.set('formato', 'csv');
+    params.set('formato', formato);
     window.location.href = `/api/candidatos?${params.toString()}`;
   }
 
@@ -217,12 +218,7 @@ function CandidatosPageInner() {
             Pipeline global — todas as vagas em um só lugar.
           </p>
         </div>
-        <button
-          onClick={baixarCsv}
-          className="rounded-full bg-v4green/15 text-v4green hover:bg-v4green/25 font-semibold px-4 py-2 text-sm transition"
-        >
-          ⬇ Baixar CSV
-        </button>
+        <ExportButtons onExport={baixar} />
       </div>
 
       {/* Filtros */}

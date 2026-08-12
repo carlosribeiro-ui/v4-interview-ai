@@ -10,9 +10,9 @@ Clone funcional da Coploy: entrevistas assíncronas em vídeo avaliadas por IA. 
 2. **Admin compartilha o link** (`/vagas/[id]` → "Copiar link"): `/entrevista/[vagaId]`.
 3. **Candidato responde** (`/entrevista/[vagaId]`): preenche nome/e-mail (+ LinkedIn, telefone, pretensão salarial e CV em PDF opcionais). A gravação é automática — sem botões, sem controle manual. Cada resposta é processada em background enquanto o candidato lê a próxima pergunta.
 4. **IA avalia automaticamente**: Gemini transcreve o áudio, analisa frames do vídeo (detecção de teleprompter), e gera nota 0-10 + feedback técnico calibrado por senioridade. Quando disponível, o CV/LinkedIn do candidato é usado como contexto adicional na avaliação.
-5. **Admin acompanha o pipeline** (`/vagas/[id]`): kanban com drag-and-drop, nota, vídeo, transcrição, feedback detalhado e parecer final consolidado (exportável em PDF).
-6. **Admin gerencia candidatos globalmente** (`/candidatos`): kanban de todas as vagas, filtros avançados, atribuição de talent, ação em massa e remoção de candidaturas (individual ou em lote — admin only).
-7. **Admin gerencia usuários e auditoria** (`/admin/config`): editar nome/e-mail/papel de qualquer usuário, ativar/desativar (bloqueia login sem apagar histórico), resetar senha; aba de logs com filtro por evento/ator/data/busca livre, export CSV e webhook configurável (Slack, n8n etc.) por tipo de evento.
+5. **Admin acompanha o pipeline** (`/vagas/[id]`): kanban com drag-and-drop, nota, vídeo, transcrição, feedback detalhado e parecer final consolidado (exportável em CSV ou PDF).
+6. **Admin gerencia candidatos globalmente** (`/candidatos`): kanban de todas as vagas, filtros avançados, atribuição de talent, ação em massa, remoção de candidaturas (individual ou em lote — admin only) e export em CSV ou PDF.
+7. **Admin gerencia usuários e auditoria** (`/admin/config`): editar nome/e-mail/papel de qualquer usuário, ativar/desativar (bloqueia login sem apagar histórico), resetar senha; aba de logs com filtro por evento/ator/data/busca livre, export em CSV ou PDF e webhook configurável (Slack, n8n etc.) por tipo de evento.
 8. **Qualquer usuário edita o próprio perfil** (`/perfil`): nome, e-mail e troca de senha (exige senha atual) — disponível pra admin e talent.
 
 ## Stack
@@ -23,7 +23,22 @@ Clone funcional da Coploy: entrevistas assíncronas em vídeo avaliadas por IA. 
 - **Deploy:** Vercel Hobby (free) + GitHub (private)
 - **IA:** Gemini 2.5 Flash (REST, sem SDK) — roteiro, avaliação, transcrição, TTS
 - **Kanban:** @dnd-kit/core (drag-and-drop)
-- **PDF:** @react-pdf/renderer (parecer consolidado)
+- **PDF:** @react-pdf/renderer (parecer consolidado + tabelas de export)
+
+## Exports (CSV/PDF)
+
+Todo export tabular da aplicação sai tanto em CSV quanto em PDF, via `?formato=csv|pdf` na própria rota GET (mesmos filtros já aplicados na tela):
+
+| Onde | Rota | Conteúdo |
+|------|------|----------|
+| `/` (dashboard) | `/api/dashboard` | Vagas com totais/score médio |
+| `/dashboard` | — | (sem export ainda — só KPIs em tela) |
+| `/relatorios` | `/api/relatorios` | Top candidatos com score/fase/talent |
+| `/candidatos` | `/api/candidatos` | Kanban global completo |
+| `/admin/config` → Logs | `/api/logs` | Auditoria filtrada |
+| `/vagas/[id]` → perfil do candidato | `/api/candidaturas/{id}/parecer` | Parecer consolidado (uma linha por pergunta no CSV) |
+
+PDF usa um componente de tabela genérico (`lib/tabela-pdf.tsx`, cabeçalho V4 repetido em toda página) reaproveitado pelos quatro exports tabulares; o parecer tem seu próprio layout de relatório (`lib/parecer-pdf.tsx` + `lib/parecer-csv.ts`).
 
 ## Segurança (v0.2.0)
 
