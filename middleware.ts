@@ -31,7 +31,8 @@ const API_ADMIN_ROUTES: { pattern: RegExp; methods: string[]; role: Role }[] = [
   // Logs de auditoria — admin only
   { pattern: /^\/api\/logs$/, methods: ['GET'], role: 'admin' },
   // Config de webhooks de log — admin only
-  { pattern: /^\/api\/config\/webhooks$/, methods: ['GET', 'PUT'], role: 'admin' },
+  { pattern: /^\/api\/config\/webhooks$/, methods: ['GET', 'POST'], role: 'admin' },
+  { pattern: /^\/api\/config\/webhooks\/[^/]+$/, methods: ['PATCH', 'DELETE'], role: 'admin' },
   // Editar/deletar vaga — admin only
   { pattern: /^\/api\/vagas\/[^/]+$/, methods: ['PATCH', 'DELETE'], role: 'admin' },
   // Gerenciar fases da vaga — admin only

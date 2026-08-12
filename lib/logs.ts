@@ -11,6 +11,7 @@ export type LogEvento =
   | 'usuario_desativado'
   | 'senha_resetada'
   | 'senha_alterada'
+  | 'senha_reset_solicitado'
   | 'role_alterada'
   | 'fase_alterada'
   | 'candidatura_criada'
@@ -23,6 +24,14 @@ export type LogEvento =
   | 'session_revoked'
   | 'erro_sistema'
   | 'webhook_config_alterado';
+
+export const EVENTOS_VALIDOS: LogEvento[] = [
+  'login', 'login_falhou', 'usuario_criado', 'usuario_removido', 'usuario_editado',
+  'usuario_ativado', 'usuario_desativado', 'senha_resetada', 'senha_alterada',
+  'senha_reset_solicitado', 'role_alterada', 'fase_alterada', 'candidatura_criada',
+  'candidatura_removida', 'vaga_criada', 'vaga_removida', 'rate_limit_hit', 'rbac_denial',
+  'auth_failure', 'session_revoked', 'erro_sistema', 'webhook_config_alterado'
+];
 
 export type LogEntry = {
   id: string;
@@ -50,24 +59,25 @@ export async function registrarLog(evento: LogEvento, detalhes?: Record<string, 
 }
 
 /**
- * Dispara o webhook configurado via UI de admin (collection `configuracoes`) se o
- * evento estiver na lista de eventos selecionados. Fire-and-forget — nunca aguarda
- * nem derruba o fluxo de quem chamou registrarLog. Import dinâmico pra evitar
- * dependência circular (lib/config.ts importa o tipo LogEvento daqui).
+ * Dispara todos os webhooks configurados via UI de admin (aba "Webhooks") que
+ * escutam esse evento. Fire-and-forget — nunca aguarda nem derruba o fluxo de
+ * quem chamou registrarLog. Import dinâmico pra evitar dependência circular
+ * (lib/config.ts importa o tipo LogEvento daqui).
  */
 async function dispararWebhookConfiguravel(entry: LogEntry): Promise<void> {
-  const { getWebhookLogsConfig } = await import('./config');
-  const config = await getWebhookLogsConfig();
-  if (!config?.url || !config.eventos.includes(entry.evento)) return;
-  try {
-    await fetch(config.url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: `v4-interview-ai · ${entry.evento}${entry.ator ? ` · ${entry.ator}` : ''}`, ...entry })
-    });
-  } catch {
-    // best-effort — falha de webhook nunca deve derrubar o registro do log
-  }
+  const { webhooksParaEvento } = await import('./config');
+  const webhooks = await webhooksParaEvento(entry.evento);
+  if (webhooks.length === 0) return;
+
+  await Promise.allSettled(
+    webhooks.map((wh) =>
+      fetch(wh.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: `v4-interview-ai · ${entry.evento}${entry.ator ? ` · ${entry.ator}` : ''}`, ...entry })
+      })
+    )
+  );
 }
 
 /** Registra evento de segurança com IP e User-Agent enriquecidos. */
