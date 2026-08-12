@@ -55,6 +55,14 @@ export async function enviarEmail(
   }
 }
 
+/** Substitui `{{chave}}` pelo valor correspondente em `variaveis` (string vazia se ausente). Usado pelos templates configuráveis em /admin/config → Modelos de e-mail. */
+export function renderizarTemplate(corpo: string, variaveis: Record<string, unknown>): string {
+  return corpo.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, chave: string) => {
+    const v = variaveis[chave];
+    return v === undefined || v === null ? '' : String(v);
+  });
+}
+
 export function templateResetSenha(nome: string, link: string): string {
   return `
     <div style="font-family: -apple-system, Segoe UI, Arial, sans-serif; max-width: 480px; margin: 0 auto; color: #1a1a1a;">

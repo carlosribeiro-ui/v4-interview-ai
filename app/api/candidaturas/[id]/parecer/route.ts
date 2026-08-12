@@ -6,6 +6,7 @@ import { gerarParecerCsv } from '@/lib/parecer-csv';
 import { comFila } from '@/lib/queue';
 import { lerSessao } from '@/lib/auth';
 import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
+import { registrarLog } from '@/lib/logs';
 import type { Parecer } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -58,6 +59,18 @@ async function obterOuGerarParecer(candidaturaId: string) {
 
       const atualizada = await salvarParecerAtomico(candidaturaId, candidatura.version, parecer);
       if (atualizada) {
+        // Feedback pro candidato — só dispara e-mail de verdade se houver template
+        // ativo pro evento em /admin/config (mesmo padrão do aviso ao talent, acima).
+        registrarLog('parecer_gerado', {
+          candidaturaId: atualizada.id,
+          candidatoNome: atualizada.nome,
+          candidatoEmail: atualizada.email,
+          vagaCargo: vaga.cargo,
+          score: parecer.scoreGeral,
+          recomendacao: parecer.recomendacao,
+          sinteseExecutiva: parecer.sinteseExecutiva,
+          conclusao: parecer.conclusao
+        }).catch(() => {});
         return { candidatura: atualizada, vaga } as const;
       }
       const recarregada = await getCandidatura(candidaturaId);

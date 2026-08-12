@@ -23,14 +23,18 @@ export type LogEvento =
   | 'auth_failure'
   | 'session_revoked'
   | 'erro_sistema'
-  | 'webhook_config_alterado';
+  | 'webhook_config_alterado'
+  | 'candidatura_finalizada'
+  | 'parecer_gerado'
+  | 'email_template_alterado';
 
 export const EVENTOS_VALIDOS: LogEvento[] = [
   'login', 'login_falhou', 'usuario_criado', 'usuario_removido', 'usuario_editado',
   'usuario_ativado', 'usuario_desativado', 'senha_resetada', 'senha_alterada',
   'senha_reset_solicitado', 'role_alterada', 'fase_alterada', 'candidatura_criada',
   'candidatura_removida', 'vaga_criada', 'vaga_removida', 'rate_limit_hit', 'rbac_denial',
-  'auth_failure', 'session_revoked', 'erro_sistema', 'webhook_config_alterado'
+  'auth_failure', 'session_revoked', 'erro_sistema', 'webhook_config_alterado',
+  'candidatura_finalizada', 'parecer_gerado', 'email_template_alterado'
 ];
 
 export type LogEntry = {
@@ -53,6 +57,7 @@ export async function registrarLog(evento: LogEvento, detalhes?: Record<string, 
     const entry: LogEntry = { id: randomUUID(), evento, ator, detalhes, criadoEm: new Date().toISOString() };
     await col.insertOne(entry);
     dispararWebhookConfiguravel(entry).catch(() => {});
+    dispararEmailsConfiguraveis(entry).catch(() => {});
   } catch (err) {
     console.error('Falha ao registrar log:', evento, err);
   }
@@ -78,6 +83,16 @@ async function dispararWebhookConfiguravel(entry: LogEntry): Promise<void> {
       })
     )
   );
+}
+
+/**
+ * Dispara e-mails configurados via UI de admin (aba "Modelos de e-mail" em /admin/config)
+ * que escutam esse evento — fire-and-forget, nunca aguarda nem derruba quem chamou
+ * registrarLog. Import dinâmico pelo mesmo motivo de dispararWebhookConfiguravel.
+ */
+async function dispararEmailsConfiguraveis(entry: LogEntry): Promise<void> {
+  const { dispararEmailConfiguravel } = await import('./email-templates');
+  await dispararEmailConfiguravel(entry.evento, entry.detalhes ?? {});
 }
 
 /** Registra evento de segurança com IP e User-Agent enriquecidos. */

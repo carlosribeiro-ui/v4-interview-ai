@@ -5,11 +5,58 @@ import { useRouter } from 'next/navigation';
 import { useSessao } from '@/app/components/Sessao';
 import ExportButtons from '@/app/components/ExportButtons';
 
-type Aba = 'usuarios' | 'logs' | 'webhooks';
+type Aba = 'usuarios' | 'logs' | 'webhooks' | 'emailTemplates' | 'emailsEnviados';
 
 type Usuario = { id: string; nome: string; email: string; role: 'admin' | 'talent'; ativo: boolean };
 type LogEntry = { id: string; evento: string; ator?: string; detalhes?: Record<string, unknown>; criadoEm: string };
 type Webhook = { id: string; nome: string; url: string; eventos: string[]; ativo: boolean; criadoEm: string; atualizadoEm: string };
+type EmailTemplate = { id: string; evento: string; assunto: string; corpoHtml: string; ativo: boolean; criadoEm: string; atualizadoEm: string };
+type EmailEnviado = {
+  id: string;
+  templateId?: string;
+  evento: string;
+  destinatario: string;
+  assunto: string;
+  corpoRenderizado: string;
+  status: 'enviado' | 'falha' | 'nao_configurado';
+  erro?: string;
+  enviadoEm: string;
+};
+
+/** Eventos que disparam e-mail configurável (subconjunto dos eventos de log — ver lib/email-templates.ts) */
+const EVENTOS_EMAIL: { valor: string; label: string; variaveis: string[] }[] = [
+  {
+    valor: 'candidatura_finalizada',
+    label: 'Entrevista finalizada (avisa o talent responsável)',
+    variaveis: ['candidatoNome', 'candidatoEmail', 'vagaCargo', 'vagaId', 'talentNome', 'talentEmail', 'linkRevisao']
+  },
+  {
+    valor: 'parecer_gerado',
+    label: 'Parecer gerado (feedback pro candidato)',
+    variaveis: ['candidatoNome', 'vagaCargo', 'score', 'recomendacao', 'sinteseExecutiva', 'conclusao']
+  }
+];
+
+/** Conteúdo inicial sugerido ao criar um modelo novo — baseado no padrão que Pipefy/Inhire/Coploy usam, editável antes de salvar. */
+const RASCUNHO_PADRAO: Record<string, { assunto: string; corpoHtml: string }> = {
+  candidatura_finalizada: {
+    assunto: 'Entrevista pronta para revisão — {{vagaCargo}}',
+    corpoHtml:
+      '<p>Olá{{talentNome}},</p>' +
+      '<p>A entrevista do(a) candidato(a) <strong>{{candidatoNome}}</strong> para a vaga de <strong>{{vagaCargo}}</strong> está pronta para ser revisada.</p>' +
+      '<p>Você pode acessar todos os detalhes através do link abaixo:<br><a href="{{linkRevisao}}">{{linkRevisao}}</a></p>' +
+      '<p>Atenciosamente,<br>V4 Interview AI</p>'
+  },
+  parecer_gerado: {
+    assunto: 'Seu feedback da entrevista — {{vagaCargo}}',
+    corpoHtml:
+      '<p>Oi {{candidatoNome}},</p>' +
+      '<p>Você participou de uma entrevista para a vaga de <strong>{{vagaCargo}}</strong>. Ficamos felizes em ter você por aqui!</p>' +
+      '<p><strong>Feedback:</strong><br>{{sinteseExecutiva}}</p>' +
+      '<p><strong>Conclusão:</strong><br>{{conclusao}}</p>' +
+      '<p>Boa sorte nas próximas etapas! Estamos na torcida por você.<br>Atenciosamente,<br>V4 Interview AI</p>'
+  }
+};
 
 const RÓTULO_EVENTO: Record<string, string> = {
   login: 'Login',
@@ -33,7 +80,10 @@ const RÓTULO_EVENTO: Record<string, string> = {
   auth_failure: 'Falha de autenticação',
   session_revoked: 'Sessão revogada',
   erro_sistema: 'Erro de sistema',
-  webhook_config_alterado: 'Webhook de logs alterado'
+  webhook_config_alterado: 'Webhook de logs alterado',
+  candidatura_finalizada: 'Entrevista finalizada',
+  parecer_gerado: 'Parecer gerado',
+  email_template_alterado: 'Modelo de e-mail alterado'
 };
 
 const EVENTOS_LISTA = Object.keys(RÓTULO_EVENTO);
@@ -63,7 +113,9 @@ export default function AdminConfigPage() {
           [
             ['usuarios', 'Usuários'],
             ['logs', 'Logs'],
-            ['webhooks', 'Webhooks']
+            ['webhooks', 'Webhooks'],
+            ['emailTemplates', 'Modelos de e-mail'],
+            ['emailsEnviados', 'Caixa de saída']
           ] as [Aba, string][]
         ).map(([valor, label]) => (
           <button
@@ -81,6 +133,8 @@ export default function AdminConfigPage() {
       {aba === 'usuarios' && <AbaUsuarios usuarioAtualId={usuario.id} />}
       {aba === 'logs' && <AbaLogs />}
       {aba === 'webhooks' && <AbaWebhooks />}
+      {aba === 'emailTemplates' && <AbaModelosEmail />}
+      {aba === 'emailsEnviados' && <AbaCaixaSaida />}
     </div>
   );
 }
@@ -850,6 +904,385 @@ function ModalWebhookForm({
           </button>
         </div>
       </form>
+    </div>
+  );
+}
+
+/* ────────────────────────────── Modelos de e-mail ────────────────────────────── */
+
+function AbaModelosEmail() {
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [modalAberto, setModalAberto] = useState(false);
+  const [editando, setEditando] = useState<EmailTemplate | null>(null);
+
+  function carregar() {
+    setLoading(true);
+    fetch('/api/config/email-templates')
+      .then((r) => r.json())
+      .then((data: EmailTemplate[]) => {
+        setTemplates(Array.isArray(data) ? data : []);
+        setLoading(false);
+      });
+  }
+
+  useEffect(carregar, []);
+
+  async function alternarAtivo(t: EmailTemplate) {
+    const res = await fetch(`/api/config/email-templates/${t.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ativo: !t.ativo })
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error ?? 'Erro ao alterar modelo');
+      return;
+    }
+    carregar();
+  }
+
+  async function remover(t: EmailTemplate) {
+    if (!confirm(`Remover o modelo de "${RÓTULO_EVENTO[t.evento] ?? t.evento}"?`)) return;
+    const res = await fetch(`/api/config/email-templates/${t.id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error ?? 'Erro ao remover modelo');
+      return;
+    }
+    carregar();
+  }
+
+  if (loading) return <p className="text-white/50">Carregando…</p>;
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-white/40">
+        E-mail automático (via SMTP configurado no servidor) disparado nos eventos abaixo. Sem template ativo pro
+        evento, nada é enviado. Use <code className="text-white/60">{'{{variavel}}'}</code> no assunto/corpo — as
+        variáveis disponíveis aparecem ao escolher o evento.
+      </p>
+
+      {templates.length === 0 ? (
+        <p className="text-white/40 text-sm">Nenhum modelo configurado ainda.</p>
+      ) : (
+        <div className="rounded-2xl border border-v4border bg-v4surface divide-y divide-white/5">
+          {templates.map((t) => (
+            <div key={t.id} className={`p-4 flex items-start justify-between gap-4 ${t.ativo ? '' : 'opacity-50'}`}>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-sm">{RÓTULO_EVENTO[t.evento] ?? t.evento}</span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                      t.ativo ? 'bg-v4green/15 text-v4green' : 'bg-white/10 text-white/50'
+                    }`}
+                  >
+                    {t.ativo ? 'Ativo' : 'Inativo'}
+                  </span>
+                </div>
+                <p className="text-xs text-white/60 mt-1">{t.assunto}</p>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  onClick={() => setEditando(t)}
+                  className="text-white/40 hover:text-white text-xs px-2 py-1 rounded-full hover:bg-white/10 transition"
+                >
+                  ✎ Editar
+                </button>
+                <button
+                  onClick={() => alternarAtivo(t)}
+                  className="text-white/40 hover:text-v4yellow text-xs px-2 py-1 rounded-full hover:bg-white/10 transition"
+                >
+                  {t.ativo ? 'Desativar' : 'Ativar'}
+                </button>
+                <button
+                  onClick={() => remover(t)}
+                  className="text-white/30 hover:text-v4red text-xs px-2 py-1 rounded-full hover:bg-white/10 transition"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <button
+        onClick={() => setModalAberto(true)}
+        className="rounded-full border border-white/10 text-white/60 hover:text-white hover:border-white/30 px-4 py-2 text-sm transition"
+      >
+        + Novo modelo
+      </button>
+
+      {modalAberto && (
+        <ModalTemplateForm onClose={() => setModalAberto(false)} onSalvo={() => { setModalAberto(false); carregar(); }} />
+      )}
+      {editando && (
+        <ModalTemplateForm template={editando} onClose={() => setEditando(null)} onSalvo={() => { setEditando(null); carregar(); }} />
+      )}
+    </div>
+  );
+}
+
+function ModalTemplateForm({
+  template, onClose, onSalvo
+}: {
+  template?: EmailTemplate;
+  onClose: () => void;
+  onSalvo: () => void;
+}) {
+  const editandoExistente = !!template;
+  const [evento, setEvento] = useState(template?.evento ?? EVENTOS_EMAIL[0].valor);
+  const [assunto, setAssunto] = useState(template?.assunto ?? RASCUNHO_PADRAO[EVENTOS_EMAIL[0].valor].assunto);
+  const [corpoHtml, setCorpoHtml] = useState(template?.corpoHtml ?? RASCUNHO_PADRAO[EVENTOS_EMAIL[0].valor].corpoHtml);
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState('');
+
+  function trocarEvento(novoEvento: string) {
+    setEvento(novoEvento);
+    if (!editandoExistente) {
+      // Só pré-preenche com o rascunho padrão na criação — não pisa em cima de edição existente
+      const rascunho = RASCUNHO_PADRAO[novoEvento];
+      if (rascunho) {
+        setAssunto(rascunho.assunto);
+        setCorpoHtml(rascunho.corpoHtml);
+      }
+    }
+  }
+
+  async function salvar(e: React.FormEvent) {
+    e.preventDefault();
+    setErro('');
+    setSalvando(true);
+    try {
+      const body = editandoExistente ? { assunto, corpoHtml } : { evento, assunto, corpoHtml };
+      const res = await fetch(
+        editandoExistente ? `/api/config/email-templates/${template!.id}` : '/api/config/email-templates',
+        {
+          method: editandoExistente ? 'PATCH' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Erro ao salvar modelo');
+      onSalvo();
+    } catch (err: any) {
+      setErro(err.message ?? 'Erro ao salvar modelo');
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  const variaveis = EVENTOS_EMAIL.find((e) => e.valor === evento)?.variaveis ?? [];
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center v4-fade-in" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <form onSubmit={salvar} className="bg-v4bg border border-v4border rounded-2xl p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-card space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-heading font-semibold text-lg">{editandoExistente ? 'Editar modelo' : '+ Novo modelo'}</h3>
+          <button type="button" onClick={onClose} className="text-white/50 hover:text-white text-lg">✕</button>
+        </div>
+
+        <div>
+          <label className="block text-xs text-white/50 mb-1">Evento</label>
+          <select
+            disabled={editandoExistente}
+            value={evento}
+            onChange={(e) => trocarEvento(e.target.value)}
+            className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red disabled:opacity-50"
+          >
+            {EVENTOS_EMAIL.map((e) => (
+              <option key={e.valor} value={e.valor}>{e.label}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-xs text-white/50 mb-2">Variáveis disponíveis pra esse evento</label>
+          <div className="flex flex-wrap gap-1.5">
+            {variaveis.map((v) => (
+              <code key={v} className="px-2 py-0.5 rounded-full bg-white/[0.06] text-white/50 text-[10px]">
+                {`{{${v}}}`}
+              </code>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs text-white/50 mb-1">Assunto</label>
+          <input
+            required
+            value={assunto}
+            onChange={(e) => setAssunto(e.target.value)}
+            className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-white/50 mb-1">Corpo (HTML)</label>
+          <textarea
+            required
+            rows={10}
+            value={corpoHtml}
+            onChange={(e) => setCorpoHtml(e.target.value)}
+            className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red font-mono text-xs"
+          />
+        </div>
+
+        {erro && <p className="text-sm text-v4red">{erro}</p>}
+
+        <div className="flex gap-2 pt-1">
+          <button
+            type="submit"
+            disabled={salvando}
+            className="rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-white font-semibold px-4 py-2 text-sm transition"
+          >
+            {salvando ? 'Salvando…' : 'Salvar'}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-white/10 text-white/60 hover:text-white px-4 py-2 text-sm transition"
+          >
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+/* ────────────────────────────── Caixa de saída ────────────────────────────── */
+
+const RÓTULO_STATUS_EMAIL: Record<string, string> = {
+  enviado: 'Enviado',
+  falha: 'Falha no envio',
+  nao_configurado: 'SMTP não configurado'
+};
+
+function AbaCaixaSaida() {
+  const [enviados, setEnviados] = useState<EmailEnviado[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [evento, setEvento] = useState('');
+  const [status, setStatus] = useState('');
+  const [aberto, setAberto] = useState<EmailEnviado | null>(null);
+
+  function carregar() {
+    setLoading(true);
+    const params = new URLSearchParams();
+    if (evento) params.set('evento', evento);
+    if (status) params.set('status', status);
+    fetch(`/api/config/emails-enviados?${params.toString()}`)
+      .then((r) => r.json())
+      .then((data: EmailEnviado[]) => {
+        setEnviados(Array.isArray(data) ? data : []);
+        setLoading(false);
+      });
+  }
+
+  useEffect(carregar, [evento, status]);
+
+  if (loading) return <p className="text-white/50">Carregando…</p>;
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-white/40">
+        Histórico de toda tentativa de envio dos modelos configurados — com SMTP não configurado em prod, fica
+        registrado aqui como "SMTP não configurado" em vez de sair de verdade (ver aba Logs pra ver o link, quando aplicável).
+      </p>
+
+      <div className="flex flex-wrap gap-2 items-center">
+        <select
+          value={evento}
+          onChange={(e) => setEvento(e.target.value)}
+          className="rounded-full bg-v4surface border border-v4border px-3 py-2 text-sm outline-none focus:border-v4red"
+        >
+          <option value="">Todos os eventos</option>
+          {EVENTOS_EMAIL.map((e) => (
+            <option key={e.valor} value={e.valor}>{e.label}</option>
+          ))}
+        </select>
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          className="rounded-full bg-v4surface border border-v4border px-3 py-2 text-sm outline-none focus:border-v4red"
+        >
+          <option value="">Todos os status</option>
+          {Object.entries(RÓTULO_STATUS_EMAIL).map(([v, label]) => (
+            <option key={v} value={v}>{label}</option>
+          ))}
+        </select>
+      </div>
+
+      {enviados.length === 0 ? (
+        <p className="text-white/40 text-sm">Nenhum e-mail disparado ainda com esses filtros.</p>
+      ) : (
+        <div className="rounded-2xl border border-v4border bg-v4surface divide-y divide-white/5 max-h-[600px] overflow-y-auto">
+          {enviados.map((email) => (
+            <button
+              key={email.id}
+              onClick={() => setAberto(email)}
+              className="w-full text-left px-4 py-2.5 text-xs hover:bg-white/[0.04] transition cursor-pointer"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-medium truncate">{email.assunto}</span>
+                <span className="text-white/30 shrink-0">{new Date(email.enviadoEm).toLocaleString('pt-BR')}</span>
+              </div>
+              <div className="text-white/40 mt-0.5 flex items-center gap-2">
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-medium shrink-0 ${
+                    email.status === 'enviado'
+                      ? 'bg-v4green/15 text-v4green'
+                      : email.status === 'nao_configurado'
+                        ? 'bg-v4yellow/15 text-v4yellow'
+                        : 'bg-v4red/15 text-v4red'
+                  }`}
+                >
+                  {RÓTULO_STATUS_EMAIL[email.status] ?? email.status}
+                </span>
+                <span className="truncate">para {email.destinatario}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {aberto && <ModalDetalheEmail email={aberto} onClose={() => setAberto(null)} />}
+    </div>
+  );
+}
+
+function ModalDetalheEmail({ email, onClose }: { email: EmailEnviado; onClose: () => void }) {
+  useEffect(() => {
+    function aoTeclar(e: KeyboardEvent) { if (e.key === 'Escape') onClose(); }
+    document.addEventListener('keydown', aoTeclar);
+    return () => document.removeEventListener('keydown', aoTeclar);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center v4-fade-in" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-v4bg border border-v4border rounded-2xl p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-card space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-heading font-semibold text-lg">{email.assunto}</h3>
+          <button onClick={onClose} className="text-white/50 hover:text-white text-lg">✕</button>
+        </div>
+
+        <div className="rounded-xl border border-v4border bg-black/20 p-4 space-y-2.5 text-sm">
+          <CampoDetalhe label="Para" valor={email.destinatario} mono />
+          <CampoDetalhe label="Evento" valor={RÓTULO_EVENTO[email.evento] ?? email.evento} />
+          <CampoDetalhe label="Status" valor={RÓTULO_STATUS_EMAIL[email.status] ?? email.status} />
+          {email.erro && <CampoDetalhe label="Erro" valor={email.erro} mono />}
+          <CampoDetalhe label="Data/hora" valor={new Date(email.enviadoEm).toLocaleString('pt-BR', { dateStyle: 'full', timeStyle: 'medium' })} />
+        </div>
+
+        <div>
+          <p className="text-xs text-white/50 mb-2">Corpo enviado</p>
+          <div
+            className="rounded-xl border border-v4border bg-white text-black p-4 text-sm max-h-64 overflow-y-auto"
+            dangerouslySetInnerHTML={{ __html: email.corpoRenderizado }}
+          />
+        </div>
+      </div>
     </div>
   );
 }
