@@ -127,6 +127,8 @@ export const LIMITES = {
   tts: { limit: 15, windowMs: 60_000 },
   /** Login — prevenir brute force */
   login: { limit: 5, windowMs: 60_000 },
+  /** Esqueci minha senha — previne flood de e-mail / enumeração de contas */
+  resetSenha: { limit: 3, windowMs: 60_000 },
   /** Endritos de leitura públicos */
   publicRead: { limit: 30, windowMs: 60_000 },
   /** Endritos admin (já protegidos por auth, rate limit é defense-in-depth) */

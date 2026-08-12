@@ -148,7 +148,9 @@ function CandidatosPageInner() {
   }
 
   useEffect(() => {
-    fetch('/api/usuarios').then((r) => r.json()).then((d) => setTalents(Array.isArray(d) ? d : []));
+    // /api/usuarios/atribuiveis (não /api/usuarios) — essa é liberada pra admin E talent,
+    // já que os dois papéis usam o kanban e atribuem candidatos entre si.
+    fetch('/api/usuarios/atribuiveis').then((r) => r.json()).then((d) => setTalents(Array.isArray(d) ? d : []));
     carregar();
   }, [busca, vagaFiltro, faixaScore, mostrarTestes, faSegmento, faNivel, faFormacao, faPais, faEstado, faCidade, faIdioma]);
 
@@ -365,6 +367,23 @@ function CandidatosPageInner() {
                             </div>
                             <ScoreRing score={c.scoreMedio} size={38} strokeWidth={3} />
                           </div>
+                        {/* Dados principais visíveis direto no card — sem precisar abrir o perfil */}
+                        {(c.email || c.nivelProfissional || c.cidade || c.estado || c.pais || c.idioma) && (
+                          <div className="mt-1.5 space-y-0.5">
+                            {c.email && (
+                              <div className="text-[10px] text-white/35 truncate" title={c.email}>{c.email}</div>
+                            )}
+                            {(c.nivelProfissional || c.cidade || c.estado || c.pais || c.idioma) && (
+                              <div className="flex flex-wrap items-center gap-x-1 text-[10px] text-white/45">
+                                {c.nivelProfissional && <span>{c.nivelProfissional}</span>}
+                                {(c.cidade || c.estado || c.pais) && (
+                                  <span>· {[c.cidade, c.estado].filter(Boolean).join('/') || c.pais}</span>
+                                )}
+                                {c.idioma && <span>· {c.idioma}</span>}
+                              </div>
+                            )}
+                          </div>
+                        )}
                         <div className="flex items-center gap-1.5 mt-2">
                           <Pill tom={c.status === 'concluida' ? 'verde' : 'amarelo'}>
                             {c.status === 'concluida' ? 'Concluída' : 'Em andamento'}

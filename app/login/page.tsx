@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -84,6 +85,9 @@ function LoginForm() {
           >
             {enviando ? 'Entrando…' : 'Entrar'}
           </button>
+          <Link href="/esqueci-senha" className="block text-center text-white/40 text-xs hover:text-white/60 mt-1">
+            Esqueci minha senha
+          </Link>
         </form>
       </div>
     </div>

@@ -21,6 +21,7 @@
     "@upstash/redis": "^1.38.2",
     "mongodb": "^7.5.0",
     "next": "14.2.35",
+    "nodemailer": "^9.0.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "swagger-ui-react": "^5.32.11",
@@ -28,6 +29,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.16.11",
+    "@types/nodemailer": "^8.0.1",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.1",
     "@types/swagger-ui-react": "^5.18.0",

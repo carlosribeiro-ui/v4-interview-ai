@@ -34,6 +34,13 @@ const envSchema = z.object({
 
   // ─── CORS (allowlist de origins para rotas de integração) ───
   CORS_ALLOWED_ORIGINS: z.string().optional(),
+
+  // ─── SMTP (e-mail de "esqueci minha senha") — opcional ───
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.string().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_FROM: z.string().optional(),
 });
 
 // Validação lazy — só roda na primeira chamada
