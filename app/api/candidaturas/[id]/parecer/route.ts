@@ -75,7 +75,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 
   // V-SEC: Rate limit — gerar parecer é caro (chama Gemini)
-  const bloqueado = await aplicarRateLimit(req, 'parecer', LIMITES.admin);
+  const bloqueado = await aplicarRateLimit(req, 'parecer', LIMITES.admin, sessao.email);
   if (bloqueado) return bloqueado;
 
   const formato = req.nextUrl.searchParams.get('formato');

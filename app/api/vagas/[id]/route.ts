@@ -17,7 +17,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 
   // V-SEC: Rate limit
-  const bloqueado = await aplicarRateLimit(req, 'vaga-detail', LIMITES.admin);
+  const bloqueado = await aplicarRateLimit(req, 'vaga-detail', LIMITES.admin, sessao.email);
   if (bloqueado) return bloqueado;
 
   const vaga = await getVaga(params.id);

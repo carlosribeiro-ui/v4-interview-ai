@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
 
-  const bloqueado = await aplicarRateLimit(req, 'vagas-generate', LIMITES.admin);
+  const bloqueado = await aplicarRateLimit(req, 'vagas-generate', LIMITES.admin, sessao.email);
   if (bloqueado) return bloqueado;
 
   const body = await req.json();

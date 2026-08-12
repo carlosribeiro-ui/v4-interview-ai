@@ -3,7 +3,10 @@ const nextConfig = {
   experimental: {
     serverActions: {
       bodySizeLimit: '30mb'
-    }
+    },
+    // Habilita instrumentation.ts (register/onRequestError) — captura de erros
+    // não tratados em produção, gravados na coleção `logs`.
+    instrumentationHook: true
   },
 
   // Security headers como defense-in-depth (middleware já aplica, mas next.config é camada extra)

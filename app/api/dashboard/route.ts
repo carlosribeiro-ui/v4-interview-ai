@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
 
-  const bloqueado = await aplicarRateLimit(req, 'dashboard', LIMITES.admin);
+  const bloqueado = await aplicarRateLimit(req, 'dashboard', LIMITES.admin, sessao.email);
   if (bloqueado) return bloqueado;
 
   const params = req.nextUrl.searchParams;

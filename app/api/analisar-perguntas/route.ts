@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   }
 
   // V-SEC: Rate limit
-  const bloqueado = await aplicarRateLimit(req, 'analisar-perguntas', LIMITES.admin);
+  const bloqueado = await aplicarRateLimit(req, 'analisar-perguntas', LIMITES.admin, sessao.email);
   if (bloqueado) return bloqueado;
 
   const body = await req.json();

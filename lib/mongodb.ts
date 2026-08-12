@@ -29,7 +29,10 @@ function getClientPromise(): Promise<MongoClient> {
 
 export async function getDb(): Promise<Db> {
   const client = await getClientPromise();
-  const db = client.db('v4-interview-ai');
+  // MONGODB_DB_NAME permite apontar o dev local para um banco separado
+  // (mesmo cluster Atlas, banco diferente) sem tocar nos dados reais do time
+  // em produção. Se não setado, usa o banco de produção (comportamento antigo).
+  const db = client.db(process.env.MONGODB_DB_NAME || 'v4-interview-ai');
 
   // Lazy init: cria indexes na primeira conexão (idempotente)
   if (!global._indexesEnsured) {

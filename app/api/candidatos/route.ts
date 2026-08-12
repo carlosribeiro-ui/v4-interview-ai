@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
   }
 
   // V-SEC: Rate limit em endpoint de leitura em massa
-  const bloqueado = await aplicarRateLimit(req, 'candidatos-list', LIMITES.admin);
+  const bloqueado = await aplicarRateLimit(req, 'candidatos-list', LIMITES.admin, sessao.email);
   if (bloqueado) return bloqueado;
 
   const params = req.nextUrl.searchParams;
