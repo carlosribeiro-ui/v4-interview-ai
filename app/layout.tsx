@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Montserrat, IBM_Plex_Sans } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 import { SessaoProvider, UserBadge, AdminNavLink } from '@/app/components/Sessao';
 
@@ -84,6 +85,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </header>
           <main className="px-6 py-8 max-w-7xl mx-auto">{children}</main>
         </SessaoProvider>
+        <Analytics />
       </body>
     </html>
   );
