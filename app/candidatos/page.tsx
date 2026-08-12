@@ -15,6 +15,7 @@ import ScoreRing from '@/app/components/ScoreRing';
 import Pill from '@/app/components/Pill';
 import ExportButtons from '@/app/components/ExportButtons';
 import { useSessao } from '@/app/components/Sessao';
+import { OPCOES_FORMACAO, OPCOES_IDIOMA } from '@/lib/form-candidato';
 import type { CandidatoEnriquecido } from '@/app/api/candidatos/route';
 
 type FiltroStatus = 'todos' | 'em_andamento' | 'concluida';
@@ -400,14 +401,8 @@ function CandidatosPageInner() {
                 ['estagiario', 'Estagiário'], ['junior', 'Júnior'], ['pleno', 'Pleno'], ['senior', 'Sênior'],
                 ['especialista', 'Especialista'], ['gerente', 'Gerente'], ['diretor', 'Diretor']
               ]} />
-              <FiltroAvancadoSelect label="Formação" value={faFormacao} onChange={setFaFormacao} options={[
-                ['ensino-medio', 'Ensino Médio'], ['tecnico', 'Técnico'], ['superior', 'Superior'],
-                ['pos-graduacao', 'Pós-graduação'], ['mestrado', 'Mestrado'], ['doutorado', 'Doutorado']
-              ]} />
-              <FiltroAvancadoSelect label="Idioma" value={faIdioma} onChange={setFaIdioma} options={[
-                ['portugues', 'Português'], ['ingles', 'Inglês'], ['espanhol', 'Espanhol'],
-                ['frances', 'Francês'], ['alemao', 'Alemão'], ['outro', 'Outro']
-              ]} />
+              <FiltroAvancadoSelect label="Formação" value={faFormacao} onChange={setFaFormacao} options={OPCOES_FORMACAO} />
+              <FiltroAvancadoSelect label="Idioma" value={faIdioma} onChange={setFaIdioma} options={OPCOES_IDIOMA} />
               <FiltroAvancadoInput label="País" value={faPais} onChange={setFaPais} placeholder="Ex: Brasil" />
               <FiltroAvancadoInput label="Estado" value={faEstado} onChange={setFaEstado} placeholder="Ex: SP" />
               <FiltroAvancadoInput label="Cidade" value={faCidade} onChange={setFaCidade} placeholder="Ex: São Paulo" />

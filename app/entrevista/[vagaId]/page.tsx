@@ -4,8 +4,12 @@ import { useEffect, useRef, useState } from 'react';
 import type { Vaga, Candidatura } from '@/lib/types';
 import { UFS, PAISES } from '@/lib/cidades-brasil';
 import BuscaCidade from '@/app/components/BuscaCidade';
+import {
+  OPCOES_FORMACAO, OPCOES_IDIOMA, formatarTelefone, telefoneValido,
+  linkedinValido, formatarMoedaBRL
+} from '@/lib/form-candidato';
 
-type Fase = 'carregando' | 'form' | 'onboarding' | 'entrevista' | 'csat' | 'concluido' | 'erro';
+type Fase = 'carregando' | 'form' | 'idioma' | 'onboarding' | 'entrevista' | 'csat' | 'concluido' | 'erro';
 
 const TEMPO_LEITURA_SEG = 20;
 const TEMPO_MAX_RESPOSTA_SEG = 180;
@@ -186,8 +190,22 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
     };
   }, [params.vagaId]);
 
-  async function iniciar(e: React.FormEvent) {
+  /** Valida os campos obrigatórios e avança pra escolha de idioma da entrevista antes de criar a candidatura. */
+  function aoSubmeterForm(e: React.FormEvent) {
     e.preventDefault();
+    setErro('');
+    if (!linkedinValido(linkedin)) {
+      setErro('Informe um LinkedIn válido (link ou @usuário).');
+      return;
+    }
+    if (!telefoneValido(telefone)) {
+      setErro('Informe um telefone válido (mín. 8 dígitos).');
+      return;
+    }
+    setFase('idioma');
+  }
+
+  async function criarCandidatura() {
     setErro('');
     const res = await fetch('/candidaturas', {
       method: 'POST',
@@ -247,7 +265,7 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
           Você vai responder {vaga.perguntas.length} pergunta(s) em vídeo. Pode gravar quando estiver
           pronto. Se precisar parar, use o mesmo e-mail para retomar de onde parou.
         </p>
-        <form onSubmit={iniciar} className="space-y-3">
+        <form onSubmit={aoSubmeterForm} className="space-y-3">
           <div>
             <label className="block text-sm text-white/60 mb-1">Nome completo</label>
             <input
@@ -269,8 +287,9 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm text-white/60 mb-1">LinkedIn (opcional)</label>
+              <label className="block text-sm text-white/60 mb-1">LinkedIn</label>
               <input
+                required
                 value={linkedin}
                 onChange={(e) => setLinkedin(e.target.value)}
                 placeholder="linkedin.com/in/..."
@@ -278,10 +297,12 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
               />
             </div>
             <div>
-              <label className="block text-sm text-white/60 mb-1">Telefone (opcional)</label>
+              <label className="block text-sm text-white/60 mb-1">Telefone</label>
               <input
+                required
+                inputMode="tel"
                 value={telefone}
-                onChange={(e) => setTelefone(e.target.value)}
+                onChange={(e) => setTelefone(formatarTelefone(e.target.value))}
                 placeholder="(11) 99999-9999"
                 className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-v4red"
               />
@@ -290,9 +311,10 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
           <div>
             <label className="block text-sm text-white/60 mb-1">Pretensão salarial (opcional)</label>
             <input
+              inputMode="numeric"
               value={pretensaoSalarial}
-              onChange={(e) => setPretensaoSalarial(e.target.value)}
-              placeholder="Ex: R$ 6.000"
+              onChange={(e) => setPretensaoSalarial(formatarMoedaBRL(e.target.value))}
+              placeholder="R$ 0,00"
               className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-v4red"
             />
           </div>
@@ -332,24 +354,9 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
                 <label className="block text-xs text-white/50 mb-1">Formação</label>
                 <select value={formacao} onChange={(e) => setFormacao(e.target.value)} className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red">
                   <option value="">Selecione</option>
-                  <option value="ensino-medio">Ensino Médio</option>
-                  <option value="tecnico">Técnico</option>
-                  <option value="superior">Superior</option>
-                  <option value="pos-graduacao">Pós-graduação</option>
-                  <option value="mestrado">Mestrado</option>
-                  <option value="doutorado">Doutorado</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs text-white/50 mb-1">Idioma</label>
-                <select value={idioma} onChange={(e) => setIdioma(e.target.value)} className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red">
-                  <option value="">Selecione</option>
-                  <option value="portugues">Português</option>
-                  <option value="ingles">Inglês</option>
-                  <option value="espanhol">Espanhol</option>
-                  <option value="frances">Francês</option>
-                  <option value="alemao">Alemão</option>
-                  <option value="outro">Outro</option>
+                  {OPCOES_FORMACAO.map(([val, label]) => (
+                    <option key={val} value={val}>{label}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -379,7 +386,7 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
                   >
                     <option value="">Selecione</option>
                     {UFS.map((uf) => (
-                      <option key={uf.sigla} value={uf.sigla}>{uf.sigla} — {uf.nome}</option>
+                      <option key={uf.sigla} value={uf.sigla}>{uf.sigla}</option>
                     ))}
                   </select>
                 ) : (
@@ -426,10 +433,22 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
             type="submit"
             className="w-full rounded bg-v4red hover:bg-v4redDark text-white uppercase font-bold px-4 py-2"
           >
-            Começar entrevista
+            Continuar
           </button>
         </form>
       </div>
+    );
+  }
+
+  if (fase === 'idioma') {
+    return (
+      <EscolhaIdioma
+        idioma={idioma}
+        onEscolher={setIdioma}
+        erro={erro}
+        onConfirmar={criarCandidatura}
+        onVoltar={() => setFase('form')}
+      />
     );
   }
 
@@ -505,6 +524,75 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
         perguntaId={pergunta.id}
         onEnviado={aoEnviarResposta}
       />
+    </div>
+  );
+}
+
+/**
+ * Escolha do idioma da entrevista — separada do form de dados (que é sobre o
+ * candidato), porque isso é sobre em qual idioma a IA vai conduzir as perguntas.
+ * Fica logo antes do onboarding de câmera/mic, já no fim do fluxo pré-entrevista.
+ */
+function EscolhaIdioma({
+  idioma, onEscolher, erro, onConfirmar, onVoltar
+}: {
+  idioma: string;
+  onEscolher: (v: string) => void;
+  erro: string;
+  onConfirmar: () => Promise<void>;
+  onVoltar: () => void;
+}) {
+  const [enviando, setEnviando] = useState(false);
+
+  async function confirmar() {
+    setEnviando(true);
+    try {
+      await onConfirmar();
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <div className="max-w-md mx-auto bg-white/5 border border-white/10 rounded p-6">
+      <h1 className="font-heading text-xl font-bold mb-1">Idioma da entrevista</h1>
+      <p className="text-white/50 text-sm mb-5">
+        Em qual idioma você prefere responder as perguntas?
+      </p>
+      <div className="space-y-2">
+        {OPCOES_IDIOMA.map(([val, label]) => (
+          <button
+            key={val}
+            type="button"
+            onClick={() => onEscolher(val)}
+            className={`w-full text-left rounded border px-4 py-2.5 transition ${
+              idioma === val
+                ? 'border-v4red bg-v4red/10 text-white'
+                : 'border-white/10 bg-black/20 text-white/70 hover:border-white/30'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {erro && <p className="text-v4red text-sm mt-3">{erro}</p>}
+      <div className="flex gap-2 mt-5">
+        <button
+          type="button"
+          onClick={onVoltar}
+          className="rounded border border-white/10 text-white/60 hover:text-white px-4 py-2"
+        >
+          Voltar
+        </button>
+        <button
+          type="button"
+          disabled={!idioma || enviando}
+          onClick={confirmar}
+          className="flex-1 rounded bg-v4red hover:bg-v4redDark disabled:opacity-50 text-white uppercase font-bold px-4 py-2"
+        >
+          {enviando ? 'Iniciando…' : 'Começar entrevista'}
+        </button>
+      </div>
     </div>
   );
 }

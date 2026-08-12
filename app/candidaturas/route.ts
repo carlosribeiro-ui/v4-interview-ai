@@ -23,8 +23,8 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const { vagaId, nome, email, linkedin, telefone, pretensaoSalarial, segmento, nivelProfissional, formacao, pais, estado, cidade, idioma } = body ?? {};
 
-  if (!vagaId || !nome || !email) {
-    return NextResponse.json({ error: 'vagaId, nome e email são obrigatórios' }, { status: 400 });
+  if (!vagaId || !nome || !email || !linkedin || !telefone) {
+    return NextResponse.json({ error: 'vagaId, nome, email, linkedin e telefone são obrigatórios' }, { status: 400 });
   }
 
   // V-SEC: Valida tipos antes de usar em filtro Mongo (findOne) ou sanitize —
@@ -37,6 +37,11 @@ export async function POST(req: NextRequest) {
     if (valor !== undefined && typeof valor !== 'string') {
       return NextResponse.json({ error: `Campo '${campo}' deve ser texto` }, { status: 400 });
     }
+  }
+
+  // Telefone: só dígitos/espaço/parênteses/traço/"+" — nunca letras — e pelo menos 8 dígitos.
+  if (!/^[+()\d\s-]+$/.test(telefone) || telefone.replace(/\D/g, '').length < 8) {
+    return NextResponse.json({ error: 'Telefone inválido — use apenas números' }, { status: 400 });
   }
 
   const vaga = await getVaga(vagaId);
@@ -68,8 +73,8 @@ export async function POST(req: NextRequest) {
     scoreMedio: null,
     createdAt: new Date().toISOString(),
     version: 0,
-    ...(linkedin ? { linkedin: sanitizarTexto(linkedin, 500) } : {}),
-    ...(telefone ? { telefone: sanitizarCurto(telefone, 30) } : {}),
+    linkedin: sanitizarTexto(linkedin, 500),
+    telefone: sanitizarCurto(telefone, 30),
     ...(pretensaoSalarial ? { pretensaoSalarial: sanitizarCurto(pretensaoSalarial, 50) } : {}),
     ...(segmento ? { segmento: sanitizarCurto(segmento) } : {}),
     ...(nivelProfissional ? { nivelProfissional: sanitizarCurto(nivelProfissional) } : {}),
