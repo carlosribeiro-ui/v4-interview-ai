@@ -62,6 +62,12 @@ export function UserBadge() {
         {usuario.nome}
         <span className="px-1.5 py-0.5 rounded-full bg-white/[0.06] text-white/40 capitalize">{usuario.role}</span>
       </span>
+      <a
+        href="/perfil"
+        className="text-xs text-white/40 hover:text-white px-2.5 py-1.5 rounded-full hover:bg-white/[0.06] transition"
+      >
+        Meu perfil
+      </a>
       <button
         onClick={sair}
         className="text-xs text-white/40 hover:text-white px-2.5 py-1.5 rounded-full hover:bg-white/[0.06] transition"

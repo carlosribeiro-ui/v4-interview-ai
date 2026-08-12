@@ -30,6 +30,8 @@ const API_ADMIN_ROUTES: { pattern: RegExp; methods: string[]; role: Role }[] = [
   { pattern: /^\/api\/usuarios(?:\/.*)?$/, methods: ['POST', 'DELETE'], role: 'admin' },
   // Logs de auditoria — admin only
   { pattern: /^\/api\/logs$/, methods: ['GET'], role: 'admin' },
+  // Config de webhooks de log — admin only
+  { pattern: /^\/api\/config\/webhooks$/, methods: ['GET', 'PUT'], role: 'admin' },
   // Editar/deletar vaga — admin only
   { pattern: /^\/api\/vagas\/[^/]+$/, methods: ['PATCH', 'DELETE'], role: 'admin' },
   // Gerenciar fases da vaga — admin only
@@ -141,10 +143,12 @@ export const config = {
     '/vagas/:path*',
     '/testar-entrevista/:path*',
     '/admin/:path*',
+    '/perfil/:path*',
     '/docs/:path*',
     // API routes protegidas por RBAC
     '/api/usuarios/:path*',
     '/api/logs',
+    '/api/config/:path*',
     '/api/vagas/:path*/fases',
     '/api/vagas/:path*',
     '/api/candidaturas/:path*/notas',

@@ -6,6 +6,11 @@ export type LogEvento =
   | 'login_falhou'
   | 'usuario_criado'
   | 'usuario_removido'
+  | 'usuario_editado'
+  | 'usuario_ativado'
+  | 'usuario_desativado'
+  | 'senha_resetada'
+  | 'senha_alterada'
   | 'role_alterada'
   | 'fase_alterada'
   | 'candidatura_criada'
@@ -16,7 +21,8 @@ export type LogEvento =
   | 'rbac_denial'
   | 'auth_failure'
   | 'session_revoked'
-  | 'erro_sistema';
+  | 'erro_sistema'
+  | 'webhook_config_alterado';
 
 export type LogEntry = {
   id: string;
@@ -35,9 +41,32 @@ async function logsCollection() {
 export async function registrarLog(evento: LogEvento, detalhes?: Record<string, unknown>, ator?: string): Promise<void> {
   try {
     const col = await logsCollection();
-    await col.insertOne({ id: randomUUID(), evento, ator, detalhes, criadoEm: new Date().toISOString() });
+    const entry: LogEntry = { id: randomUUID(), evento, ator, detalhes, criadoEm: new Date().toISOString() };
+    await col.insertOne(entry);
+    dispararWebhookConfiguravel(entry).catch(() => {});
   } catch (err) {
     console.error('Falha ao registrar log:', evento, err);
+  }
+}
+
+/**
+ * Dispara o webhook configurado via UI de admin (collection `configuracoes`) se o
+ * evento estiver na lista de eventos selecionados. Fire-and-forget — nunca aguarda
+ * nem derruba o fluxo de quem chamou registrarLog. Import dinâmico pra evitar
+ * dependência circular (lib/config.ts importa o tipo LogEvento daqui).
+ */
+async function dispararWebhookConfiguravel(entry: LogEntry): Promise<void> {
+  const { getWebhookLogsConfig } = await import('./config');
+  const config = await getWebhookLogsConfig();
+  if (!config?.url || !config.eventos.includes(entry.evento)) return;
+  try {
+    await fetch(config.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: `v4-interview-ai · ${entry.evento}${entry.ator ? ` · ${entry.ator}` : ''}`, ...entry })
+    });
+  } catch {
+    // best-effort — falha de webhook nunca deve derrubar o registro do log
   }
 }
 
@@ -62,9 +91,66 @@ export async function registrarLogSeguranca(
   }, ator);
 }
 
-export async function listarLogs(limite = 200): Promise<LogEntry[]> {
+export type FiltroLogs = {
+  evento?: LogEvento;
+  ator?: string;
+  desde?: string; // ISO date
+  ate?: string; // ISO date
+  q?: string; // busca livre em ator + detalhes (stringificado)
+  limite?: number;
+};
+
+export async function listarLogs(filtro: FiltroLogs = {}): Promise<LogEntry[]> {
   const col = await logsCollection();
-  return col.find({}).sort({ criadoEm: -1 }).limit(limite).toArray();
+  const query: Record<string, unknown> = {};
+
+  if (filtro.evento) query.evento = filtro.evento;
+  if (filtro.ator) query.ator = { $regex: escaparRegex(filtro.ator), $options: 'i' };
+  if (filtro.desde || filtro.ate) {
+    query.criadoEm = {
+      ...(filtro.desde ? { $gte: filtro.desde } : {}),
+      ...(filtro.ate ? { $lte: filtro.ate } : {})
+    };
+  }
+
+  let cursor = col.find(query).sort({ criadoEm: -1 });
+  const limite = Math.min(filtro.limite ?? 500, 2000);
+  cursor = cursor.limit(limite);
+  let resultados = await cursor.toArray();
+
+  // Busca livre é feita em memória (detalhes é schemaless — não dá pra indexar bem no Mongo aqui)
+  if (filtro.q) {
+    const termo = filtro.q.toLowerCase();
+    resultados = resultados.filter(
+      (l) =>
+        l.evento.toLowerCase().includes(termo) ||
+        l.ator?.toLowerCase().includes(termo) ||
+        JSON.stringify(l.detalhes ?? {}).toLowerCase().includes(termo)
+    );
+  }
+
+  return resultados;
+}
+
+function escaparRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** Gera CSV dos logs pra export — mesma ordem/campos exibidos na UI. */
+export function logsParaCsv(logs: LogEntry[]): string {
+  const escapar = (v: string) => `"${v.replace(/"/g, '""')}"`;
+  const header = ['Data/hora', 'Evento', 'Ator', 'Detalhes'];
+  const linhas = logs.map((l) =>
+    [
+      new Date(l.criadoEm).toLocaleString('pt-BR'),
+      l.evento,
+      l.ator ?? '',
+      l.detalhes ? JSON.stringify(l.detalhes) : ''
+    ]
+      .map((v) => escapar(String(v)))
+      .join(',')
+  );
+  return '﻿' + [header.map(escapar).join(','), ...linhas].join('\n');
 }
 
 /**

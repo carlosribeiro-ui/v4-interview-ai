@@ -12,6 +12,8 @@ Clone funcional da Coploy: entrevistas assíncronas em vídeo avaliadas por IA. 
 4. **IA avalia automaticamente**: Gemini transcreve o áudio, analisa frames do vídeo (detecção de teleprompter), e gera nota 0-10 + feedback técnico calibrado por senioridade. Quando disponível, o CV/LinkedIn do candidato é usado como contexto adicional na avaliação.
 5. **Admin acompanha o pipeline** (`/vagas/[id]`): kanban com drag-and-drop, nota, vídeo, transcrição, feedback detalhado e parecer final consolidado (exportável em PDF).
 6. **Admin gerencia candidatos globalmente** (`/candidatos`): kanban de todas as vagas, filtros avançados, atribuição de talent, ação em massa e remoção de candidaturas (individual ou em lote — admin only).
+7. **Admin gerencia usuários e auditoria** (`/admin/config`): editar nome/e-mail/papel de qualquer usuário, ativar/desativar (bloqueia login sem apagar histórico), resetar senha; aba de logs com filtro por evento/ator/data/busca livre, export CSV e webhook configurável (Slack, n8n etc.) por tipo de evento.
+8. **Qualquer usuário edita o próprio perfil** (`/perfil`): nome, e-mail e troca de senha (exige senha atual) — disponível pra admin e talent.
 
 ## Stack
 
@@ -25,7 +27,9 @@ Clone funcional da Coploy: entrevistas assíncronas em vídeo avaliadas por IA. 
 
 ## Segurança (v0.2.0)
 
-- **RBAC centralizado:** Middleware protege rotas admin (editar/deletar vagas, remover candidaturas, gerenciar usuários, logs) e rotas que exigem sessão (criar vaga, notas internas, mover fase). Candidatos não logam — o ID da candidatura funciona como token implícito.
+- **RBAC centralizado:** Middleware protege rotas admin (editar/deletar vagas, remover candidaturas, gerenciar usuários, logs, config de webhooks) e rotas que exigem sessão (criar vaga, notas internas, mover fase, `/api/usuarios/me`). Candidatos não logam — o ID da candidatura funciona como token implícito.
+- **Usuário ativo/inativo:** admin desativa um usuário sem apagar (bloqueia login, revoga sessões na hora, preserva histórico/logs). Não dá pra desativar/remover o próprio usuário nem o último admin restante.
+- **Self-service de perfil:** qualquer usuário troca a própria senha (exige senha atual) e edita nome/e-mail em `/perfil`; a troca de senha reemite o cookie de sessão na hora (senão o próprio usuário se derrubaria).
 - **Rate limiting:** Endpoints públicos têm limite por IP (10/min pra candidaturas, 5/min pra upload de vídeo, 15/min pra TTS, 5/min pra login). Proteção contra abuse e brute force.
 - **Session auth:** Cookie HMAC-SHA256, 7 dias, roles `admin`/`talent`. Senhas com scrypt (64 bytes).
 - **Input validation (anti-NoSQL injection):** Campos do body que alimentam filtro Mongo (`vagaId`, `email`, etc. em `/api/candidaturas` e `/api/auth/login`) são validados com `typeof === 'string'` antes de chegar no `findOne` — bloqueia operadores (`$ne`, `$gt`) enviados no lugar de valores simples. Achado em pentest 2026-08-12.
