@@ -66,8 +66,17 @@ async function updateWithVersion<T extends { id: string; version: number }>(
   update: UpdateFilter<T>,
   options?: { upsert?: boolean }
 ): Promise<T | null> {
+  // Documentos gravados antes do campo `version` existir não têm o campo no Mongo —
+  // normalizarFases()/normalizarFase() só o sintetizam como 0 na LEITURA, nunca persistem
+  // isso. Um filtro `{version: 0}` nunca bate num campo ausente, então travava em 409
+  // "concorrência" pra sempre. Quando currentVersion=0, aceita tanto version:0 quanto
+  // ausente; o $inc abaixo grava o campo de verdade a partir daí.
+  const versionFilter: Filter<T> =
+    currentVersion === 0
+      ? ({ $or: [{ version: 0 }, { version: { $exists: false } }] } as Filter<T>)
+      : ({ version: currentVersion } as Filter<T>);
   const result = await col.findOneAndUpdate(
-    { id, version: currentVersion } as Filter<T>,
+    { id, ...versionFilter } as Filter<T>,
     { ...update, $inc: { version: 1 } } as any,
     { returnDocument: 'after', upsert: options?.upsert }
   );

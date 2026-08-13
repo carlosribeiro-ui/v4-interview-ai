@@ -15,6 +15,7 @@ type VagaStats = {
   senioridade: string;
   segmento: string;
   createdAt: string;
+  ativa: boolean;
   totalCandidatos: number;
   concluidos: number;
   emAndamento: number;
@@ -49,6 +50,10 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [gerando, setGerando] = useState(false);
+  const [filtroAtiva, setFiltroAtiva] = useState<'ativas' | 'inativas' | 'todas'>('ativas');
+  const [modoSelecao, setModoSelecao] = useState(false);
+  const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
+  const [aplicandoLote, setAplicandoLote] = useState(false);
 
   async function carregar() {
     const res = await fetch('/api/dashboard');
@@ -79,9 +84,46 @@ export default function DashboardPage() {
     }
   }
 
+  function toggleSelecao(id: string) {
+    setSelecionadas((atual) => {
+      const next = new Set(atual);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function aplicarAtivaEmLote(ativa: boolean) {
+    setAplicandoLote(true);
+    try {
+      const resultados = await Promise.all(
+        Array.from(selecionadas).map((id) =>
+          fetch(`/api/vagas/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ativa })
+          })
+        )
+      );
+      const falhas = resultados.filter((r) => !r.ok).length;
+      setSelecionadas(new Set());
+      setModoSelecao(false);
+      await carregar();
+      if (falhas > 0) mostrar(`${falhas} vaga(s) não puderam ser atualizadas.`, 'erro');
+      else mostrar(ativa ? 'Vaga(s) reativada(s).' : 'Vaga(s) inativada(s).', 'sucesso');
+    } finally {
+      setAplicandoLote(false);
+    }
+  }
+
   if (loading || !data) return <p className="text-white/50">Carregando dashboard…</p>;
 
-  const { totais, vagas } = data;
+  const { totais } = data;
+  const vagasFiltradas = data.vagas.filter((v) => {
+    if (filtroAtiva === 'ativas') return v.ativa;
+    if (filtroAtiva === 'inativas') return !v.ativa;
+    return true;
+  });
 
   return (
     <div className="space-y-8">
@@ -137,51 +179,138 @@ export default function DashboardPage() {
       )}
 
       <section>
-        <h2 className="font-heading text-lg font-semibold mb-4">Vagas</h2>
-        {vagas.length === 0 ? (
-          <p className="text-white/50">Nenhuma vaga criada ainda. Clique em "+ Nova vaga".</p>
+        <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+          <h2 className="font-heading text-lg font-semibold">Vagas</h2>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center rounded-full bg-white/[0.05] p-1 text-sm">
+              {(['ativas', 'inativas', 'todas'] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFiltroAtiva(f)}
+                  className={`px-3 py-1.5 rounded-full transition ${
+                    filtroAtiva === f ? 'bg-v4red text-white' : 'text-white/50 hover:text-white/80'
+                  }`}
+                >
+                  {f === 'ativas' ? 'Ativas' : f === 'inativas' ? 'Inativas' : 'Todas'}
+                </button>
+              ))}
+            </div>
+            {isAdmin && (
+              <button
+                onClick={() => { setModoSelecao((v) => !v); if (modoSelecao) setSelecionadas(new Set()); }}
+                className={`rounded-full px-3 py-1.5 text-sm transition ${
+                  modoSelecao ? 'bg-v4red text-white' : 'bg-white/[0.05] text-white/60 hover:bg-white/10'
+                }`}
+              >
+                {modoSelecao ? '✕ Cancelar' : '☑ Selecionar'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {modoSelecao && selecionadas.size > 0 && (
+          <div className="flex items-center gap-3 mb-4 rounded-xl bg-white/[0.04] border border-v4border px-4 py-2.5">
+            <span className="text-xs text-white/50">{selecionadas.size} selecionada(s)</span>
+            <button
+              disabled={aplicandoLote}
+              onClick={() => aplicarAtivaEmLote(false)}
+              className="rounded-full bg-v4yellow/15 text-v4yellow hover:bg-v4yellow/25 px-3 py-1.5 text-xs font-medium transition disabled:opacity-50"
+            >
+              🚫 Inativar selecionadas
+            </button>
+            <button
+              disabled={aplicandoLote}
+              onClick={() => aplicarAtivaEmLote(true)}
+              className="rounded-full bg-v4green/15 text-v4green hover:bg-v4green/25 px-3 py-1.5 text-xs font-medium transition disabled:opacity-50"
+            >
+              ♻ Reativar selecionadas
+            </button>
+          </div>
+        )}
+
+        {vagasFiltradas.length === 0 ? (
+          <p className="text-white/50">
+            {filtroAtiva === 'ativas'
+              ? 'Nenhuma vaga ativa. Clique em "+ Nova vaga" ou veja as inativas.'
+              : 'Nenhuma vaga nessa categoria.'}
+          </p>
         ) : (
           <div className="grid sm:grid-cols-2 gap-4">
-            {vagas.map((v) => (
-              <a
-                key={v.id}
-                href={`/vagas/${v.id}`}
-                className="rounded-2xl border border-v4border bg-v4surface hover:bg-white/[0.06] hover:border-white/20 p-5 transition block shadow-card"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="font-semibold truncate">
-                      {v.cargo} <span className="text-white/40 font-normal">· {v.senioridade}</span>
+            {vagasFiltradas.map((v) => {
+              const selecionada = selecionadas.has(v.id);
+              const conteudo = (
+                <>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-semibold truncate flex items-center gap-2">
+                        {v.cargo} <span className="text-white/40 font-normal">· {v.senioridade}</span>
+                        {!v.ativa && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/50 uppercase tracking-wide">
+                            Inativa
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-sm text-white/45 truncate">{v.segmento}</div>
                     </div>
-                    <div className="text-sm text-white/45 truncate">{v.segmento}</div>
+                    {modoSelecao ? (
+                      <input
+                        type="checkbox"
+                        checked={selecionada}
+                        onChange={() => toggleSelecao(v.id)}
+                        className="w-5 h-5 rounded accent-v4red shrink-0"
+                      />
+                    ) : (
+                      <ScoreRing score={v.scoreMedio} size={48} />
+                    )}
                   </div>
-                  <ScoreRing score={v.scoreMedio} size={48} />
-                </div>
 
-                <div className="flex items-center gap-2 mt-4 flex-wrap">
-                  <span className="text-xs px-2.5 py-1 rounded-full bg-white/[0.06] text-white/60">
-                    {v.totalCandidatos} candidato(s)
-                  </span>
-                  <span className="text-xs px-2.5 py-1 rounded-full bg-v4green/10 text-v4green">
-                    {v.concluidos} concluído(s)
-                  </span>
-                  {v.emAndamento > 0 && (
-                    <span className="text-xs px-2.5 py-1 rounded-full bg-v4yellow/10 text-v4yellow">
-                      {v.emAndamento} em andamento
+                  <div className="flex items-center gap-2 mt-4 flex-wrap">
+                    <span className="text-xs px-2.5 py-1 rounded-full bg-white/[0.06] text-white/60">
+                      {v.totalCandidatos} candidato(s)
                     </span>
+                    <span className="text-xs px-2.5 py-1 rounded-full bg-v4green/10 text-v4green">
+                      {v.concluidos} concluído(s)
+                    </span>
+                    {v.emAndamento > 0 && (
+                      <span className="text-xs px-2.5 py-1 rounded-full bg-v4yellow/10 text-v4yellow">
+                        {v.emAndamento} em andamento
+                      </span>
+                    )}
+                  </div>
+
+                  {v.topCandidato && (
+                    <div className="mt-3 pt-3 border-t border-white/[0.06] text-sm text-white/70">
+                      🏆 Top candidato: <span className="font-medium">{v.topCandidato.nome}</span>{' '}
+                      <span className={corScore(v.topCandidato.scoreMedio)}>
+                        ({v.topCandidato.scoreMedio?.toFixed(1)})
+                      </span>
+                    </div>
                   )}
-                </div>
+                </>
+              );
 
-                {v.topCandidato && (
-                  <div className="mt-3 pt-3 border-t border-white/[0.06] text-sm text-white/70">
-                    🏆 Top candidato: <span className="font-medium">{v.topCandidato.nome}</span>{' '}
-                    <span className={corScore(v.topCandidato.scoreMedio)}>
-                      ({v.topCandidato.scoreMedio?.toFixed(1)})
-                    </span>
-                  </div>
-                )}
-              </a>
-            ))}
+              const classeBase = `rounded-2xl border p-5 transition shadow-card ${
+                selecionada ? 'border-v4red ring-1 ring-v4red/30' : 'border-v4border'
+              } ${!v.ativa ? 'opacity-60' : ''}`;
+
+              return modoSelecao ? (
+                <div
+                  key={v.id}
+                  onClick={() => toggleSelecao(v.id)}
+                  className={`${classeBase} bg-v4surface cursor-pointer hover:border-white/20`}
+                >
+                  {conteudo}
+                </div>
+              ) : (
+                <a
+                  key={v.id}
+                  href={`/vagas/${v.id}`}
+                  className={`${classeBase} bg-v4surface hover:bg-white/[0.06] hover:border-white/20 block`}
+                >
+                  {conteudo}
+                </a>
+              );
+            })}
           </div>
         )}
       </section>

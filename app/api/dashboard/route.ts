@@ -101,11 +101,18 @@ export async function GET(req: NextRequest) {
     const scoreMedio = conc.length
       ? Math.round((conc.reduce((sum, c) => sum + (c.scoreMedio ?? 0), 0) / conc.length) * 10) / 10
       : null;
+    const melhor = conc.length
+      ? conc.slice().sort((a, b) => (b.scoreMedio ?? 0) - (a.scoreMedio ?? 0))[0]
+      : null;
     return {
-      id: vaga.id, cargo: vaga.cargo, senioridade: vaga.senioridade,
-      total: cs.length, concluidos: conc.length, emAndamento: cs.length - conc.length, scoreMedio
+      id: vaga.id, cargo: vaga.cargo, senioridade: vaga.senioridade, segmento: vaga.segmento,
+      createdAt: vaga.createdAt, ativa: vaga.ativa !== false,
+      totalCandidatos: cs.length, concluidos: conc.length, emAndamento: cs.length - conc.length, scoreMedio,
+      topCandidato: melhor ? { nome: melhor.nome, scoreMedio: melhor.scoreMedio } : null
     };
   }).filter((v) => vagaFiltro ? v.id === vagaFiltro : true);
+
+  const vagasAtivas = vagas.filter((v) => v.ativa !== false);
 
   // ─── Últimas atividades (últimas 10 candidaturas criadas) ───
   const ultimasAtividades = candidaturas
@@ -155,6 +162,7 @@ export async function GET(req: NextRequest) {
     const colunas = [
       { chave: 'cargo', titulo: 'Vaga' },
       { chave: 'senioridade', titulo: 'Senioridade' },
+      { chave: 'status', titulo: 'Status' },
       { chave: 'total', titulo: 'Total' },
       { chave: 'concluidos', titulo: 'Concluídos' },
       { chave: 'emAndamento', titulo: 'Em andamento' },
@@ -163,7 +171,8 @@ export async function GET(req: NextRequest) {
     const linhas = vagasComStats.map((v) => ({
       cargo: v.cargo,
       senioridade: v.senioridade,
-      total: String(v.total),
+      status: v.ativa ? 'Ativa' : 'Inativa',
+      total: String(v.totalCandidatos),
       concluidos: String(v.concluidos),
       emAndamento: String(v.emAndamento),
       scoreMedio: v.scoreMedio !== null ? v.scoreMedio.toFixed(1) : '—'
@@ -186,7 +195,8 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     totais: {
-      vagas: vagas.length,
+      vagas: vagasAtivas.length,
+      vagasTotal: vagas.length,
       candidatos: candidaturas.length,
       concluidos: concluidas.length,
       emAndamento: candidaturas.length - concluidas.length,
