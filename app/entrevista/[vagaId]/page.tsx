@@ -257,7 +257,7 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
 
   if (fase === 'form') {
     return (
-      <div className="max-w-md mx-auto bg-fg/5 border border-fg/10 rounded p-6">
+      <div className="max-w-md mx-auto bg-v4surface border border-fg/10 rounded p-6">
         <h1 className="font-heading text-xl font-bold mb-1">
           Entrevista — {vaga.cargo} ({vaga.senioridade})
         </h1>
@@ -460,7 +460,7 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
   if (fase === 'concluido') {
     return (
       <div className="max-w-xl mx-auto space-y-6">
-        <div className="text-center bg-fg/5 border border-fg/10 rounded-2xl p-8">
+        <div className="text-center bg-v4surface border border-fg/10 rounded-2xl p-8">
           <h1 className="font-heading text-xl font-bold mb-2">Entrevista concluída!</h1>
           <p className="text-fg/60">
             Obrigado, {nome}. Suas respostas foram registradas e avaliadas.
@@ -555,7 +555,7 @@ function EscolhaIdioma({
   }
 
   return (
-    <div className="max-w-md mx-auto bg-fg/5 border border-fg/10 rounded p-6">
+    <div className="max-w-md mx-auto bg-v4surface border border-fg/10 rounded p-6">
       <h1 className="font-heading text-xl font-bold mb-1">Idioma da entrevista</h1>
       <p className="text-fg/50 text-sm mb-5">
         Em qual idioma você prefere responder as perguntas?
@@ -621,7 +621,7 @@ function Onboarding({ onConcluir }: { onConcluir: () => void }) {
         leitura e a gravação inicia e é enviada sozinha.
       </p>
 
-      <div className="rounded border border-fg/10 bg-fg/5 p-6">
+      <div className="rounded border border-fg/10 bg-v4surface p-6">
         <h2 className="text-center font-semibold text-fg/90 mb-5">Liberando câmera e microfone…</h2>
         <TesteCameraMicrofone onResultado={aoLiberarPermissao} />
       </div>
@@ -905,7 +905,7 @@ function Gravador({
       {erro && <p className="text-v4red text-sm">{erro}</p>}
 
       {estado === 'leitura' && (
-        <div className="rounded border border-fg/10 bg-fg/5 px-4 py-3 text-sm text-fg/70 flex items-center justify-between">
+        <div className="rounded border border-fg/10 bg-v4surface px-4 py-3 text-sm text-fg/70 flex items-center justify-between">
           <span>📖 Leia a pergunta com atenção — a gravação começa sozinha</span>
           <span className="font-mono text-v4red font-bold">{segundosLeitura}s</span>
         </div>
@@ -1019,7 +1019,7 @@ function OutrasVagas({ vagaAtualId }: { vagaAtualId: string }) {
   );
 
   return (
-    <div className="bg-fg/5 border border-fg/10 rounded-2xl p-6 v4-fade-in">
+    <div className="bg-v4surface border border-fg/10 rounded-2xl p-6 v4-fade-in">
       <h2 className="font-heading text-lg font-semibold mb-1">Gostaria de fazer outra entrevista?</h2>
       <p className="text-fg/50 text-sm mb-4">
         Temos outras vagas abertas — dá pra se candidatar a quantas quiser.
@@ -1094,7 +1094,7 @@ function FormCSAT({ candidaturaId, nome, onConcluir }: { candidaturaId: string; 
 
   if (enviado) {
     return (
-      <div className="max-w-xl mx-auto text-center bg-fg/5 border border-fg/10 rounded-2xl p-8 v4-fade-in">
+      <div className="max-w-xl mx-auto text-center bg-v4surface border border-fg/10 rounded-2xl p-8 v4-fade-in">
         <div className="text-4xl mb-3">🎉</div>
         <h1 className="font-heading text-xl font-bold mb-2">Obrigado!</h1>
         <p className="text-fg/60">Sua avaliação nos ajuda a melhorar a plataforma.</p>
@@ -1104,14 +1104,14 @@ function FormCSAT({ candidaturaId, nome, onConcluir }: { candidaturaId: string; 
 
   return (
     <div className="max-w-xl mx-auto space-y-6 v4-fade-in">
-      <div className="text-center bg-fg/5 border border-fg/10 rounded-2xl p-6">
+      <div className="text-center bg-v4surface border border-fg/10 rounded-2xl p-6">
         <h1 className="font-heading text-xl font-bold mb-1">Última etapa, {nome}!</h1>
         <p className="text-fg/50 text-sm">Avalie sua experiência com a plataforma (leva 30 segundos).</p>
       </div>
 
       <div className="space-y-5">
         {perguntas.map((p) => (
-          <div key={p.key} className="bg-fg/5 border border-fg/10 rounded-xl p-4">
+          <div key={p.key} className="bg-v4surface border border-fg/10 rounded-xl p-4">
             <p className="font-medium text-sm mb-1">{p.label}</p>
             <p className="text-xs text-fg/40 mb-3">{p.desc}</p>
             <div className="flex gap-2">
@@ -1124,7 +1124,7 @@ function FormCSAT({ candidaturaId, nome, onConcluir }: { candidaturaId: string; 
                       ? 'bg-v4red text-fg'
                       : notas[p.key] > n
                         ? 'bg-v4red/20 text-v4red'
-                        : 'bg-fg/5 text-fg/40 hover:bg-fg/10'
+                        : 'bg-v4surface text-fg/40 hover:bg-fg/10'
                   }`}
                 >
                   {n}
@@ -1143,7 +1143,7 @@ function FormCSAT({ candidaturaId, nome, onConcluir }: { candidaturaId: string; 
           </div>
         ))}
 
-        <div className="bg-fg/5 border border-fg/10 rounded-xl p-4">
+        <div className="bg-v4surface border border-fg/10 rounded-xl p-4">
           <p className="font-medium text-sm mb-2">Comentário opcional</p>
           <textarea
             value={comentario}

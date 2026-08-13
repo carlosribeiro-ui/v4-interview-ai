@@ -182,7 +182,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
           <h2 className="font-heading text-lg font-semibold">Vagas</h2>
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center rounded-full bg-fg/[0.05] p-1 text-sm">
+            <div className="flex items-center rounded-full bg-v4surface p-1 text-sm">
               {(['ativas', 'inativas', 'todas'] as const).map((f) => (
                 <button
                   key={f}
@@ -209,7 +209,7 @@ export default function DashboardPage() {
         </div>
 
         {modoSelecao && selecionadas.size > 0 && (
-          <div className="flex items-center gap-3 mb-4 rounded-xl bg-fg/[0.04] border border-v4border px-4 py-2.5">
+          <div className="flex items-center gap-3 mb-4 rounded-xl bg-v4surface border border-v4border px-4 py-2.5">
             <span className="text-xs text-fg/50">{selecionadas.size} selecionada(s)</span>
             <button
               disabled={aplicandoLote}

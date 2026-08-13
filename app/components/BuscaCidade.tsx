@@ -111,7 +111,7 @@ export default function BuscaCidade({ uf, value, onChange, disabled, placeholder
               className={`w-full text-left px-3 py-1.5 text-sm transition-colors ${
                 i === indiceFoco
                   ? 'bg-v4green/20 text-v4green'
-                  : 'text-fg/70 hover:bg-fg/5'
+                  : 'text-fg/70 hover:bg-v4surface'
               }`}
             >
               {cid}

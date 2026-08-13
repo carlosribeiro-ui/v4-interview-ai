@@ -88,24 +88,24 @@ export default function RelatoriosPage() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="rounded-xl border border-fg/10 bg-fg/5 p-4"><div className="text-xs text-fg/50">Candidatos</div><div className="text-2xl font-bold">{data.totais.candidatos}</div></div>
-        <div className="rounded-xl border border-fg/10 bg-fg/5 p-4"><div className="text-xs text-fg/50">Concluídos</div><div className="text-2xl font-bold">{data.totais.concluidos}</div></div>
-        <div className="rounded-xl border border-fg/10 bg-fg/5 p-4"><div className="text-xs text-fg/50">Aprovados</div><div className="text-2xl font-bold text-v4green">{data.funil.aprovados}</div></div>
-        <div className="rounded-xl border border-fg/10 bg-fg/5 p-4"><div className="text-xs text-fg/50">Score médio</div><div className={`text-2xl font-bold ${corScore(data.totais.scoreMedioGeral)}`}>{data.totais.scoreMedioGeral?.toFixed(1) ?? '—'}</div></div>
+        <div className="rounded-xl border border-fg/10 bg-v4surface p-4"><div className="text-xs text-fg/50">Candidatos</div><div className="text-2xl font-bold">{data.totais.candidatos}</div></div>
+        <div className="rounded-xl border border-fg/10 bg-v4surface p-4"><div className="text-xs text-fg/50">Concluídos</div><div className="text-2xl font-bold">{data.totais.concluidos}</div></div>
+        <div className="rounded-xl border border-fg/10 bg-v4surface p-4"><div className="text-xs text-fg/50">Aprovados</div><div className="text-2xl font-bold text-v4green">{data.funil.aprovados}</div></div>
+        <div className="rounded-xl border border-fg/10 bg-v4surface p-4"><div className="text-xs text-fg/50">Score médio</div><div className={`text-2xl font-bold ${corScore(data.totais.scoreMedioGeral)}`}>{data.totais.scoreMedioGeral?.toFixed(1) ?? '—'}</div></div>
       </div>
 
       {/* Conteúdo por tab */}
       {tab === 'visaoGeral' && (
         <div className="grid lg:grid-cols-2 gap-4">
-          <div className="bg-fg/5 border border-fg/10 rounded-xl p-5">
+          <div className="bg-v4surface border border-fg/10 rounded-xl p-5">
             <h3 className="font-heading font-semibold text-sm mb-4">Funil de seleção</h3>
             <GraficoFunil funil={data.funil} />
           </div>
-          <div className="bg-fg/5 border border-fg/10 rounded-xl p-5">
+          <div className="bg-v4surface border border-fg/10 rounded-xl p-5">
             <h3 className="font-heading font-semibold text-sm mb-4">Distribuição de notas</h3>
             <GraficoBarras dados={data.distribuicaoNotas} />
           </div>
-          <div className="bg-fg/5 border border-fg/10 rounded-xl p-5 lg:col-span-2">
+          <div className="bg-v4surface border border-fg/10 rounded-xl p-5 lg:col-span-2">
             <h3 className="font-heading font-semibold text-sm mb-4">Evolução temporal</h3>
             <GraficoTimeline dados={data.timeline} />
             <div className="flex items-center gap-4 mt-3 text-[10px] text-fg/40">
@@ -118,11 +118,11 @@ export default function RelatoriosPage() {
 
       {tab === 'porVaga' && (
         <div className="space-y-4">
-          <div className="bg-fg/5 border border-fg/10 rounded-xl p-5">
+          <div className="bg-v4surface border border-fg/10 rounded-xl p-5">
             <h3 className="font-heading font-semibold text-sm mb-4">Score por vaga</h3>
             <GraficoScoreVagas dados={data.scorePorSenioridade} />
           </div>
-          <div className="bg-fg/5 border border-fg/10 rounded-xl p-5">
+          <div className="bg-v4surface border border-fg/10 rounded-xl p-5">
             <h3 className="font-heading font-semibold text-sm mb-4">Detalhamento por vaga</h3>
             <div className="space-y-3">
               {data.vagas.map((v) => (
@@ -153,7 +153,7 @@ export default function RelatoriosPage() {
       )}
 
       {tab === 'porTalent' && (
-        <div className="bg-fg/5 border border-fg/10 rounded-xl p-5">
+        <div className="bg-v4surface border border-fg/10 rounded-xl p-5">
           <h3 className="font-heading font-semibold text-sm mb-4">Performance por Talent</h3>
           {data.talentStats.length === 0 ? (
             <p className="text-fg/40 text-sm">Nenhum talent com candidatos atribuídos.</p>
@@ -194,7 +194,7 @@ export default function RelatoriosPage() {
       )}
 
       {tab === 'tabela' && (
-        <div className="bg-fg/5 border border-fg/10 rounded-xl p-5">
+        <div className="bg-v4surface border border-fg/10 rounded-xl p-5">
           <h3 className="font-heading font-semibold text-sm mb-4">Tabela completa de candidatos</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -212,7 +212,7 @@ export default function RelatoriosPage() {
                   <tr key={i} className="border-b border-fg/5 hover:bg-fg/[0.03]">
                     <td className="py-2 px-2"><div className="flex items-center gap-2"><div className="w-6 h-6 rounded-full bg-v4red/15 text-v4red flex items-center justify-center text-[9px] font-bold shrink-0">{iniciais(c.nome)}</div><span className="font-medium truncate">{c.nome}</span></div></td>
                     <td className="py-2 px-2 text-fg/60 truncate">{c.vaga}</td>
-                    <td className="py-2 px-2 text-center"><span className={`text-xs px-2 py-0.5 rounded-full ${c.fase === 'Aprovado' ? 'bg-v4green/15 text-v4green' : c.fase === 'Reprovado' ? 'bg-v4red/15 text-v4red' : 'bg-fg/5 text-fg/50'}`}>{c.fase}</span></td>
+                    <td className="py-2 px-2 text-center"><span className={`text-xs px-2 py-0.5 rounded-full ${c.fase === 'Aprovado' ? 'bg-v4green/15 text-v4green' : c.fase === 'Reprovado' ? 'bg-v4red/15 text-v4red' : 'bg-v4surface text-fg/50'}`}>{c.fase}</span></td>
                     <td className="py-2 px-2 text-center"><span className={`font-semibold ${corScore(c.scoreMedio)}`}>{c.scoreMedio?.toFixed(1) ?? '—'}</span></td>
                     <td className="py-2 px-2 text-fg/50 text-xs">{c.talent}</td>
                   </tr>

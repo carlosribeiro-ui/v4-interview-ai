@@ -85,7 +85,7 @@ export default function AdminAnalisarPerguntas() {
         </p>
       </div>
 
-      <section className="bg-fg/5 border border-fg/10 rounded p-6 space-y-4">
+      <section className="bg-v4surface border border-fg/10 rounded p-6 space-y-4">
         <div className="grid sm:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm text-fg/60 mb-1">Cargo (opcional)</label>
@@ -193,7 +193,7 @@ export default function AdminAnalisarPerguntas() {
             </div>
           ))}
 
-          <div className="bg-fg/5 border border-fg/10 rounded p-4 text-sm">
+          <div className="bg-v4surface border border-fg/10 rounded p-4 text-sm">
             <p className="text-fg/50">
               Médias:Texto{' '}
               <span className="font-semibold text-fg/80">

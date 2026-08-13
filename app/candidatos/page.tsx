@@ -450,7 +450,7 @@ function ColunaCandidatos({
       <div className={`flex items-center gap-2 px-3 py-2.5 rounded-t-xl border ${col.cor}`}>
         <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${col.dot}`} />
         <h3 className="text-sm font-semibold text-fg/80 flex-1 truncate">{col.nome}</h3>
-        <span className="text-xs font-medium text-fg/40 bg-fg/5 px-2 py-0.5 rounded-full">{total}</span>
+        <span className="text-xs font-medium text-fg/40 bg-v4surface px-2 py-0.5 rounded-full">{total}</span>
       </div>
 
       {/* Cards */}
@@ -616,7 +616,7 @@ function PerfilCandidatoModal({
     <div className="fixed inset-0 z-50 bg-field/85 backdrop-blur-sm flex flex-col v4-fade-in" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="w-full h-full sm:h-[95vh] sm:my-auto sm:max-w-4xl sm:mx-auto bg-v4bg sm:rounded-2xl sm:border sm:border-v4border flex flex-col overflow-hidden shadow-card">
         {/* Header */}
-        <div className="shrink-0 flex items-start justify-between gap-4 px-6 py-5 border-b border-v4border bg-fg/[0.02]">
+        <div className="shrink-0 flex items-start justify-between gap-4 px-6 py-5 border-b border-v4border bg-v4surface">
           <div className="flex items-center gap-4 min-w-0">
             <div className="w-14 h-14 shrink-0 rounded-full bg-v4red/15 text-v4red flex items-center justify-center text-lg font-bold">{iniciais(c.nome)}</div>
             <div className="min-w-0">

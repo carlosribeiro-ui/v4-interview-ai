@@ -73,7 +73,7 @@ export default function DashboardPage() {
       )}
 
       {/* Talent Performance */}
-      <div className="bg-fg/5 border border-fg/10 rounded-xl p-5">
+      <div className="bg-v4surface border border-fg/10 rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-heading font-semibold">Performance por Talent</h3>
           {data.totais.semTalent > 0 && (
@@ -128,11 +128,11 @@ export default function DashboardPage() {
 
       {/* Linha: Funil + Atividade recente */}
       <div className="grid lg:grid-cols-2 gap-4">
-        <div className="bg-fg/5 border border-fg/10 rounded-xl p-5">
+        <div className="bg-v4surface border border-fg/10 rounded-xl p-5">
           <h3 className="font-heading font-semibold text-sm mb-4">Funil de seleção</h3>
           <GraficoFunil funil={data.funil} />
         </div>
-        <div className="bg-fg/5 border border-fg/10 rounded-xl p-5">
+        <div className="bg-v4surface border border-fg/10 rounded-xl p-5">
           <h3 className="font-heading font-semibold text-sm mb-4">Atividade recente</h3>
           <div className="space-y-2">
             {data.ultimasAtividades.map((a, i) => (
@@ -153,11 +153,11 @@ export default function DashboardPage() {
 
       {/* Linha: Score + Top candidatos */}
       <div className="grid lg:grid-cols-2 gap-4">
-        <div className="bg-fg/5 border border-fg/10 rounded-xl p-5">
+        <div className="bg-v4surface border border-fg/10 rounded-xl p-5">
           <h3 className="font-heading font-semibold text-sm mb-4">Distribuição de notas</h3>
           <GraficoBarras dados={data.distribuicaoNotas} />
         </div>
-        <div className="bg-fg/5 border border-fg/10 rounded-xl p-5">
+        <div className="bg-v4surface border border-fg/10 rounded-xl p-5">
           <h3 className="font-heading font-semibold text-sm mb-4">Top 10 candidatos</h3>
           <div className="space-y-2">
             {data.topCandidatos.map((c, i) => (
@@ -180,7 +180,7 @@ export default function DashboardPage() {
 
 function Kpi({ label, value, icone, cor }: { label: string; value: string | number; icone: string; cor?: string }) {
   return (
-    <div className="rounded-xl border border-fg/10 bg-fg/5 p-3 text-center">
+    <div className="rounded-xl border border-fg/10 bg-v4surface p-3 text-center">
       <div className="text-lg mb-0.5">{icone}</div>
       <div className={`text-xl font-bold ${cor ?? ''}`}>{value}</div>
       <div className="text-[10px] text-fg/40 mt-0.5">{label}</div>

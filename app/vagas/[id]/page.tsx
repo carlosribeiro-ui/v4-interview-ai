@@ -446,7 +446,7 @@ export default function VagaPage({ params }: { params: { id: string } }) {
         />
       </section>
 
-      <section className="bg-fg/5 border border-fg/10 rounded p-5">
+      <section className="bg-v4surface border border-fg/10 rounded p-5">
         <h2 className="font-heading font-semibold mb-2">Link para o candidato</h2>
         <div className="flex gap-2">
           <input
@@ -489,7 +489,7 @@ export default function VagaPage({ params }: { params: { id: string } }) {
         </div>
       )}
 
-      <section className="bg-fg/5 border border-fg/10 rounded p-5">
+      <section className="bg-v4surface border border-fg/10 rounded p-5">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-heading font-semibold">
             Job Description {!vaga.jobDescription && !editando && <span className="text-fg/40 font-normal text-sm">(não cadastrada)</span>}
@@ -531,7 +531,7 @@ export default function VagaPage({ params }: { params: { id: string } }) {
       </section>
 
       <section className="grid sm:grid-cols-2 gap-6">
-        <div className="bg-fg/5 border border-fg/10 rounded p-5">
+        <div className="bg-v4surface border border-fg/10 rounded p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-heading font-semibold">Requisitos</h2>
             {isAdmin && (
@@ -572,7 +572,7 @@ export default function VagaPage({ params }: { params: { id: string } }) {
             </ul>
           )}
         </div>
-        <div className="bg-fg/5 border border-fg/10 rounded p-5">
+        <div className="bg-v4surface border border-fg/10 rounded p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-heading font-semibold">Perguntas da entrevista</h2>
             {isAdmin && (
@@ -684,7 +684,7 @@ export default function VagaPage({ params }: { params: { id: string } }) {
                   className={`px-3 py-1.5 rounded border transition ${
                     filtro === valor
                       ? 'bg-v4red text-fg border-v4red font-medium'
-                      : 'border-fg/10 text-fg/60 hover:bg-fg/5'
+                      : 'border-fg/10 text-fg/60 hover:bg-v4surface'
                   }`}
                 >
                   {label}
@@ -703,7 +703,7 @@ export default function VagaPage({ params }: { params: { id: string } }) {
         </div>
 
         {gerenciandoFases && (
-          <div className="bg-fg/5 border border-fg/10 rounded p-5 space-y-4 mb-4">
+          <div className="bg-v4surface border border-fg/10 rounded p-5 space-y-4 mb-4">
             <div className="flex items-center justify-between">
               <h3 className="font-heading font-semibold text-sm">Fases desta vaga</h3>
               <button onClick={() => setGerenciandoFases(false)} className="text-xs text-fg/50 hover:text-fg/80">
@@ -852,7 +852,7 @@ function ColunaFase({
       <div className={`flex items-center gap-2 px-3 py-2.5 rounded-t-xl border ${corHeader[fase.cor]}`}>
         <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${cor.dot}`} />
         <h3 className="text-sm font-semibold text-fg/80 flex-1 truncate">{fase.nome}</h3>
-        <span className="text-xs font-medium text-fg/40 bg-fg/5 px-2 py-0.5 rounded-full">{total}</span>
+        <span className="text-xs font-medium text-fg/40 bg-v4surface px-2 py-0.5 rounded-full">{total}</span>
       </div>
 
       {/* Lista de cards — fundo sutil, borda lateral transparente */}
@@ -1021,7 +1021,7 @@ function PerfilCandidatoModal({
     >
       <div className="w-full h-full sm:h-[95vh] sm:my-auto sm:max-w-4xl sm:mx-auto bg-v4bg sm:rounded-2xl sm:border sm:border-v4border flex flex-col overflow-hidden shadow-card">
         {/* Header fixo */}
-        <div className="shrink-0 flex items-start justify-between gap-4 px-6 py-5 border-b border-v4border bg-fg/[0.02]">
+        <div className="shrink-0 flex items-start justify-between gap-4 px-6 py-5 border-b border-v4border bg-v4surface">
           <div className="flex items-center gap-4 min-w-0">
             <div className="w-14 h-14 shrink-0 rounded-full bg-v4red/15 text-v4red flex items-center justify-center text-lg font-bold">
               {iniciais(c.nome)}
@@ -1288,7 +1288,7 @@ function StatCard({
   destaque?: string;
 }) {
   return (
-    <div className="rounded border border-fg/10 bg-fg/5 p-4">
+    <div className="rounded border border-fg/10 bg-v4surface p-4">
       <div className="text-xs text-fg/50 mb-1">{label}</div>
       <div className={`text-2xl font-semibold ${destaque ?? ''}`}>{value}</div>
     </div>
