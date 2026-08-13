@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/app/components/Toast';
 import { UFS, PAISES } from '@/lib/cidades-brasil';
 import BuscaCidade from '@/app/components/BuscaCidade';
@@ -81,6 +81,27 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
   const [responsabilidades, setResponsabilidades] = useState('');
   const [requisitos, setRequisitos] = useState('');
   const [gerandoDescricao, setGerandoDescricao] = useState(false);
+  const [vagasAnteriores, setVagasAnteriores] = useState<any[]>([]);
+  const [vagaModeloId, setVagaModeloId] = useState('');
+
+  // Carrega vagas existentes uma vez (pro seletor "usar descrição existente")
+  useEffect(() => {
+    fetch('/api/vagas')
+      .then((r) => (r.ok ? r.json() : []))
+      .then((lista) => setVagasAnteriores(Array.isArray(lista) ? lista : []))
+      .catch(() => setVagasAnteriores([]));
+  }, []);
+
+  function usarVagaModelo(id: string) {
+    setVagaModeloId(id);
+    if (!id) return;
+    const modelo = vagasAnteriores.find((v) => v.id === id);
+    if (!modelo) return;
+    if (modelo.jobDescription) setJobDescription(modelo.jobDescription);
+    if (modelo.responsabilidades) setResponsabilidades(modelo.responsabilidades);
+    if (modelo.requisitos?.length) setRequisitos(modelo.requisitos.join('\n'));
+    mostrar('Descrição preenchida com base na vaga selecionada — revise antes de avançar.', 'sucesso');
+  }
 
   // Step 3 — Perguntas
   const [numeroPerguntas, setNumeroPerguntas] = useState(7);
@@ -455,7 +476,23 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
                   <p className="text-white/50 text-sm">Descreva as responsabilidades e requisitos da posição</p>
                 </div>
 
-                <div className="flex justify-end">
+                <div className="flex items-center justify-end gap-2 flex-wrap">
+                  {vagasAnteriores.length > 0 && (
+                    <select
+                      value={vagaModeloId}
+                      onChange={(e) => usarVagaModelo(e.target.value)}
+                      className="rounded-full bg-black/30 border border-white/10 px-4 py-2 text-sm outline-none focus:border-v4red max-w-[260px]"
+                    >
+                      <option value="">📋 Usar descrição de vaga existente…</option>
+                      {vagasAnteriores
+                        .filter((v) => v.jobDescription)
+                        .map((v) => (
+                          <option key={v.id} value={v.id}>
+                            {v.cargo} — {v.senioridade}
+                          </option>
+                        ))}
+                    </select>
+                  )}
                   <button
                     type="button"
                     onClick={gerarDescricao}
@@ -465,7 +502,7 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
                     {gerandoDescricao ? (
                       <>⏳ Gerando…</>
                     ) : (
-                      <>✨ Gerar nova descrição</>
+                      <>✨ Gerar entrevista com AI</>
                     )}
                   </button>
                 </div>
