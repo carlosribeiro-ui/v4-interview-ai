@@ -54,38 +54,38 @@ function LoginForm() {
         </div>
 
         <h1 className="font-heading text-lg font-bold mb-1">Entrar</h1>
-        <p className="text-white/40 text-sm mb-5">Acesso restrito ao time (admin/talent).</p>
+        <p className="text-fg/40 text-sm mb-5">Acesso restrito ao time (admin/talent).</p>
 
         <form onSubmit={entrar} className="space-y-3">
           <div>
-            <label className="block text-xs text-white/50 mb-1">E-mail</label>
+            <label className="block text-xs text-fg/50 mb-1">E-mail</label>
             <input
               required
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
+              className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
             />
           </div>
           <div>
-            <label className="block text-xs text-white/50 mb-1">Senha</label>
+            <label className="block text-xs text-fg/50 mb-1">Senha</label>
             <input
               required
               type="password"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
-              className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
+              className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
             />
           </div>
           {erro && <p className="text-v4red text-sm">{erro}</p>}
           <button
             type="submit"
             disabled={enviando}
-            className="w-full rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-white font-semibold px-4 py-2.5 text-sm transition"
+            className="w-full rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-fg font-semibold px-4 py-2.5 text-sm transition"
           >
             {enviando ? 'Entrando…' : 'Entrar'}
           </button>
-          <Link href="/esqueci-senha" className="block text-center text-white/40 text-xs hover:text-white/60 mt-1">
+          <Link href="/esqueci-senha" className="block text-center text-fg/40 text-xs hover:text-fg/60 mt-1">
             Esqueci minha senha
           </Link>
         </form>

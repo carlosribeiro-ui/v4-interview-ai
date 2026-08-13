@@ -20,14 +20,14 @@ import { useSessao } from '@/app/components/Sessao';
 type Filtro = 'todos' | 'concluida' | 'em_andamento';
 
 const COR_FASE_CLASSES: Record<CorFase, { dot: string }> = {
-  neutro: { dot: 'bg-white/40' },
+  neutro: { dot: 'bg-fg/40' },
   atencao: { dot: 'bg-v4yellow' },
   sucesso: { dot: 'bg-v4green' },
   perigo: { dot: 'bg-v4red' }
 };
 
 const CORES_DISPONIVEIS: { valor: CorFase; label: string; classe: string }[] = [
-  { valor: 'neutro', label: 'Neutro', classe: 'bg-white/40' },
+  { valor: 'neutro', label: 'Neutro', classe: 'bg-fg/40' },
   { valor: 'atencao', label: 'Atenção', classe: 'bg-v4yellow' },
   { valor: 'sucesso', label: 'Sucesso', classe: 'bg-v4green' },
   { valor: 'perigo', label: 'Perigo', classe: 'bg-v4red' }
@@ -38,7 +38,7 @@ function idFaseNova() {
 }
 
 function corScore(score: number | null) {
-  if (score === null) return 'text-white/40';
+  if (score === null) return 'text-fg/40';
   if (score >= 7) return 'text-v4green';
   if (score >= 4) return 'text-v4yellow';
   return 'text-v4red';
@@ -396,7 +396,7 @@ export default function VagaPage({ params }: { params: { id: string } }) {
     return grupos;
   }, [candidaturasFiltradas, vaga]);
 
-  if (loading) return <p className="text-white/50">Carregando…</p>;
+  if (loading) return <p className="text-fg/50">Carregando…</p>;
   if (!vaga) return <p className="text-v4red">Vaga não encontrada.</p>;
 
   return (
@@ -404,12 +404,12 @@ export default function VagaPage({ params }: { params: { id: string } }) {
       {ToastContainer}
 
       <div>
-        <a href="/" className="text-sm text-white/40 hover:text-white/70">
+        <a href="/" className="text-sm text-fg/40 hover:text-fg/70">
           ← Dashboard
         </a>
         <div className="flex items-center gap-2.5 mt-1 flex-wrap">
           <h1 className="font-heading text-xl font-bold">
-            {vaga.cargo} <span className="text-white/40 font-normal">· {vaga.senioridade}</span>
+            {vaga.cargo} <span className="text-fg/40 font-normal">· {vaga.senioridade}</span>
           </h1>
           {isAdmin ? (
             <button
@@ -417,7 +417,7 @@ export default function VagaPage({ params }: { params: { id: string } }) {
               className={`text-xs px-2.5 py-1 rounded-full font-medium transition ${
                 vaga.ativa !== false
                   ? 'bg-v4green/15 text-v4green hover:bg-v4green/25'
-                  : 'bg-white/[0.06] text-white/40 hover:bg-white/10'
+                  : 'bg-fg/[0.06] text-fg/40 hover:bg-fg/10'
               }`}
             >
               {vaga.ativa !== false ? '● Ativa' : '○ Inativa'}
@@ -425,14 +425,14 @@ export default function VagaPage({ params }: { params: { id: string } }) {
           ) : (
             <span
               className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                vaga.ativa !== false ? 'bg-v4green/15 text-v4green' : 'bg-white/[0.06] text-white/40'
+                vaga.ativa !== false ? 'bg-v4green/15 text-v4green' : 'bg-fg/[0.06] text-fg/40'
               }`}
             >
               {vaga.ativa !== false ? '● Ativa' : '○ Inativa'}
             </span>
           )}
         </div>
-        <p className="text-white/50">{vaga.segmento}</p>
+        <p className="text-fg/50">{vaga.segmento}</p>
       </div>
 
       <section className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -446,13 +446,13 @@ export default function VagaPage({ params }: { params: { id: string } }) {
         />
       </section>
 
-      <section className="bg-white/5 border border-white/10 rounded p-5">
+      <section className="bg-fg/5 border border-fg/10 rounded p-5">
         <h2 className="font-heading font-semibold mb-2">Link para o candidato</h2>
         <div className="flex gap-2">
           <input
             readOnly
             value={link}
-            className="flex-1 rounded bg-black/30 border border-white/10 px-3 py-2 text-sm text-white/70"
+            className="flex-1 rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm text-fg/70"
           />
           <button
             onClick={() => {
@@ -460,7 +460,7 @@ export default function VagaPage({ params }: { params: { id: string } }) {
               setCopiado(true);
               setTimeout(() => setCopiado(false), 1500);
             }}
-            className="rounded bg-v4red hover:bg-v4redDark text-white uppercase font-bold px-4 py-2 text-sm transition"
+            className="rounded bg-v4red hover:bg-v4redDark text-fg uppercase font-bold px-4 py-2 text-sm transition"
           >
             {copiado ? 'Copiado!' : 'Copiar'}
           </button>
@@ -489,10 +489,10 @@ export default function VagaPage({ params }: { params: { id: string } }) {
         </div>
       )}
 
-      <section className="bg-white/5 border border-white/10 rounded p-5">
+      <section className="bg-fg/5 border border-fg/10 rounded p-5">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-heading font-semibold">
-            Job Description {!vaga.jobDescription && !editando && <span className="text-white/40 font-normal text-sm">(não cadastrada)</span>}
+            Job Description {!vaga.jobDescription && !editando && <span className="text-fg/40 font-normal text-sm">(não cadastrada)</span>}
           </h2>
           {isAdmin && (
             <div className="flex items-center gap-3">
@@ -518,12 +518,12 @@ export default function VagaPage({ params }: { params: { id: string } }) {
             onChange={(e) => setEditJobDescription(e.target.value)}
             rows={8}
             placeholder="Cole aqui a descrição completa da vaga — usada como fonte de verdade pela IA na geração do roteiro e na avaliação das respostas."
-            className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+            className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
           />
         ) : vaga.jobDescription ? (
-          <p className="text-sm text-white/70 whitespace-pre-wrap">{vaga.jobDescription}</p>
+          <p className="text-sm text-fg/70 whitespace-pre-wrap">{vaga.jobDescription}</p>
         ) : (
-          <p className="text-sm text-white/40">
+          <p className="text-sm text-fg/40">
             Sem JD cadastrada — a IA usa cargo/senioridade/segmento + requisitos gerados. Clique em
             "Editar" pra colar a descrição completa da vaga.
           </p>
@@ -531,7 +531,7 @@ export default function VagaPage({ params }: { params: { id: string } }) {
       </section>
 
       <section className="grid sm:grid-cols-2 gap-6">
-        <div className="bg-white/5 border border-white/10 rounded p-5">
+        <div className="bg-fg/5 border border-fg/10 rounded p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-heading font-semibold">Requisitos</h2>
             {isAdmin && (
@@ -561,18 +561,18 @@ export default function VagaPage({ params }: { params: { id: string } }) {
                     next[i] = e.target.value;
                     setEditRequisitos(next);
                   }}
-                  className="w-full rounded bg-black/30 border border-white/10 px-2 py-1 text-sm outline-none focus:border-v4red" />
+                  className="w-full rounded bg-field/30 border border-fg/10 px-2 py-1 text-sm outline-none focus:border-v4red" />
               ))}
             </div>
           ) : (
-            <ul className="list-disc list-inside space-y-1 text-sm text-white/70">
+            <ul className="list-disc list-inside space-y-1 text-sm text-fg/70">
               {vaga.requisitos.map((r, i) => (
                 <li key={i}>{r}</li>
               ))}
             </ul>
           )}
         </div>
-        <div className="bg-white/5 border border-white/10 rounded p-5">
+        <div className="bg-fg/5 border border-fg/10 rounded p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-heading font-semibold">Perguntas da entrevista</h2>
             {isAdmin && (
@@ -596,7 +596,7 @@ export default function VagaPage({ params }: { params: { id: string } }) {
           {editando ? (
             <div className="space-y-3">
               {editPerguntas.map((p, i) => (
-                <div key={p.id} className="border border-white/10 rounded p-3 space-y-2">
+                <div key={p.id} className="border border-fg/10 rounded p-3 space-y-2">
                   <div className="flex items-center justify-between gap-2">
                     <input value={p.texto}
                       onChange={(e) => {
@@ -604,7 +604,7 @@ export default function VagaPage({ params }: { params: { id: string } }) {
                         next[i] = { ...next[i], texto: e.target.value };
                         setEditPerguntas(next);
                       }}
-                      className="flex-1 rounded bg-black/30 border border-white/10 px-2 py-1 text-sm outline-none focus:border-v4red" />
+                      className="flex-1 rounded bg-field/30 border border-fg/10 px-2 py-1 text-sm outline-none focus:border-v4red" />
                     <select
                       value={p.tipo ?? 'principal'}
                       onChange={(e) => {
@@ -612,7 +612,7 @@ export default function VagaPage({ params }: { params: { id: string } }) {
                         next[i] = { ...next[i], tipo: e.target.value as 'principal' | 'adicional' };
                         setEditPerguntas(next);
                       }}
-                      className="shrink-0 text-xs rounded-full bg-black/30 border border-white/10 px-2 py-1 outline-none focus:border-v4red"
+                      className="shrink-0 text-xs rounded-full bg-field/30 border border-fg/10 px-2 py-1 outline-none focus:border-v4red"
                     >
                       <option value="principal">Principal</option>
                       <option value="adicional">Adicional</option>
@@ -625,16 +625,16 @@ export default function VagaPage({ params }: { params: { id: string } }) {
                       setEditPerguntas(next);
                     }}
                     rows={2}
-                    className="w-full rounded bg-black/30 border border-white/10 px-2 py-1 text-sm outline-none focus:border-v4red" />
+                    className="w-full rounded bg-field/30 border border-fg/10 px-2 py-1 text-sm outline-none focus:border-v4red" />
                 </div>
               ))}
               <div className="flex items-center gap-2 pt-2">
                 <button onClick={salvarEdicao} disabled={salvando}
-                  className="rounded bg-v4red hover:bg-v4redDark disabled:opacity-50 text-white uppercase font-bold px-3 py-1.5 text-sm">
+                  className="rounded bg-v4red hover:bg-v4redDark disabled:opacity-50 text-fg uppercase font-bold px-3 py-1.5 text-sm">
                   {salvando ? 'Salvando…' : 'Salvar'}
                 </button>
                 <button onClick={() => setEditando(false)}
-                  className="rounded border border-white/10 text-white/60 hover:text-white/80 px-3 py-1.5 text-sm">
+                  className="rounded border border-fg/10 text-fg/60 hover:text-fg/80 px-3 py-1.5 text-sm">
                   Cancelar
                 </button>
                 <a href="/admin/perguntas"
@@ -650,10 +650,10 @@ export default function VagaPage({ params }: { params: { id: string } }) {
                 if (lista.length === 0) return null;
                 return (
                   <div key={tipo}>
-                    <p className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-2">
+                    <p className="text-xs font-semibold text-fg/40 uppercase tracking-wide mb-2">
                       {tipo === 'principal' ? 'Principais' : 'Adicionais'} ({lista.length})
                     </p>
-                    <ol className="list-decimal list-inside space-y-2 text-sm text-white/70">
+                    <ol className="list-decimal list-inside space-y-2 text-sm text-fg/70">
                       {lista.map((p) => (
                         <li key={p.id}>{p.texto}</li>
                       ))}
@@ -683,8 +683,8 @@ export default function VagaPage({ params }: { params: { id: string } }) {
                   onClick={() => setFiltro(valor)}
                   className={`px-3 py-1.5 rounded border transition ${
                     filtro === valor
-                      ? 'bg-v4red text-white border-v4red font-medium'
-                      : 'border-white/10 text-white/60 hover:bg-white/5'
+                      ? 'bg-v4red text-fg border-v4red font-medium'
+                      : 'border-fg/10 text-fg/60 hover:bg-fg/5'
                   }`}
                 >
                   {label}
@@ -694,7 +694,7 @@ export default function VagaPage({ params }: { params: { id: string } }) {
             {isAdmin && (
               <button
                 onClick={iniciarGerenciarFases}
-                className="text-sm rounded border border-white/10 text-white/60 hover:text-white hover:border-white/30 px-3 py-1.5 transition"
+                className="text-sm rounded border border-fg/10 text-fg/60 hover:text-fg hover:border-fg/30 px-3 py-1.5 transition"
               >
                 ⚙ Gerenciar fases
               </button>
@@ -703,23 +703,23 @@ export default function VagaPage({ params }: { params: { id: string } }) {
         </div>
 
         {gerenciandoFases && (
-          <div className="bg-white/5 border border-white/10 rounded p-5 space-y-4 mb-4">
+          <div className="bg-fg/5 border border-fg/10 rounded p-5 space-y-4 mb-4">
             <div className="flex items-center justify-between">
               <h3 className="font-heading font-semibold text-sm">Fases desta vaga</h3>
-              <button onClick={() => setGerenciandoFases(false)} className="text-xs text-white/50 hover:text-white/80">
+              <button onClick={() => setGerenciandoFases(false)} className="text-xs text-fg/50 hover:text-fg/80">
                 Fechar
               </button>
             </div>
             {erroFases && <p className="text-sm text-v4red">{erroFases}</p>}
             <div className="space-y-2">
               {editFasesList.map((f, i) => (
-                <div key={f.id} className="flex items-center gap-2 border border-white/10 rounded p-2">
+                <div key={f.id} className="flex items-center gap-2 border border-fg/10 rounded p-2">
                   <div className="flex flex-col leading-none shrink-0">
                     <button
                       type="button"
                       disabled={i === 0}
                       onClick={() => moverOrdemFase(i, -1)}
-                      className="disabled:opacity-20 text-white/50 hover:text-white text-xs px-1"
+                      className="disabled:opacity-20 text-fg/50 hover:text-fg text-xs px-1"
                     >
                       ▲
                     </button>
@@ -727,7 +727,7 @@ export default function VagaPage({ params }: { params: { id: string } }) {
                       type="button"
                       disabled={i === editFasesList.length - 1}
                       onClick={() => moverOrdemFase(i, 1)}
-                      className="disabled:opacity-20 text-white/50 hover:text-white text-xs px-1"
+                      className="disabled:opacity-20 text-fg/50 hover:text-fg text-xs px-1"
                     >
                       ▼
                     </button>
@@ -735,7 +735,7 @@ export default function VagaPage({ params }: { params: { id: string } }) {
                   <input
                     value={f.nome}
                     onChange={(e) => atualizarFase(i, { nome: e.target.value })}
-                    className="flex-1 min-w-0 rounded bg-black/30 border border-white/10 px-2 py-1 text-sm outline-none focus:border-v4red"
+                    className="flex-1 min-w-0 rounded bg-field/30 border border-fg/10 px-2 py-1 text-sm outline-none focus:border-v4red"
                   />
                   <div className="flex items-center gap-1.5 shrink-0">
                     {CORES_DISPONIVEIS.map((c) => (
@@ -746,7 +746,7 @@ export default function VagaPage({ params }: { params: { id: string } }) {
                         aria-label={`Cor ${c.label}`}
                         onClick={() => atualizarFase(i, { cor: c.valor })}
                         className={`w-5 h-5 rounded-full ${c.classe} ${
-                          f.cor === c.valor ? 'ring-2 ring-white' : 'opacity-40 hover:opacity-80'
+                          f.cor === c.valor ? 'ring-2 ring-fg' : 'opacity-40 hover:opacity-80'
                         }`}
                       />
                     ))}
@@ -755,7 +755,7 @@ export default function VagaPage({ params }: { params: { id: string } }) {
                     type="button"
                     onClick={() => removerFase(i)}
                     disabled={editFasesList.length === 1}
-                    className="shrink-0 text-white/40 hover:text-v4red disabled:opacity-20 text-sm px-1"
+                    className="shrink-0 text-fg/40 hover:text-v4red disabled:opacity-20 text-sm px-1"
                     aria-label="Excluir fase"
                   >
                     ✕
@@ -767,7 +767,7 @@ export default function VagaPage({ params }: { params: { id: string } }) {
               <button
                 type="button"
                 onClick={adicionarFase}
-                className="rounded border border-white/10 text-white/60 hover:text-white hover:border-white/30 px-3 py-1.5 text-sm"
+                className="rounded border border-fg/10 text-fg/60 hover:text-fg hover:border-fg/30 px-3 py-1.5 text-sm"
               >
                 + Nova fase
               </button>
@@ -775,7 +775,7 @@ export default function VagaPage({ params }: { params: { id: string } }) {
                 type="button"
                 onClick={salvarFases}
                 disabled={salvandoFases}
-                className="ml-auto rounded bg-v4red hover:bg-v4redDark disabled:opacity-50 text-white uppercase font-bold px-4 py-1.5 text-sm"
+                className="ml-auto rounded bg-v4red hover:bg-v4redDark disabled:opacity-50 text-fg uppercase font-bold px-4 py-1.5 text-sm"
               >
                 {salvandoFases ? 'Salvando…' : 'Salvar fases'}
               </button>
@@ -784,7 +784,7 @@ export default function VagaPage({ params }: { params: { id: string } }) {
         )}
 
         {candidaturasFiltradas.length === 0 ? (
-          <p className="text-white/50">Nenhum candidato nesse filtro.</p>
+          <p className="text-fg/50">Nenhum candidato nesse filtro.</p>
         ) : (
           <DndContext sensors={sensors} onDragEnd={aoSoltarCard}>
             <div className="overflow-x-auto pb-3">
@@ -840,7 +840,7 @@ function ColunaFase({
   const cor = COR_FASE_CLASSES[fase.cor];
 
   const corHeader: Record<CorFase, string> = {
-    neutro: 'bg-white/[0.06] border-white/10',
+    neutro: 'bg-fg/[0.06] border-fg/10',
     atencao: 'bg-v4yellow/10 border-v4yellow/30',
     sucesso: 'bg-v4green/10 border-v4green/30',
     perigo: 'bg-v4red/10 border-v4red/30'
@@ -851,20 +851,20 @@ function ColunaFase({
       {/* Cabeçalho da fase — estilo Pipefy */}
       <div className={`flex items-center gap-2 px-3 py-2.5 rounded-t-xl border ${corHeader[fase.cor]}`}>
         <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${cor.dot}`} />
-        <h3 className="text-sm font-semibold text-white/80 flex-1 truncate">{fase.nome}</h3>
-        <span className="text-xs font-medium text-white/40 bg-white/5 px-2 py-0.5 rounded-full">{total}</span>
+        <h3 className="text-sm font-semibold text-fg/80 flex-1 truncate">{fase.nome}</h3>
+        <span className="text-xs font-medium text-fg/40 bg-fg/5 px-2 py-0.5 rounded-full">{total}</span>
       </div>
 
       {/* Lista de cards — fundo sutil, borda lateral transparente */}
       <div
         ref={setNodeRef}
         className={`flex-1 space-y-2.5 p-2 rounded-b-xl border border-t-0 transition min-h-[6rem] ${
-          isOver ? 'border-v4red/40 bg-v4red/5' : 'border-white/5 bg-white/[0.02]'
+          isOver ? 'border-v4red/40 bg-v4red/5' : 'border-fg/5 bg-fg/[0.02]'
         }`}
       >
         {children}
         {total === 0 && (
-          <div className="flex items-center justify-center h-16 text-xs text-white/20 border border-dashed border-white/10 rounded-lg">
+          <div className="flex items-center justify-center h-16 text-xs text-fg/20 border border-dashed border-fg/10 rounded-lg">
             Arraste candidatos aqui
           </div>
         )}
@@ -893,7 +893,7 @@ function CardCandidato({
     <div
       ref={setNodeRef}
       style={style}
-      className={`w-64 shrink-0 rounded-xl border border-v4border bg-v4surface hover:bg-white/[0.06] hover:border-white/15 overflow-hidden transition shadow-card ${
+      className={`w-64 shrink-0 rounded-xl border border-v4border bg-v4surface hover:bg-fg/[0.06] hover:border-fg/15 overflow-hidden transition shadow-card ${
         isDragging ? 'opacity-40 relative z-10' : ''
       }`}
     >
@@ -902,7 +902,7 @@ function CardCandidato({
           {...listeners}
           {...attributes}
           aria-label="Arrastar candidato entre fases"
-          className="shrink-0 cursor-grab active:cursor-grabbing text-white/25 hover:text-white/60 touch-none select-none px-1 py-1"
+          className="shrink-0 cursor-grab active:cursor-grabbing text-fg/25 hover:text-fg/60 touch-none select-none px-1 py-1"
         >
           ⠿
         </button>
@@ -917,7 +917,7 @@ function CardCandidato({
             </div>
             <div className="min-w-0">
               <div className="font-medium text-sm truncate">{c.nome}</div>
-              <div className="text-xs text-white/40 truncate">{c.email}</div>
+              <div className="text-xs text-fg/40 truncate">{c.email}</div>
             </div>
           </div>
           <ScoreRing score={c.scoreMedio} size={40} strokeWidth={3.5} />
@@ -932,7 +932,7 @@ function CardCandidato({
           value={c.fase}
           onChange={(e) => onMoverFase(e.target.value)}
           onClick={(e) => e.stopPropagation()}
-          className="ml-auto text-xs rounded-full bg-black/30 border border-white/10 px-2.5 py-1 outline-none focus:border-v4red"
+          className="ml-auto text-xs rounded-full bg-field/30 border border-fg/10 px-2.5 py-1 outline-none focus:border-v4red"
         >
           {vaga.fases.map((f) => (
             <option key={f.id} value={f.id}>
@@ -1014,21 +1014,21 @@ function PerfilCandidatoModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex flex-col v4-fade-in"
+      className="fixed inset-0 z-50 bg-field/85 backdrop-blur-sm flex flex-col v4-fade-in"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div className="w-full h-full sm:h-[95vh] sm:my-auto sm:max-w-4xl sm:mx-auto bg-v4bg sm:rounded-2xl sm:border sm:border-v4border flex flex-col overflow-hidden shadow-card">
         {/* Header fixo */}
-        <div className="shrink-0 flex items-start justify-between gap-4 px-6 py-5 border-b border-v4border bg-white/[0.02]">
+        <div className="shrink-0 flex items-start justify-between gap-4 px-6 py-5 border-b border-v4border bg-fg/[0.02]">
           <div className="flex items-center gap-4 min-w-0">
             <div className="w-14 h-14 shrink-0 rounded-full bg-v4red/15 text-v4red flex items-center justify-center text-lg font-bold">
               {iniciais(c.nome)}
             </div>
             <div className="min-w-0">
               <h2 className="font-heading text-xl font-bold truncate">{c.nome}</h2>
-              <p className="text-sm text-white/50 truncate">{c.email}</p>
+              <p className="text-sm text-fg/50 truncate">{c.email}</p>
               <div className="flex items-center gap-2 mt-2 flex-wrap">
                 <Pill tom={c.status === 'concluida' ? 'verde' : 'amarelo'}>
                   {c.status === 'concluida' ? 'Concluída' : 'Em andamento'}
@@ -1036,7 +1036,7 @@ function PerfilCandidatoModal({
                 <select
                   value={c.fase}
                   onChange={(e) => onMoverFase(e.target.value)}
-                  className="text-xs rounded-full bg-black/30 border border-white/10 px-2.5 py-1 outline-none focus:border-v4red"
+                  className="text-xs rounded-full bg-field/30 border border-fg/10 px-2.5 py-1 outline-none focus:border-v4red"
                 >
                   {vaga.fases.map((f) => (
                     <option key={f.id} value={f.id}>
@@ -1052,7 +1052,7 @@ function PerfilCandidatoModal({
             <button
               onClick={onClose}
               aria-label="Fechar perfil"
-              className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 text-lg transition"
+              className="w-9 h-9 rounded-full flex items-center justify-center text-fg/50 hover:text-fg hover:bg-fg/10 text-lg transition"
             >
               ✕
             </button>
@@ -1062,7 +1062,7 @@ function PerfilCandidatoModal({
         {/* Corpo com scroll */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
           {(c.linkedin || c.telefone || c.pretensaoSalarial || c.curriculoPath) && (
-            <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-white/60 border-b border-white/10 pb-4">
+            <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-fg/60 border-b border-fg/10 pb-4">
               {c.linkedin && (
                 <a href={c.linkedin} target="_blank" rel="noreferrer" className="text-v4red hover:text-v4redDark">
                   🔗 LinkedIn
@@ -1079,7 +1079,7 @@ function PerfilCandidatoModal({
           )}
 
           {c.respostas.length === 0 && (
-            <p className="text-white/40 text-sm">Nenhuma resposta enviada ainda.</p>
+            <p className="text-fg/40 text-sm">Nenhuma resposta enviada ainda.</p>
           )}
 
           {c.respostas.length > 0 && (
@@ -1124,10 +1124,10 @@ function PerfilCandidatoModal({
             {c.respostas.map((r, i) => {
               const pergunta = vaga.perguntas.find((p) => p.id === r.perguntaId);
               return (
-                <div key={r.perguntaId} className="rounded-2xl border border-v4border bg-white/[0.025] p-4 space-y-3">
+                <div key={r.perguntaId} className="rounded-2xl border border-v4border bg-fg/[0.025] p-4 space-y-3">
                   <div className="flex items-start justify-between gap-3">
-                    <p className="text-sm font-medium text-white/80">
-                      <span className="text-white/40">Pergunta {i + 1} · </span>
+                    <p className="text-sm font-medium text-fg/80">
+                      <span className="text-fg/40">Pergunta {i + 1} · </span>
                       {pergunta?.texto ?? 'Pergunta'}
                     </p>
                     {r.avaliando ? (
@@ -1136,7 +1136,7 @@ function PerfilCandidatoModal({
                       <ScoreRing score={r.score} size={34} strokeWidth={3} />
                     )}
                   </div>
-                  <video src={r.videoPath} controls className="w-full rounded-xl bg-black aspect-video" />
+                  <video src={r.videoPath} controls className="w-full rounded-xl bg-field aspect-video" />
                   {r.avaliando && (
                     <Pill tom="amarelo">⏳ Vídeo salvo — transcrevendo e avaliando em background…</Pill>
                   )}
@@ -1148,24 +1148,24 @@ function PerfilCandidatoModal({
                     </Pill>
                   )}
                   {!r.avaliando && (
-                    <p className="text-xs text-white/40">
-                      Transcrição: <span className="text-white/70">{r.transcricao || '—'}</span>
+                    <p className="text-xs text-fg/40">
+                      Transcrição: <span className="text-fg/70">{r.transcricao || '—'}</span>
                     </p>
                   )}
-                  {!r.avaliando && <p className="text-sm text-white/60">{r.feedback}</p>}
+                  {!r.avaliando && <p className="text-sm text-fg/60">{r.feedback}</p>}
                   {!r.avaliando && r.pontoAtencao && (
                     <div className="rounded-xl border border-v4yellow/30 bg-v4yellow/5 px-3.5 py-3 space-y-1.5">
                       <p className="text-xs font-semibold text-v4yellow uppercase tracking-wide">Ponto de atenção</p>
-                      <p className="text-xs text-white/70">
-                        <span className="text-white/50">Lacuna: </span>
+                      <p className="text-xs text-fg/70">
+                        <span className="text-fg/50">Lacuna: </span>
                         {r.pontoAtencao.lacuna}
                       </p>
-                      <p className="text-xs text-white/70">
-                        <span className="text-white/50">Impacto: </span>
+                      <p className="text-xs text-fg/70">
+                        <span className="text-fg/50">Impacto: </span>
                         {r.pontoAtencao.impacto}
                       </p>
-                      <p className="text-xs text-white/70">
-                        <span className="text-white/50">Como validar: </span>
+                      <p className="text-xs text-fg/70">
+                        <span className="text-fg/50">Como validar: </span>
                         {r.pontoAtencao.comoValidar}
                       </p>
                     </div>
@@ -1185,8 +1185,8 @@ function PerfilCandidatoModal({
                       {detalheAberto[r.perguntaId] && (
                         <div className="mt-3 space-y-4 v4-fade-in">
                           {r.qualidadeDiscurso && (
-                            <div className="rounded-xl border border-v4border bg-black/20 p-3.5 space-y-2.5">
-                              <p className="text-xs font-semibold text-white/70 uppercase tracking-wide">
+                            <div className="rounded-xl border border-v4border bg-field/20 p-3.5 space-y-2.5">
+                              <p className="text-xs font-semibold text-fg/70 uppercase tracking-wide">
                                 Qualidade da resposta
                               </p>
                               <Barra label="Naturalidade" valor={r.qualidadeDiscurso.naturalidade} corIndice={0} />
@@ -1202,8 +1202,8 @@ function PerfilCandidatoModal({
                           )}
 
                           {r.qualidadeConteudo && (
-                            <div className="rounded-xl border border-v4border bg-black/20 p-3.5 space-y-2.5">
-                              <p className="text-xs font-semibold text-white/70 uppercase tracking-wide">Conteúdo</p>
+                            <div className="rounded-xl border border-v4border bg-field/20 p-3.5 space-y-2.5">
+                              <p className="text-xs font-semibold text-fg/70 uppercase tracking-wide">Conteúdo</p>
                               <Barra label="Profundidade" valor={r.qualidadeConteudo.profundidade} corIndice={0} />
                               <Barra label="Estrutura" valor={r.qualidadeConteudo.estrutura} corIndice={1} />
                               <Barra label="Exemplos" valor={r.qualidadeConteudo.exemplos} corIndice={2} />
@@ -1211,8 +1211,8 @@ function PerfilCandidatoModal({
                           )}
 
                           {r.competenciasEssenciais && r.competenciasEssenciais.length > 0 && (
-                            <div className="rounded-xl border border-v4border bg-black/20 p-3.5 space-y-2.5">
-                              <p className="text-xs font-semibold text-white/70 uppercase tracking-wide">
+                            <div className="rounded-xl border border-v4border bg-field/20 p-3.5 space-y-2.5">
+                              <p className="text-xs font-semibold text-fg/70 uppercase tracking-wide">
                                 Competências essenciais
                               </p>
                               {r.competenciasEssenciais.map((comp, j) => (
@@ -1222,8 +1222,8 @@ function PerfilCandidatoModal({
                           )}
 
                           {r.competenciasAdicionais && r.competenciasAdicionais.length > 0 && (
-                            <div className="rounded-xl border border-v4border bg-black/20 p-3.5 space-y-2.5">
-                              <p className="text-xs font-semibold text-white/70 uppercase tracking-wide">
+                            <div className="rounded-xl border border-v4border bg-field/20 p-3.5 space-y-2.5">
+                              <p className="text-xs font-semibold text-fg/70 uppercase tracking-wide">
                                 Competências adicionais
                               </p>
                               {r.competenciasAdicionais.map((comp, j) => (
@@ -1240,15 +1240,15 @@ function PerfilCandidatoModal({
             })}
           </div>
 
-          <div className="border-t border-white/10 pt-4 space-y-2">
-            <p className="text-xs font-semibold text-white/50 uppercase">Notas internas</p>
+          <div className="border-t border-fg/10 pt-4 space-y-2">
+            <p className="text-xs font-semibold text-fg/50 uppercase">Notas internas</p>
             {(c.notasInternas ?? []).length === 0 && (
-              <p className="text-white/40 text-xs">Nenhuma nota ainda.</p>
+              <p className="text-fg/40 text-xs">Nenhuma nota ainda.</p>
             )}
             {(c.notasInternas ?? []).map((n) => (
-              <div key={n.id} className="text-sm bg-black/20 rounded px-2.5 py-1.5">
-                <p className="text-white/80">{n.texto}</p>
-                <p className="text-white/30 text-xs mt-0.5">
+              <div key={n.id} className="text-sm bg-field/20 rounded px-2.5 py-1.5">
+                <p className="text-fg/80">{n.texto}</p>
+                <p className="text-fg/30 text-xs mt-0.5">
                   {new Date(n.criadoEm).toLocaleString('pt-BR')}
                 </p>
               </div>
@@ -1261,12 +1261,12 @@ function PerfilCandidatoModal({
                   if (e.key === 'Enter') enviarNota();
                 }}
                 placeholder="Adicionar nota…"
-                className="flex-1 rounded bg-black/30 border border-white/10 px-2 py-1.5 text-sm outline-none focus:border-v4red"
+                className="flex-1 rounded bg-field/30 border border-fg/10 px-2 py-1.5 text-sm outline-none focus:border-v4red"
               />
               <button
                 onClick={enviarNota}
                 disabled={enviandoNota || !novaNota.trim()}
-                className="rounded bg-v4red hover:bg-v4redDark disabled:opacity-50 text-white text-xs font-bold uppercase px-3 py-1.5"
+                className="rounded bg-v4red hover:bg-v4redDark disabled:opacity-50 text-fg text-xs font-bold uppercase px-3 py-1.5"
               >
                 {enviandoNota ? '…' : 'Add'}
               </button>
@@ -1288,8 +1288,8 @@ function StatCard({
   destaque?: string;
 }) {
   return (
-    <div className="rounded border border-white/10 bg-white/5 p-4">
-      <div className="text-xs text-white/50 mb-1">{label}</div>
+    <div className="rounded border border-fg/10 bg-fg/5 p-4">
+      <div className="text-xs text-fg/50 mb-1">{label}</div>
       <div className={`text-2xl font-semibold ${destaque ?? ''}`}>{value}</div>
     </div>
   );

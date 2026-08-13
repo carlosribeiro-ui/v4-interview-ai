@@ -251,53 +251,53 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
     }
   }
 
-  if (fase === 'carregando') return <p className="text-white/50">Carregando…</p>;
+  if (fase === 'carregando') return <p className="text-fg/50">Carregando…</p>;
   if (fase === 'erro') return <p className="text-v4red">{erro}</p>;
   if (!vaga) return null;
 
   if (fase === 'form') {
     return (
-      <div className="max-w-md mx-auto bg-white/5 border border-white/10 rounded p-6">
+      <div className="max-w-md mx-auto bg-fg/5 border border-fg/10 rounded p-6">
         <h1 className="font-heading text-xl font-bold mb-1">
           Entrevista — {vaga.cargo} ({vaga.senioridade})
         </h1>
-        <p className="text-white/50 text-sm mb-5">
+        <p className="text-fg/50 text-sm mb-5">
           Você vai responder {vaga.perguntas.length} pergunta(s) em vídeo. Pode gravar quando estiver
           pronto. Se precisar parar, use o mesmo e-mail para retomar de onde parou.
         </p>
         <form onSubmit={aoSubmeterForm} className="space-y-3">
           <div>
-            <label className="block text-sm text-white/60 mb-1">Nome completo</label>
+            <label className="block text-sm text-fg/60 mb-1">Nome completo</label>
             <input
               required
               value={nome}
               onChange={(e) => setNome(e.target.value)}
-              className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-v4red"
+              className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 outline-none focus:border-v4red"
             />
           </div>
           <div>
-            <label className="block text-sm text-white/60 mb-1">E-mail</label>
+            <label className="block text-sm text-fg/60 mb-1">E-mail</label>
             <input
               required
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-v4red"
+              className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 outline-none focus:border-v4red"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm text-white/60 mb-1">LinkedIn</label>
+              <label className="block text-sm text-fg/60 mb-1">LinkedIn</label>
               <input
                 required
                 value={linkedin}
                 onChange={(e) => setLinkedin(e.target.value)}
                 placeholder="linkedin.com/in/..."
-                className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-v4red"
+                className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 outline-none focus:border-v4red"
               />
             </div>
             <div>
-              <label className="block text-sm text-white/60 mb-1">Telefone</label>
+              <label className="block text-sm text-fg/60 mb-1">Telefone</label>
               <input
                 required
                 inputMode="tel"
@@ -305,28 +305,28 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
                 value={telefone}
                 onChange={(e) => setTelefone(formatarTelefone(e.target.value))}
                 placeholder="(11) 99999-9999"
-                className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-v4red"
+                className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 outline-none focus:border-v4red"
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm text-white/60 mb-1">Pretensão salarial (opcional)</label>
+            <label className="block text-sm text-fg/60 mb-1">Pretensão salarial (opcional)</label>
             <input
               inputMode="numeric"
               value={pretensaoSalarial}
               onChange={(e) => setPretensaoSalarial(formatarMoedaBRL(e.target.value))}
               placeholder="R$ 0,00"
-              className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-v4red"
+              className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 outline-none focus:border-v4red"
             />
           </div>
 
           {/* Dados adicionais para filtros avançados */}
-          <div className="border-t border-white/10 pt-4 mt-2">
-            <p className="text-xs text-white/40 uppercase tracking-wide mb-3">Dados adicionais (opcional — melhora os filtros)</p>
+          <div className="border-t border-fg/10 pt-4 mt-2">
+            <p className="text-xs text-fg/40 uppercase tracking-wide mb-3">Dados adicionais (opcional — melhora os filtros)</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-white/50 mb-1">Segmento</label>
-                <select value={segmento} onChange={(e) => setSegmento(e.target.value)} className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red">
+                <label className="block text-xs text-fg/50 mb-1">Segmento</label>
+                <select value={segmento} onChange={(e) => setSegmento(e.target.value)} className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red">
                   <option value="">Selecione</option>
                   <option value="tecnologia">Tecnologia</option>
                   <option value="saude">Saúde</option>
@@ -339,8 +339,8 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-white/50 mb-1">Nível profissional</label>
-                <select value={nivelProfissional} onChange={(e) => setNivelProfissional(e.target.value)} className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red">
+                <label className="block text-xs text-fg/50 mb-1">Nível profissional</label>
+                <select value={nivelProfissional} onChange={(e) => setNivelProfissional(e.target.value)} className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red">
                   <option value="">Selecione</option>
                   <option value="estagiario">Estagiário</option>
                   <option value="junior">Júnior</option>
@@ -352,8 +352,8 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-white/50 mb-1">Formação</label>
-                <select value={formacao} onChange={(e) => setFormacao(e.target.value)} className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red">
+                <label className="block text-xs text-fg/50 mb-1">Formação</label>
+                <select value={formacao} onChange={(e) => setFormacao(e.target.value)} className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red">
                   <option value="">Selecione</option>
                   {OPCOES_FORMACAO.map(([val, label]) => (
                     <option key={val} value={val}>{label}</option>
@@ -363,14 +363,14 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
             </div>
             <div className="grid grid-cols-3 gap-3 mt-3">
               <div>
-                <label className="block text-xs text-white/50 mb-1">País</label>
+                <label className="block text-xs text-fg/50 mb-1">País</label>
                 <select
                   value={pais}
                   onChange={(e) => {
                     setPais(e.target.value);
                     if (e.target.value !== 'Brasil') { setEstado(''); setCidade(''); }
                   }}
-                  className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                  className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
                 >
                   {PAISES.map((p) => (
                     <option key={p.value} value={p.value}>{p.label}</option>
@@ -378,12 +378,12 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-white/50 mb-1">Estado</label>
+                <label className="block text-xs text-fg/50 mb-1">Estado</label>
                 {pais === 'Brasil' ? (
                   <select
                     value={estado}
                     onChange={(e) => { setEstado(e.target.value); setCidade(''); }}
-                    className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                    className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
                   >
                     <option value="">Selecione</option>
                     {UFS.map((uf) => (
@@ -395,12 +395,12 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
                     value={estado}
                     onChange={(e) => setEstado(e.target.value)}
                     placeholder="Ex: SP"
-                    className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                    className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
                   />
                 )}
               </div>
               <div>
-                <label className="block text-xs text-white/50 mb-1">Cidade</label>
+                <label className="block text-xs text-fg/50 mb-1">Cidade</label>
                 {pais === 'Brasil' && estado ? (
                   <BuscaCidade
                     uf={estado}
@@ -414,25 +414,25 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
                     onChange={(e) => setCidade(e.target.value)}
                     placeholder={pais === 'Brasil' ? 'Selecione o estado' : 'Ex: São Paulo'}
                     disabled={pais === 'Brasil' && !estado}
-                    className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red disabled:opacity-40"
+                    className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red disabled:opacity-40"
                   />
                 )}
               </div>
             </div>
           </div>
           <div>
-            <label className="block text-sm text-white/60 mb-1">Currículo em PDF (opcional)</label>
+            <label className="block text-sm text-fg/60 mb-1">Currículo em PDF (opcional)</label>
             <input
               type="file"
               accept="application/pdf"
               onChange={(e) => setCurriculo(e.target.files?.[0] ?? null)}
-              className="w-full text-sm text-white/60 file:mr-3 file:rounded file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-white/70 hover:file:bg-white/20"
+              className="w-full text-sm text-fg/60 file:mr-3 file:rounded file:border-0 file:bg-fg/10 file:px-3 file:py-1.5 file:text-fg/70 hover:file:bg-fg/20"
             />
           </div>
           {erro && <p className="text-v4red text-sm">{erro}</p>}
           <button
             type="submit"
-            className="w-full rounded bg-v4red hover:bg-v4redDark text-white uppercase font-bold px-4 py-2"
+            className="w-full rounded bg-v4red hover:bg-v4redDark text-fg uppercase font-bold px-4 py-2"
           >
             Continuar
           </button>
@@ -460,15 +460,15 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
   if (fase === 'concluido') {
     return (
       <div className="max-w-xl mx-auto space-y-6">
-        <div className="text-center bg-white/5 border border-white/10 rounded-2xl p-8">
+        <div className="text-center bg-fg/5 border border-fg/10 rounded-2xl p-8">
           <h1 className="font-heading text-xl font-bold mb-2">Entrevista concluída!</h1>
-          <p className="text-white/60">
+          <p className="text-fg/60">
             Obrigado, {nome}. Suas respostas foram registradas e avaliadas.
           </p>
           {ehTeste && (
             <a
               href={`/vagas/${params.vagaId}`}
-              className="inline-block mt-5 rounded-full bg-v4red hover:bg-v4redDark text-white font-semibold px-5 py-2.5 text-sm transition"
+              className="inline-block mt-5 rounded-full bg-v4red hover:bg-v4redDark text-fg font-semibold px-5 py-2.5 text-sm transition"
             >
               Ver feedback da IA →
             </a>
@@ -496,7 +496,7 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
           Entrevista retomada — suas {indice} resposta(s) anteriores já foram salvas.
         </div>
       )}
-      <p className="text-white/40 text-sm">
+      <p className="text-fg/40 text-sm">
         {ehAdicional
           ? `Pergunta adicional ${indiceAdicional + 1} de ${totalAdicionais} (opcional)`
           : `Pergunta ${indice + 1} de ${principais.length}`}
@@ -506,7 +506,7 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
         <button
           onClick={() => ouvirPergunta(pergunta)}
           disabled={carregandoAudio}
-          className="shrink-0 rounded border border-white/10 hover:bg-white/10 text-white/70 hover:text-white px-3 py-1.5 text-sm whitespace-nowrap disabled:opacity-50"
+          className="shrink-0 rounded border border-fg/10 hover:bg-fg/10 text-fg/70 hover:text-fg px-3 py-1.5 text-sm whitespace-nowrap disabled:opacity-50"
         >
           {carregandoAudio ? '⏳ Gerando áudio…' : falando ? '⏸ Parar' : '🔊 Ouvir pergunta'}
         </button>
@@ -514,7 +514,7 @@ export default function EntrevistaPage({ params }: { params: { vagaId: string } 
       {ehAdicional && (
         <button
           onClick={aoEnviarResposta}
-          className="text-sm text-white/50 hover:text-white/80 underline"
+          className="text-sm text-fg/50 hover:text-fg/80 underline"
         >
           Pular esta pergunta (opcional) →
         </button>
@@ -555,9 +555,9 @@ function EscolhaIdioma({
   }
 
   return (
-    <div className="max-w-md mx-auto bg-white/5 border border-white/10 rounded p-6">
+    <div className="max-w-md mx-auto bg-fg/5 border border-fg/10 rounded p-6">
       <h1 className="font-heading text-xl font-bold mb-1">Idioma da entrevista</h1>
-      <p className="text-white/50 text-sm mb-5">
+      <p className="text-fg/50 text-sm mb-5">
         Em qual idioma você prefere responder as perguntas?
       </p>
       <div className="space-y-2">
@@ -568,8 +568,8 @@ function EscolhaIdioma({
             onClick={() => onEscolher(val)}
             className={`w-full text-left rounded border px-4 py-2.5 transition ${
               idioma === val
-                ? 'border-v4red bg-v4red/10 text-white'
-                : 'border-white/10 bg-black/20 text-white/70 hover:border-white/30'
+                ? 'border-v4red bg-v4red/10 text-fg'
+                : 'border-fg/10 bg-field/20 text-fg/70 hover:border-fg/30'
             }`}
           >
             {label}
@@ -581,7 +581,7 @@ function EscolhaIdioma({
         <button
           type="button"
           onClick={onVoltar}
-          className="rounded border border-white/10 text-white/60 hover:text-white px-4 py-2"
+          className="rounded border border-fg/10 text-fg/60 hover:text-fg px-4 py-2"
         >
           Voltar
         </button>
@@ -589,7 +589,7 @@ function EscolhaIdioma({
           type="button"
           disabled={!idioma || enviando}
           onClick={confirmar}
-          className="flex-1 rounded bg-v4red hover:bg-v4redDark disabled:opacity-50 text-white uppercase font-bold px-4 py-2"
+          className="flex-1 rounded bg-v4red hover:bg-v4redDark disabled:opacity-50 text-fg uppercase font-bold px-4 py-2"
         >
           {enviando ? 'Iniciando…' : 'Começar entrevista'}
         </button>
@@ -615,14 +615,14 @@ function Onboarding({ onConcluir }: { onConcluir: () => void }) {
   return (
     <div className="max-w-xl mx-auto">
       <h1 className="font-heading text-xl font-semibold mb-2">Antes de começar</h1>
-      <p className="text-white/50 text-sm mb-6">
+      <p className="text-fg/50 text-sm mb-6">
         Procure um local silencioso e com boa iluminação. A entrevista começa automaticamente assim
         que sua câmera e microfone forem liberados — cada pergunta tem {TEMPO_LEITURA_SEG}s de
         leitura e a gravação inicia e é enviada sozinha.
       </p>
 
-      <div className="rounded border border-white/10 bg-white/5 p-6">
-        <h2 className="text-center font-semibold text-white/90 mb-5">Liberando câmera e microfone…</h2>
+      <div className="rounded border border-fg/10 bg-fg/5 p-6">
+        <h2 className="text-center font-semibold text-fg/90 mb-5">Liberando câmera e microfone…</h2>
         <TesteCameraMicrofone onResultado={aoLiberarPermissao} />
       </div>
     </div>
@@ -694,11 +694,11 @@ function TesteCameraMicrofone({ onResultado }: { onResultado: (ok: boolean) => v
         ref={videoRef}
         autoPlay
         playsInline
-        className="w-full rounded bg-black aspect-video border border-white/10"
+        className="w-full rounded bg-field aspect-video border border-fg/10"
       />
 
       {estado === 'pedindo' && (
-        <p className="text-white/60 text-sm text-center">
+        <p className="text-fg/60 text-sm text-center">
           Aguardando permissão do navegador para câmera e microfone…
         </p>
       )}
@@ -707,8 +707,8 @@ function TesteCameraMicrofone({ onResultado }: { onResultado: (ok: boolean) => v
         <div className="space-y-1">
           <p className="text-v4green text-sm text-center">✓ Câmera e microfone conectados</p>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-white/50 shrink-0">🎙 Fale algo para testar</span>
-            <div className="flex-1 h-2 rounded bg-white/10 overflow-hidden">
+            <span className="text-xs text-fg/50 shrink-0">🎙 Fale algo para testar</span>
+            <div className="flex-1 h-2 rounded bg-fg/10 overflow-hidden">
               <div
                 className="h-full bg-v4green transition-all"
                 style={{ width: `${nivelAudio}%` }}
@@ -726,7 +726,7 @@ function TesteCameraMicrofone({ onResultado }: { onResultado: (ok: boolean) => v
           </p>
           <button
             onClick={testar}
-            className="rounded border border-white/20 hover:bg-white/10 text-white/80 px-4 py-1.5 text-sm"
+            className="rounded border border-fg/20 hover:bg-fg/10 text-fg/80 px-4 py-1.5 text-sm"
           >
             Tentar novamente
           </button>
@@ -901,11 +901,11 @@ function Gravador({
 
   return (
     <div className="space-y-3">
-      <video ref={videoRef} autoPlay playsInline className="w-full rounded bg-black aspect-video" />
+      <video ref={videoRef} autoPlay playsInline className="w-full rounded bg-field aspect-video" />
       {erro && <p className="text-v4red text-sm">{erro}</p>}
 
       {estado === 'leitura' && (
-        <div className="rounded border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/70 flex items-center justify-between">
+        <div className="rounded border border-fg/10 bg-fg/5 px-4 py-3 text-sm text-fg/70 flex items-center justify-between">
           <span>📖 Leia a pergunta com atenção — a gravação começa sozinha</span>
           <span className="font-mono text-v4red font-bold">{segundosLeitura}s</span>
         </div>
@@ -914,25 +914,25 @@ function Gravador({
       <div className="flex gap-2 items-center">
         {estado === 'gravando' && (
           <>
-            <span className="flex items-center gap-2 rounded bg-v4redDeep text-white uppercase font-bold px-4 py-2 animate-pulse">
+            <span className="flex items-center gap-2 rounded bg-v4redDeep text-fg uppercase font-bold px-4 py-2 animate-pulse">
               ● Gravando
             </span>
-            <span className="font-mono text-white/50 text-sm">
+            <span className="font-mono text-fg/50 text-sm">
               {String(Math.floor(segundosResposta / 60)).padStart(2, '0')}:
               {String(segundosResposta % 60).padStart(2, '0')} restantes
             </span>
             <button
               onClick={encerrarResposta}
-              className="rounded border border-white/20 hover:bg-white/10 text-white/80 px-4 py-2 text-sm"
+              className="rounded border border-fg/20 hover:bg-fg/10 text-fg/80 px-4 py-2 text-sm"
             >
               Já terminei de responder →
             </button>
           </>
         )}
         {estado === 'enviando' && (
-          <span className="text-white/60 px-4 py-2">Processando (transcrevendo e avaliando)…</span>
+          <span className="text-fg/60 px-4 py-2">Processando (transcrevendo e avaliando)…</span>
         )}
-        {estado === 'preparando' && <span className="text-white/40 px-4 py-2">Preparando câmera…</span>}
+        {estado === 'preparando' && <span className="text-fg/40 px-4 py-2">Preparando câmera…</span>}
       </div>
     </div>
   );
@@ -966,12 +966,12 @@ function GrupoFiltro({
   if (opcoes.length <= 1) return null;
   return (
     <div className="mb-3">
-      <p className="text-[11px] text-white/40 uppercase tracking-wide mb-1.5">{label}</p>
+      <p className="text-[11px] text-fg/40 uppercase tracking-wide mb-1.5">{label}</p>
       <div className="flex items-center gap-2 flex-wrap">
         <button
           onClick={() => onEscolher('')}
           className={`text-xs px-3 py-1.5 rounded-full transition ${
-            valor === '' ? 'bg-v4red text-white font-medium' : 'bg-white/[0.06] text-white/60 hover:bg-white/10'
+            valor === '' ? 'bg-v4red text-fg font-medium' : 'bg-fg/[0.06] text-fg/60 hover:bg-fg/10'
           }`}
         >
           Todas
@@ -981,7 +981,7 @@ function GrupoFiltro({
             key={o}
             onClick={() => onEscolher(o)}
             className={`text-xs px-3 py-1.5 rounded-full transition ${
-              valor === o ? 'bg-v4red text-white font-medium' : 'bg-white/[0.06] text-white/60 hover:bg-white/10'
+              valor === o ? 'bg-v4red text-fg font-medium' : 'bg-fg/[0.06] text-fg/60 hover:bg-fg/10'
             }`}
           >
             {o}
@@ -1019,9 +1019,9 @@ function OutrasVagas({ vagaAtualId }: { vagaAtualId: string }) {
   );
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-2xl p-6 v4-fade-in">
+    <div className="bg-fg/5 border border-fg/10 rounded-2xl p-6 v4-fade-in">
       <h2 className="font-heading text-lg font-semibold mb-1">Gostaria de fazer outra entrevista?</h2>
-      <p className="text-white/50 text-sm mb-4">
+      <p className="text-fg/50 text-sm mb-4">
         Temos outras vagas abertas — dá pra se candidatar a quantas quiser.
       </p>
 
@@ -1031,19 +1031,19 @@ function OutrasVagas({ vagaAtualId }: { vagaAtualId: string }) {
 
       <div className="space-y-2 mt-4">
         {filtradas.length === 0 && (
-          <p className="text-white/40 text-sm">Nenhuma vaga encontrada com esses filtros.</p>
+          <p className="text-fg/40 text-sm">Nenhuma vaga encontrada com esses filtros.</p>
         )}
         {filtradas.map((v) => (
           <a
             key={v.id}
             href={`/entrevista/${v.id}`}
-            className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/20 hover:bg-black/30 hover:border-white/20 px-4 py-3 transition"
+            className="flex items-center justify-between gap-3 rounded-xl border border-fg/10 bg-field/20 hover:bg-field/30 hover:border-fg/20 px-4 py-3 transition"
           >
             <div className="min-w-0">
               <div className="font-medium text-sm truncate">
-                {v.cargo} <span className="text-white/40 font-normal">· {v.senioridade}</span>
+                {v.cargo} <span className="text-fg/40 font-normal">· {v.senioridade}</span>
               </div>
-              <div className="text-xs text-white/40 truncate">{v.segmento}</div>
+              <div className="text-xs text-fg/40 truncate">{v.segmento}</div>
             </div>
             <span className="shrink-0 text-v4red text-sm font-semibold">Começar →</span>
           </a>
@@ -1094,26 +1094,26 @@ function FormCSAT({ candidaturaId, nome, onConcluir }: { candidaturaId: string; 
 
   if (enviado) {
     return (
-      <div className="max-w-xl mx-auto text-center bg-white/5 border border-white/10 rounded-2xl p-8 v4-fade-in">
+      <div className="max-w-xl mx-auto text-center bg-fg/5 border border-fg/10 rounded-2xl p-8 v4-fade-in">
         <div className="text-4xl mb-3">🎉</div>
         <h1 className="font-heading text-xl font-bold mb-2">Obrigado!</h1>
-        <p className="text-white/60">Sua avaliação nos ajuda a melhorar a plataforma.</p>
+        <p className="text-fg/60">Sua avaliação nos ajuda a melhorar a plataforma.</p>
       </div>
     );
   }
 
   return (
     <div className="max-w-xl mx-auto space-y-6 v4-fade-in">
-      <div className="text-center bg-white/5 border border-white/10 rounded-2xl p-6">
+      <div className="text-center bg-fg/5 border border-fg/10 rounded-2xl p-6">
         <h1 className="font-heading text-xl font-bold mb-1">Última etapa, {nome}!</h1>
-        <p className="text-white/50 text-sm">Avalie sua experiência com a plataforma (leva 30 segundos).</p>
+        <p className="text-fg/50 text-sm">Avalie sua experiência com a plataforma (leva 30 segundos).</p>
       </div>
 
       <div className="space-y-5">
         {perguntas.map((p) => (
-          <div key={p.key} className="bg-white/5 border border-white/10 rounded-xl p-4">
+          <div key={p.key} className="bg-fg/5 border border-fg/10 rounded-xl p-4">
             <p className="font-medium text-sm mb-1">{p.label}</p>
-            <p className="text-xs text-white/40 mb-3">{p.desc}</p>
+            <p className="text-xs text-fg/40 mb-3">{p.desc}</p>
             <div className="flex gap-2">
               {[1, 2, 3, 4, 5].map((n) => (
                 <button
@@ -1121,10 +1121,10 @@ function FormCSAT({ candidaturaId, nome, onConcluir }: { candidaturaId: string; 
                   onClick={() => setNotas((atual) => ({ ...atual, [p.key]: n }))}
                   className={`w-10 h-10 rounded-lg font-bold text-sm transition ${
                     notas[p.key] === n
-                      ? 'bg-v4red text-white'
+                      ? 'bg-v4red text-fg'
                       : notas[p.key] > n
                         ? 'bg-v4red/20 text-v4red'
-                        : 'bg-white/5 text-white/40 hover:bg-white/10'
+                        : 'bg-fg/5 text-fg/40 hover:bg-fg/10'
                   }`}
                 >
                   {n}
@@ -1132,7 +1132,7 @@ function FormCSAT({ candidaturaId, nome, onConcluir }: { candidaturaId: string; 
               ))}
             </div>
             {notas[p.key] > 0 && (
-              <p className="text-[10px] text-white/30 mt-1">
+              <p className="text-[10px] text-fg/30 mt-1">
                 {notas[p.key] === 1 && 'Péssimo'}
                 {notas[p.key] === 2 && 'Ruim'}
                 {notas[p.key] === 3 && 'Regular'}
@@ -1143,14 +1143,14 @@ function FormCSAT({ candidaturaId, nome, onConcluir }: { candidaturaId: string; 
           </div>
         ))}
 
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+        <div className="bg-fg/5 border border-fg/10 rounded-xl p-4">
           <p className="font-medium text-sm mb-2">Comentário opcional</p>
           <textarea
             value={comentario}
             onChange={(e) => setComentario(e.target.value)}
             rows={3}
             placeholder="Algum feedback adicional sobre sua experiência?"
-            className="w-full rounded-lg bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red resize-none"
+            className="w-full rounded-lg bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red resize-none"
           />
         </div>
       </div>
@@ -1160,14 +1160,14 @@ function FormCSAT({ candidaturaId, nome, onConcluir }: { candidaturaId: string; 
       <div className="flex gap-3">
         <button
           onClick={onConcluir}
-          className="flex-1 rounded-full border border-white/10 text-white/50 hover:text-white/80 py-3 text-sm transition"
+          className="flex-1 rounded-full border border-fg/10 text-fg/50 hover:text-fg/80 py-3 text-sm transition"
         >
           Pular
         </button>
         <button
           onClick={enviar}
           disabled={!todasPreenchidas || enviando}
-          className="flex-1 rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-white font-semibold py-3 text-sm transition"
+          className="flex-1 rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-fg font-semibold py-3 text-sm transition"
         >
           {enviando ? 'Enviando…' : `Enviar (${preenchidas}/5)`}
         </button>

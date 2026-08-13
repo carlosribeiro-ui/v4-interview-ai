@@ -33,7 +33,7 @@ export default function PerfilPage() {
   }, [usuario]);
 
   if (carregando || !usuario) {
-    return <p className="text-white/50">Carregando…</p>;
+    return <p className="text-fg/50">Carregando…</p>;
   }
 
   async function salvarDados(e: React.FormEvent) {
@@ -91,30 +91,30 @@ export default function PerfilPage() {
     <div className="max-w-xl mx-auto space-y-6">
       <div>
         <h1 className="font-heading text-2xl font-bold">👤 Meu perfil</h1>
-        <p className="text-white/40 text-sm mt-0.5">
+        <p className="text-fg/40 text-sm mt-0.5">
           {usuario.nome} · <span className="capitalize">{usuario.role}</span>
         </p>
       </div>
 
       <form onSubmit={salvarDados} className="rounded-2xl border border-v4border bg-v4surface p-5 space-y-4">
-        <h2 className="font-heading font-semibold text-sm text-white/70">Dados</h2>
+        <h2 className="font-heading font-semibold text-sm text-fg/70">Dados</h2>
         <div>
-          <label className="block text-xs text-white/50 mb-1">Nome</label>
+          <label className="block text-xs text-fg/50 mb-1">Nome</label>
           <input
             required
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
+            className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
           />
         </div>
         <div>
-          <label className="block text-xs text-white/50 mb-1">E-mail</label>
+          <label className="block text-xs text-fg/50 mb-1">E-mail</label>
           <input
             required
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
+            className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
           />
         </div>
         {erroDados && <p className="text-sm text-v4red">{erroDados}</p>}
@@ -122,44 +122,44 @@ export default function PerfilPage() {
         <button
           type="submit"
           disabled={salvandoDados}
-          className="rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-white font-semibold px-4 py-2 text-sm transition"
+          className="rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-fg font-semibold px-4 py-2 text-sm transition"
         >
           {salvandoDados ? 'Salvando…' : 'Salvar dados'}
         </button>
       </form>
 
       <form onSubmit={trocarSenha} className="rounded-2xl border border-v4border bg-v4surface p-5 space-y-4">
-        <h2 className="font-heading font-semibold text-sm text-white/70">Trocar senha</h2>
+        <h2 className="font-heading font-semibold text-sm text-fg/70">Trocar senha</h2>
         <div>
-          <label className="block text-xs text-white/50 mb-1">Senha atual</label>
+          <label className="block text-xs text-fg/50 mb-1">Senha atual</label>
           <input
             required
             type="password"
             value={senhaAtual}
             onChange={(e) => setSenhaAtual(e.target.value)}
-            className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
+            className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
           />
         </div>
         <div>
-          <label className="block text-xs text-white/50 mb-1">Nova senha (mín. 8 caracteres)</label>
+          <label className="block text-xs text-fg/50 mb-1">Nova senha (mín. 8 caracteres)</label>
           <input
             required
             type="password"
             minLength={8}
             value={novaSenha}
             onChange={(e) => setNovaSenha(e.target.value)}
-            className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
+            className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
           />
         </div>
         <div>
-          <label className="block text-xs text-white/50 mb-1">Confirmar nova senha</label>
+          <label className="block text-xs text-fg/50 mb-1">Confirmar nova senha</label>
           <input
             required
             type="password"
             minLength={8}
             value={confirmarSenha}
             onChange={(e) => setConfirmarSenha(e.target.value)}
-            className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
+            className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
           />
         </div>
         {erroSenha && <p className="text-sm text-v4red">{erroSenha}</p>}
@@ -167,7 +167,7 @@ export default function PerfilPage() {
         <button
           type="submit"
           disabled={salvandoSenha}
-          className="rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-white font-semibold px-4 py-2 text-sm transition"
+          className="rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-fg font-semibold px-4 py-2 text-sm transition"
         >
           {salvandoSenha ? 'Salvando…' : 'Trocar senha'}
         </button>

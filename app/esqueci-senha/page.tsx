@@ -42,7 +42,7 @@ export default function EsqueciSenhaPage() {
 
         {enviado ? (
           <>
-            <p className="text-white/60 text-sm mb-5">
+            <p className="text-fg/60 text-sm mb-5">
               Se <strong>{email}</strong> tiver uma conta, enviamos um link de redefinição — confira sua caixa de entrada
               (e o spam). O link expira em 30 minutos.
             </p>
@@ -52,26 +52,26 @@ export default function EsqueciSenhaPage() {
           </>
         ) : (
           <>
-            <p className="text-white/40 text-sm mb-5">Digite seu e-mail corporativo — enviamos um link pra redefinir.</p>
+            <p className="text-fg/40 text-sm mb-5">Digite seu e-mail corporativo — enviamos um link pra redefinir.</p>
             <form onSubmit={solicitar} className="space-y-3">
               <div>
-                <label className="block text-xs text-white/50 mb-1">E-mail</label>
+                <label className="block text-xs text-fg/50 mb-1">E-mail</label>
                 <input
                   required
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
+                  className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
                 />
               </div>
               <button
                 type="submit"
                 disabled={enviando}
-                className="w-full rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-white font-semibold px-4 py-2.5 text-sm transition"
+                className="w-full rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-fg font-semibold px-4 py-2.5 text-sm transition"
               >
                 {enviando ? 'Enviando…' : 'Enviar link de redefinição'}
               </button>
-              <Link href="/login" className="block text-center text-white/40 text-xs hover:text-white/60 mt-2">
+              <Link href="/login" className="block text-center text-fg/40 text-xs hover:text-fg/60 mt-2">
                 ← Voltar pro login
               </Link>
             </form>

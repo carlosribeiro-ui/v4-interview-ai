@@ -1,5 +1,5 @@
 const TONS = {
-  neutro: 'bg-white/10 text-white/60',
+  neutro: 'bg-fg/10 text-fg/60',
   vermelho: 'bg-v4red/15 text-v4red',
   verde: 'bg-v4green/15 text-v4green',
   amarelo: 'bg-v4yellow/15 text-v4yellow'

@@ -7,7 +7,7 @@ export default function GraficoBarras({ dados }: { dados: { faixa: string; total
     <div className="flex items-end justify-between gap-3 h-40 px-1">
       {dados.map((d, i) => (
         <div key={d.faixa} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
-          {d.total > 0 && <span className="text-xs font-semibold text-white/80">{d.total}</span>}
+          {d.total > 0 && <span className="text-xs font-semibold text-fg/80">{d.total}</span>}
           <div
             className="w-full rounded-t-lg transition-all"
             style={{
@@ -16,7 +16,7 @@ export default function GraficoBarras({ dados }: { dados: { faixa: string; total
               opacity: d.total === 0 ? 0.15 : 0.9
             }}
           />
-          <span className="text-[10px] text-white/40">{d.faixa}</span>
+          <span className="text-[10px] text-fg/40">{d.faixa}</span>
         </div>
       ))}
     </div>

@@ -98,14 +98,14 @@ export default function AdminConfigPage() {
   }, [carregando, usuario, router]);
 
   if (carregando || !usuario || usuario.role !== 'admin') {
-    return <p className="text-white/50">Carregando…</p>;
+    return <p className="text-fg/50">Carregando…</p>;
   }
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div>
         <h1 className="font-heading text-2xl font-bold">⚙ Configurações</h1>
-        <p className="text-white/40 text-sm mt-0.5">Usuários, auditoria e integrações — só admin.</p>
+        <p className="text-fg/40 text-sm mt-0.5">Usuários, auditoria e integrações — só admin.</p>
       </div>
 
       <div className="flex gap-1.5">
@@ -122,7 +122,7 @@ export default function AdminConfigPage() {
             key={valor}
             onClick={() => setAba(valor)}
             className={`px-3.5 py-1.5 rounded-full text-sm transition ${
-              aba === valor ? 'bg-v4red text-white font-medium' : 'bg-white/[0.05] text-white/60 hover:bg-white/10'
+              aba === valor ? 'bg-v4red text-fg font-medium' : 'bg-fg/[0.05] text-fg/60 hover:bg-fg/10'
             }`}
           >
             {label}
@@ -217,14 +217,14 @@ function AbaUsuarios({ usuarioAtualId }: { usuarioAtualId?: string }) {
     carregar();
   }
 
-  if (loading) return <p className="text-white/50">Carregando…</p>;
+  if (loading) return <p className="text-fg/50">Carregando…</p>;
 
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-v4border bg-v4surface overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs text-white/40 border-b border-white/5">
+            <tr className="text-left text-xs text-fg/40 border-b border-fg/5">
               <th className="px-4 py-2.5 font-medium">Nome</th>
               <th className="px-4 py-2.5 font-medium">E-mail</th>
               <th className="px-4 py-2.5 font-medium">Papel</th>
@@ -232,11 +232,11 @@ function AbaUsuarios({ usuarioAtualId }: { usuarioAtualId?: string }) {
               <th className="px-4 py-2.5 font-medium text-right">Ações</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody className="divide-y divide-fg/5">
             {usuarios.map((u) => (
               <tr key={u.id} className={u.ativo ? '' : 'opacity-50'}>
                 <td className="px-4 py-2.5 font-medium truncate max-w-[160px]">{u.nome}</td>
-                <td className="px-4 py-2.5 text-white/50 truncate max-w-[220px]">{u.email}</td>
+                <td className="px-4 py-2.5 text-fg/50 truncate max-w-[220px]">{u.email}</td>
                 <td className="px-4 py-2.5">
                   <span className={`px-2 py-0.5 rounded-full text-xs capitalize font-medium ${
                     u.role === 'admin' ? 'bg-v4red/20 text-v4red' : 'bg-v4green/20 text-v4green'
@@ -244,21 +244,21 @@ function AbaUsuarios({ usuarioAtualId }: { usuarioAtualId?: string }) {
                 </td>
                 <td className="px-4 py-2.5">
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                    u.ativo ? 'bg-white/10 text-white/60' : 'bg-v4yellow/15 text-v4yellow'
+                    u.ativo ? 'bg-fg/10 text-fg/60' : 'bg-v4yellow/15 text-v4yellow'
                   }`}>{u.ativo ? 'Ativo' : 'Inativo'}</span>
                 </td>
                 <td className="px-4 py-2.5">
                   <div className="flex items-center justify-end gap-1.5">
                     <button
                       onClick={() => setEditando(u)}
-                      className="text-white/40 hover:text-white text-xs px-2 py-1 rounded-full hover:bg-white/10 transition"
+                      className="text-fg/40 hover:text-fg text-xs px-2 py-1 rounded-full hover:bg-fg/10 transition"
                     >
                       ✎ Editar
                     </button>
                     {u.id !== usuarioAtualId && (
                       <button
                         onClick={() => alternarAtivo(u)}
-                        className="text-white/40 hover:text-v4yellow text-xs px-2 py-1 rounded-full hover:bg-white/10 transition"
+                        className="text-fg/40 hover:text-v4yellow text-xs px-2 py-1 rounded-full hover:bg-fg/10 transition"
                       >
                         {u.ativo ? 'Desativar' : 'Reativar'}
                       </button>
@@ -266,7 +266,7 @@ function AbaUsuarios({ usuarioAtualId }: { usuarioAtualId?: string }) {
                     <button
                       onClick={() => remover(u)}
                       disabled={u.id === usuarioAtualId}
-                      className="text-white/30 hover:text-v4red disabled:opacity-20 text-xs px-2 py-1 rounded-full hover:bg-white/10 transition"
+                      className="text-fg/30 hover:text-v4red disabled:opacity-20 text-xs px-2 py-1 rounded-full hover:bg-fg/10 transition"
                       title={u.id === usuarioAtualId ? 'Você não pode remover seu próprio usuário' : 'Remover'}
                     >
                       ✕
@@ -285,41 +285,41 @@ function AbaUsuarios({ usuarioAtualId }: { usuarioAtualId?: string }) {
         <form onSubmit={criarUsuario} className="rounded-2xl border border-v4border bg-v4surface p-4 space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-white/50 mb-1">Nome</label>
+              <label className="block text-xs text-fg/50 mb-1">Nome</label>
               <input
                 required
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
-                className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
               />
             </div>
             <div>
-              <label className="block text-xs text-white/50 mb-1">E-mail</label>
+              <label className="block text-xs text-fg/50 mb-1">E-mail</label>
               <input
                 required
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
               />
             </div>
             <div>
-              <label className="block text-xs text-white/50 mb-1">Senha (mín. 8 caracteres)</label>
+              <label className="block text-xs text-fg/50 mb-1">Senha (mín. 8 caracteres)</label>
               <input
                 required
                 type="password"
                 minLength={8}
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
-                className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
               />
             </div>
             <div>
-              <label className="block text-xs text-white/50 mb-1">Papel</label>
+              <label className="block text-xs text-fg/50 mb-1">Papel</label>
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as 'admin' | 'talent')}
-                className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
               >
                 <option value="talent">Talent</option>
                 <option value="admin">Admin</option>
@@ -330,14 +330,14 @@ function AbaUsuarios({ usuarioAtualId }: { usuarioAtualId?: string }) {
             <button
               type="submit"
               disabled={salvando}
-              className="rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-white font-semibold px-4 py-2 text-sm transition"
+              className="rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-fg font-semibold px-4 py-2 text-sm transition"
             >
               {salvando ? 'Criando…' : 'Criar usuário'}
             </button>
             <button
               type="button"
               onClick={() => setCriando(false)}
-              className="rounded-full border border-white/10 text-white/60 hover:text-white px-4 py-2 text-sm transition"
+              className="rounded-full border border-fg/10 text-fg/60 hover:text-fg px-4 py-2 text-sm transition"
             >
               Cancelar
             </button>
@@ -346,7 +346,7 @@ function AbaUsuarios({ usuarioAtualId }: { usuarioAtualId?: string }) {
       ) : (
         <button
           onClick={() => setCriando(true)}
-          className="rounded-full border border-white/10 text-white/60 hover:text-white hover:border-white/30 px-4 py-2 text-sm transition"
+          className="rounded-full border border-fg/10 text-fg/60 hover:text-fg hover:border-fg/30 px-4 py-2 text-sm transition"
         >
           + Novo usuário
         </button>
@@ -409,51 +409,51 @@ function ModalEditarUsuario({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center v4-fade-in" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="fixed inset-0 z-50 bg-field/85 backdrop-blur-sm flex items-center justify-center v4-fade-in" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <form onSubmit={salvar} className="bg-v4bg border border-v4border rounded-2xl p-6 w-full max-w-md shadow-card space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-heading font-semibold text-lg">Editar usuário</h3>
-          <button type="button" onClick={onClose} className="text-white/50 hover:text-white text-lg">✕</button>
+          <button type="button" onClick={onClose} className="text-fg/50 hover:text-fg text-lg">✕</button>
         </div>
         <div>
-          <label className="block text-xs text-white/50 mb-1">Nome</label>
+          <label className="block text-xs text-fg/50 mb-1">Nome</label>
           <input
             required
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
+            className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
           />
         </div>
         <div>
-          <label className="block text-xs text-white/50 mb-1">E-mail</label>
+          <label className="block text-xs text-fg/50 mb-1">E-mail</label>
           <input
             required
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
+            className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
           />
         </div>
         <div>
-          <label className="block text-xs text-white/50 mb-1">Papel</label>
+          <label className="block text-xs text-fg/50 mb-1">Papel</label>
           <select
             value={role}
             onChange={(e) => setRole(e.target.value as 'admin' | 'talent')}
-            className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
+            className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
           >
             <option value="talent">Talent</option>
             <option value="admin">Admin</option>
           </select>
         </div>
         <div>
-          <label className="block text-xs text-white/50 mb-1">Resetar senha (opcional — deixe em branco pra manter)</label>
+          <label className="block text-xs text-fg/50 mb-1">Resetar senha (opcional — deixe em branco pra manter)</label>
           <input
             type="password"
             minLength={8}
             placeholder="Nova senha (mín. 8 caracteres)"
             value={novaSenha}
             onChange={(e) => setNovaSenha(e.target.value)}
-            className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
+            className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
           />
         </div>
         {erro && <p className="text-sm text-v4red">{erro}</p>}
@@ -461,14 +461,14 @@ function ModalEditarUsuario({
           <button
             type="submit"
             disabled={salvando}
-            className="rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-white font-semibold px-4 py-2 text-sm transition"
+            className="rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-fg font-semibold px-4 py-2 text-sm transition"
           >
             {salvando ? 'Salvando…' : 'Salvar'}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-white/10 text-white/60 hover:text-white px-4 py-2 text-sm transition"
+            className="rounded-full border border-fg/10 text-fg/60 hover:text-fg px-4 py-2 text-sm transition"
           >
             Cancelar
           </button>
@@ -556,18 +556,18 @@ function AbaLogs() {
           type="datetime-local"
           value={desde}
           onChange={(e) => setDesde(e.target.value)}
-          className="rounded-full bg-v4surface border border-v4border px-3 py-2 text-xs outline-none focus:border-v4red text-white/70"
+          className="rounded-full bg-v4surface border border-v4border px-3 py-2 text-xs outline-none focus:border-v4red text-fg/70"
           title="Desde"
         />
         <input
           type="datetime-local"
           value={ate}
           onChange={(e) => setAte(e.target.value)}
-          className="rounded-full bg-v4surface border border-v4border px-3 py-2 text-xs outline-none focus:border-v4red text-white/70"
+          className="rounded-full bg-v4surface border border-v4border px-3 py-2 text-xs outline-none focus:border-v4red text-fg/70"
           title="Até"
         />
         {(evento || ator || q || desde || ate) && (
-          <button onClick={limparFiltros} className="text-xs text-white/40 hover:text-white px-2">
+          <button onClick={limparFiltros} className="text-xs text-fg/40 hover:text-fg px-2">
             ✕ Limpar
           </button>
         )}
@@ -575,22 +575,22 @@ function AbaLogs() {
       </div>
 
       {loading ? (
-        <p className="text-white/50">Carregando…</p>
+        <p className="text-fg/50">Carregando…</p>
       ) : logs.length === 0 ? (
-        <p className="text-white/40 text-sm">Nenhum evento encontrado com esses filtros.</p>
+        <p className="text-fg/40 text-sm">Nenhum evento encontrado com esses filtros.</p>
       ) : (
-        <div className="rounded-2xl border border-v4border bg-v4surface divide-y divide-white/5 max-h-[600px] overflow-y-auto">
+        <div className="rounded-2xl border border-v4border bg-v4surface divide-y divide-fg/5 max-h-[600px] overflow-y-auto">
           {logs.map((l) => (
             <button
               key={l.id}
               onClick={() => setLogAberto(l)}
-              className="w-full text-left px-4 py-2.5 text-xs hover:bg-white/[0.04] transition cursor-pointer"
+              className="w-full text-left px-4 py-2.5 text-xs hover:bg-fg/[0.04] transition cursor-pointer"
             >
               <div className="flex items-center justify-between gap-3">
                 <span className="font-medium">{RÓTULO_EVENTO[l.evento] ?? l.evento}</span>
-                <span className="text-white/30 shrink-0">{new Date(l.criadoEm).toLocaleString('pt-BR')}</span>
+                <span className="text-fg/30 shrink-0">{new Date(l.criadoEm).toLocaleString('pt-BR')}</span>
               </div>
-              <div className="text-white/40 mt-0.5">
+              <div className="text-fg/40 mt-0.5">
                 {l.ator && <span className="mr-2">por {l.ator}</span>}
                 {l.detalhes && <span className="break-all line-clamp-1">{JSON.stringify(l.detalhes)}</span>}
               </div>
@@ -623,14 +623,14 @@ function ModalDetalheLog({ log, onClose }: { log: LogEntry; onClose: () => void 
   const camposDetalhes = Object.entries(log.detalhes ?? {});
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center v4-fade-in" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="fixed inset-0 z-50 bg-field/85 backdrop-blur-sm flex items-center justify-center v4-fade-in" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="bg-v4bg border border-v4border rounded-2xl p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-card space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-heading font-semibold text-lg">{RÓTULO_EVENTO[log.evento] ?? log.evento}</h3>
-          <button onClick={onClose} className="text-white/50 hover:text-white text-lg">✕</button>
+          <button onClick={onClose} className="text-fg/50 hover:text-fg text-lg">✕</button>
         </div>
 
-        <div className="rounded-xl border border-v4border bg-black/20 p-4 space-y-2.5 text-sm">
+        <div className="rounded-xl border border-v4border bg-field/20 p-4 space-y-2.5 text-sm">
           <CampoDetalhe label="ID do evento" valor={log.id} mono />
           <CampoDetalhe label="Tipo" valor={log.evento} mono />
           <CampoDetalhe label="Data/hora" valor={new Date(log.criadoEm).toLocaleString('pt-BR', { dateStyle: 'full', timeStyle: 'medium' })} />
@@ -639,20 +639,20 @@ function ModalDetalheLog({ log, onClose }: { log: LogEntry; onClose: () => void 
 
         {camposDetalhes.length > 0 ? (
           <div>
-            <p className="text-xs text-white/50 mb-2">Detalhes</p>
-            <div className="rounded-xl border border-v4border bg-black/20 p-4 space-y-2.5 text-sm">
+            <p className="text-xs text-fg/50 mb-2">Detalhes</p>
+            <div className="rounded-xl border border-v4border bg-field/20 p-4 space-y-2.5 text-sm">
               {camposDetalhes.map(([k, v]) => (
                 <CampoDetalhe key={k} label={k} valor={typeof v === 'object' ? JSON.stringify(v) : String(v)} mono />
               ))}
             </div>
           </div>
         ) : (
-          <p className="text-xs text-white/40">Sem detalhes adicionais.</p>
+          <p className="text-xs text-fg/40">Sem detalhes adicionais.</p>
         )}
 
         <button
           onClick={copiarJson}
-          className="rounded-full border border-white/10 text-white/60 hover:text-white hover:border-white/30 px-4 py-2 text-sm transition"
+          className="rounded-full border border-fg/10 text-fg/60 hover:text-fg hover:border-fg/30 px-4 py-2 text-sm transition"
         >
           {copiado ? '✓ Copiado' : '⧉ Copiar JSON completo'}
         </button>
@@ -664,8 +664,8 @@ function ModalDetalheLog({ log, onClose }: { log: LogEntry; onClose: () => void 
 function CampoDetalhe({ label, valor, mono }: { label: string; valor: string; mono?: boolean }) {
   return (
     <div className="flex items-start justify-between gap-4">
-      <span className="text-white/40 shrink-0">{label}</span>
-      <span className={`text-right break-all ${mono ? 'font-mono text-[11px] text-white/70' : 'text-white/80'}`}>{valor}</span>
+      <span className="text-fg/40 shrink-0">{label}</span>
+      <span className={`text-right break-all ${mono ? 'font-mono text-[11px] text-fg/70' : 'text-fg/80'}`}>{valor}</span>
     </div>
   );
 }
@@ -715,32 +715,32 @@ function AbaWebhooks() {
     carregar();
   }
 
-  if (loading) return <p className="text-white/50">Carregando…</p>;
+  if (loading) return <p className="text-fg/50">Carregando…</p>;
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-white/40">
+      <p className="text-sm text-fg/40">
         POST em tempo real (fire-and-forget) pros eventos selecionados de cada webhook — ex: Slack, Google Chat, n8n.
         Dá pra ter vários, cada um escutando um subconjunto diferente de eventos.
       </p>
 
       {webhooks.length === 0 ? (
-        <p className="text-white/40 text-sm">Nenhum webhook configurado ainda.</p>
+        <p className="text-fg/40 text-sm">Nenhum webhook configurado ainda.</p>
       ) : (
-        <div className="rounded-2xl border border-v4border bg-v4surface divide-y divide-white/5">
+        <div className="rounded-2xl border border-v4border bg-v4surface divide-y divide-fg/5">
           {webhooks.map((w) => (
             <div key={w.id} className={`p-4 flex items-start justify-between gap-4 ${w.ativo ? '' : 'opacity-50'}`}>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-sm">{w.nome}</span>
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                    w.ativo ? 'bg-v4green/15 text-v4green' : 'bg-white/10 text-white/50'
+                    w.ativo ? 'bg-v4green/15 text-v4green' : 'bg-fg/10 text-fg/50'
                   }`}>{w.ativo ? 'Ativo' : 'Inativo'}</span>
                 </div>
-                <p className="text-xs text-white/40 truncate mt-0.5 font-mono">{w.url}</p>
+                <p className="text-xs text-fg/40 truncate mt-0.5 font-mono">{w.url}</p>
                 <div className="flex flex-wrap gap-1 mt-2">
                   {w.eventos.map((ev) => (
-                    <span key={ev} className="px-2 py-0.5 rounded-full bg-white/[0.06] text-white/50 text-[10px]">
+                    <span key={ev} className="px-2 py-0.5 rounded-full bg-fg/[0.06] text-fg/50 text-[10px]">
                       {RÓTULO_EVENTO[ev] ?? ev}
                     </span>
                   ))}
@@ -749,19 +749,19 @@ function AbaWebhooks() {
               <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   onClick={() => setEditando(w)}
-                  className="text-white/40 hover:text-white text-xs px-2 py-1 rounded-full hover:bg-white/10 transition"
+                  className="text-fg/40 hover:text-fg text-xs px-2 py-1 rounded-full hover:bg-fg/10 transition"
                 >
                   ✎ Editar
                 </button>
                 <button
                   onClick={() => alternarAtivo(w)}
-                  className="text-white/40 hover:text-v4yellow text-xs px-2 py-1 rounded-full hover:bg-white/10 transition"
+                  className="text-fg/40 hover:text-v4yellow text-xs px-2 py-1 rounded-full hover:bg-fg/10 transition"
                 >
                   {w.ativo ? 'Desativar' : 'Ativar'}
                 </button>
                 <button
                   onClick={() => remover(w)}
-                  className="text-white/30 hover:text-v4red text-xs px-2 py-1 rounded-full hover:bg-white/10 transition"
+                  className="text-fg/30 hover:text-v4red text-xs px-2 py-1 rounded-full hover:bg-fg/10 transition"
                 >
                   ✕
                 </button>
@@ -773,7 +773,7 @@ function AbaWebhooks() {
 
       <button
         onClick={() => setModalAberto(true)}
-        className="rounded-full border border-white/10 text-white/60 hover:text-white hover:border-white/30 px-4 py-2 text-sm transition"
+        className="rounded-full border border-fg/10 text-fg/60 hover:text-fg hover:border-fg/30 px-4 py-2 text-sm transition"
       >
         + Novo webhook
       </button>
@@ -840,39 +840,39 @@ function ModalWebhookForm({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center v4-fade-in" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="fixed inset-0 z-50 bg-field/85 backdrop-blur-sm flex items-center justify-center v4-fade-in" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <form onSubmit={salvar} className="bg-v4bg border border-v4border rounded-2xl p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-card space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-heading font-semibold text-lg">{editandoExistente ? 'Editar webhook' : '+ Novo webhook'}</h3>
-          <button type="button" onClick={onClose} className="text-white/50 hover:text-white text-lg">✕</button>
+          <button type="button" onClick={onClose} className="text-fg/50 hover:text-fg text-lg">✕</button>
         </div>
 
         <div>
-          <label className="block text-xs text-white/50 mb-1">Nome</label>
+          <label className="block text-xs text-fg/50 mb-1">Nome</label>
           <input
             required
             value={nome}
             onChange={(e) => setNome(e.target.value)}
             placeholder="Ex: Slack #alertas-seguranca"
-            className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
+            className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
           />
         </div>
         <div>
-          <label className="block text-xs text-white/50 mb-1">URL</label>
+          <label className="block text-xs text-fg/50 mb-1">URL</label>
           <input
             required
             type="url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="https://hooks.slack.com/... ou https://chat.googleapis.com/..."
-            className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
+            className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
           />
         </div>
         <div>
-          <label className="block text-xs text-white/50 mb-2">Eventos que disparam esse webhook</label>
+          <label className="block text-xs text-fg/50 mb-2">Eventos que disparam esse webhook</label>
           <div className="grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto pr-1">
             {EVENTOS_LISTA.map((ev) => (
-              <label key={ev} className="flex items-center gap-1.5 text-xs text-white/60 cursor-pointer select-none">
+              <label key={ev} className="flex items-center gap-1.5 text-xs text-fg/60 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={eventosSelecionados.has(ev)}
@@ -891,14 +891,14 @@ function ModalWebhookForm({
           <button
             type="submit"
             disabled={salvando}
-            className="rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-white font-semibold px-4 py-2 text-sm transition"
+            className="rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-fg font-semibold px-4 py-2 text-sm transition"
           >
             {salvando ? 'Salvando…' : 'Salvar'}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-white/10 text-white/60 hover:text-white px-4 py-2 text-sm transition"
+            className="rounded-full border border-fg/10 text-fg/60 hover:text-fg px-4 py-2 text-sm transition"
           >
             Cancelar
           </button>
@@ -953,20 +953,20 @@ function AbaModelosEmail() {
     carregar();
   }
 
-  if (loading) return <p className="text-white/50">Carregando…</p>;
+  if (loading) return <p className="text-fg/50">Carregando…</p>;
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-white/40">
+      <p className="text-sm text-fg/40">
         E-mail automático (via SMTP configurado no servidor) disparado nos eventos abaixo. Sem template ativo pro
-        evento, nada é enviado. Use <code className="text-white/60">{'{{variavel}}'}</code> no assunto/corpo — as
+        evento, nada é enviado. Use <code className="text-fg/60">{'{{variavel}}'}</code> no assunto/corpo — as
         variáveis disponíveis aparecem ao escolher o evento.
       </p>
 
       {templates.length === 0 ? (
-        <p className="text-white/40 text-sm">Nenhum modelo configurado ainda.</p>
+        <p className="text-fg/40 text-sm">Nenhum modelo configurado ainda.</p>
       ) : (
-        <div className="rounded-2xl border border-v4border bg-v4surface divide-y divide-white/5">
+        <div className="rounded-2xl border border-v4border bg-v4surface divide-y divide-fg/5">
           {templates.map((t) => (
             <div key={t.id} className={`p-4 flex items-start justify-between gap-4 ${t.ativo ? '' : 'opacity-50'}`}>
               <div className="min-w-0">
@@ -974,30 +974,30 @@ function AbaModelosEmail() {
                   <span className="font-medium text-sm">{RÓTULO_EVENTO[t.evento] ?? t.evento}</span>
                   <span
                     className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                      t.ativo ? 'bg-v4green/15 text-v4green' : 'bg-white/10 text-white/50'
+                      t.ativo ? 'bg-v4green/15 text-v4green' : 'bg-fg/10 text-fg/50'
                     }`}
                   >
                     {t.ativo ? 'Ativo' : 'Inativo'}
                   </span>
                 </div>
-                <p className="text-xs text-white/60 mt-1">{t.assunto}</p>
+                <p className="text-xs text-fg/60 mt-1">{t.assunto}</p>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   onClick={() => setEditando(t)}
-                  className="text-white/40 hover:text-white text-xs px-2 py-1 rounded-full hover:bg-white/10 transition"
+                  className="text-fg/40 hover:text-fg text-xs px-2 py-1 rounded-full hover:bg-fg/10 transition"
                 >
                   ✎ Editar
                 </button>
                 <button
                   onClick={() => alternarAtivo(t)}
-                  className="text-white/40 hover:text-v4yellow text-xs px-2 py-1 rounded-full hover:bg-white/10 transition"
+                  className="text-fg/40 hover:text-v4yellow text-xs px-2 py-1 rounded-full hover:bg-fg/10 transition"
                 >
                   {t.ativo ? 'Desativar' : 'Ativar'}
                 </button>
                 <button
                   onClick={() => remover(t)}
-                  className="text-white/30 hover:text-v4red text-xs px-2 py-1 rounded-full hover:bg-white/10 transition"
+                  className="text-fg/30 hover:text-v4red text-xs px-2 py-1 rounded-full hover:bg-fg/10 transition"
                 >
                   ✕
                 </button>
@@ -1009,7 +1009,7 @@ function AbaModelosEmail() {
 
       <button
         onClick={() => setModalAberto(true)}
-        className="rounded-full border border-white/10 text-white/60 hover:text-white hover:border-white/30 px-4 py-2 text-sm transition"
+        className="rounded-full border border-fg/10 text-fg/60 hover:text-fg hover:border-fg/30 px-4 py-2 text-sm transition"
       >
         + Novo modelo
       </button>
@@ -1077,20 +1077,20 @@ function ModalTemplateForm({
   const variaveis = EVENTOS_EMAIL.find((e) => e.valor === evento)?.variaveis ?? [];
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center v4-fade-in" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="fixed inset-0 z-50 bg-field/85 backdrop-blur-sm flex items-center justify-center v4-fade-in" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <form onSubmit={salvar} className="bg-v4bg border border-v4border rounded-2xl p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-card space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-heading font-semibold text-lg">{editandoExistente ? 'Editar modelo' : '+ Novo modelo'}</h3>
-          <button type="button" onClick={onClose} className="text-white/50 hover:text-white text-lg">✕</button>
+          <button type="button" onClick={onClose} className="text-fg/50 hover:text-fg text-lg">✕</button>
         </div>
 
         <div>
-          <label className="block text-xs text-white/50 mb-1">Evento</label>
+          <label className="block text-xs text-fg/50 mb-1">Evento</label>
           <select
             disabled={editandoExistente}
             value={evento}
             onChange={(e) => trocarEvento(e.target.value)}
-            className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red disabled:opacity-50"
+            className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2.5 text-sm outline-none focus:border-v4red disabled:opacity-50"
           >
             {EVENTOS_EMAIL.map((e) => (
               <option key={e.valor} value={e.valor}>{e.label}</option>
@@ -1099,10 +1099,10 @@ function ModalTemplateForm({
         </div>
 
         <div>
-          <label className="block text-xs text-white/50 mb-2">Variáveis disponíveis pra esse evento</label>
+          <label className="block text-xs text-fg/50 mb-2">Variáveis disponíveis pra esse evento</label>
           <div className="flex flex-wrap gap-1.5">
             {variaveis.map((v) => (
-              <code key={v} className="px-2 py-0.5 rounded-full bg-white/[0.06] text-white/50 text-[10px]">
+              <code key={v} className="px-2 py-0.5 rounded-full bg-fg/[0.06] text-fg/50 text-[10px]">
                 {`{{${v}}}`}
               </code>
             ))}
@@ -1110,22 +1110,22 @@ function ModalTemplateForm({
         </div>
 
         <div>
-          <label className="block text-xs text-white/50 mb-1">Assunto</label>
+          <label className="block text-xs text-fg/50 mb-1">Assunto</label>
           <input
             required
             value={assunto}
             onChange={(e) => setAssunto(e.target.value)}
-            className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
+            className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
           />
         </div>
         <div>
-          <label className="block text-xs text-white/50 mb-1">Corpo (HTML)</label>
+          <label className="block text-xs text-fg/50 mb-1">Corpo (HTML)</label>
           <textarea
             required
             rows={10}
             value={corpoHtml}
             onChange={(e) => setCorpoHtml(e.target.value)}
-            className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red font-mono text-xs"
+            className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2.5 text-sm outline-none focus:border-v4red font-mono text-xs"
           />
         </div>
 
@@ -1135,14 +1135,14 @@ function ModalTemplateForm({
           <button
             type="submit"
             disabled={salvando}
-            className="rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-white font-semibold px-4 py-2 text-sm transition"
+            className="rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-fg font-semibold px-4 py-2 text-sm transition"
           >
             {salvando ? 'Salvando…' : 'Salvar'}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-white/10 text-white/60 hover:text-white px-4 py-2 text-sm transition"
+            className="rounded-full border border-fg/10 text-fg/60 hover:text-fg px-4 py-2 text-sm transition"
           >
             Cancelar
           </button>
@@ -1182,11 +1182,11 @@ function AbaCaixaSaida() {
 
   useEffect(carregar, [evento, status]);
 
-  if (loading) return <p className="text-white/50">Carregando…</p>;
+  if (loading) return <p className="text-fg/50">Carregando…</p>;
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-white/40">
+      <p className="text-sm text-fg/40">
         Histórico de toda tentativa de envio dos modelos configurados — com SMTP não configurado em prod, fica
         registrado aqui como "SMTP não configurado" em vez de sair de verdade (ver aba Logs pra ver o link, quando aplicável).
       </p>
@@ -1215,20 +1215,20 @@ function AbaCaixaSaida() {
       </div>
 
       {enviados.length === 0 ? (
-        <p className="text-white/40 text-sm">Nenhum e-mail disparado ainda com esses filtros.</p>
+        <p className="text-fg/40 text-sm">Nenhum e-mail disparado ainda com esses filtros.</p>
       ) : (
-        <div className="rounded-2xl border border-v4border bg-v4surface divide-y divide-white/5 max-h-[600px] overflow-y-auto">
+        <div className="rounded-2xl border border-v4border bg-v4surface divide-y divide-fg/5 max-h-[600px] overflow-y-auto">
           {enviados.map((email) => (
             <button
               key={email.id}
               onClick={() => setAberto(email)}
-              className="w-full text-left px-4 py-2.5 text-xs hover:bg-white/[0.04] transition cursor-pointer"
+              className="w-full text-left px-4 py-2.5 text-xs hover:bg-fg/[0.04] transition cursor-pointer"
             >
               <div className="flex items-center justify-between gap-3">
                 <span className="font-medium truncate">{email.assunto}</span>
-                <span className="text-white/30 shrink-0">{new Date(email.enviadoEm).toLocaleString('pt-BR')}</span>
+                <span className="text-fg/30 shrink-0">{new Date(email.enviadoEm).toLocaleString('pt-BR')}</span>
               </div>
-              <div className="text-white/40 mt-0.5 flex items-center gap-2">
+              <div className="text-fg/40 mt-0.5 flex items-center gap-2">
                 <span
                   className={`px-2 py-0.5 rounded-full text-[10px] font-medium shrink-0 ${
                     email.status === 'enviado'
@@ -1260,14 +1260,14 @@ function ModalDetalheEmail({ email, onClose }: { email: EmailEnviado; onClose: (
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center v4-fade-in" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="fixed inset-0 z-50 bg-field/85 backdrop-blur-sm flex items-center justify-center v4-fade-in" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="bg-v4bg border border-v4border rounded-2xl p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-card space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-heading font-semibold text-lg">{email.assunto}</h3>
-          <button onClick={onClose} className="text-white/50 hover:text-white text-lg">✕</button>
+          <button onClick={onClose} className="text-fg/50 hover:text-fg text-lg">✕</button>
         </div>
 
-        <div className="rounded-xl border border-v4border bg-black/20 p-4 space-y-2.5 text-sm">
+        <div className="rounded-xl border border-v4border bg-field/20 p-4 space-y-2.5 text-sm">
           <CampoDetalhe label="Para" valor={email.destinatario} mono />
           <CampoDetalhe label="Evento" valor={RÓTULO_EVENTO[email.evento] ?? email.evento} />
           <CampoDetalhe label="Status" valor={RÓTULO_STATUS_EMAIL[email.status] ?? email.status} />
@@ -1276,7 +1276,9 @@ function ModalDetalheEmail({ email, onClose }: { email: EmailEnviado; onClose: (
         </div>
 
         <div>
-          <p className="text-xs text-white/50 mb-2">Corpo enviado</p>
+          <p className="text-xs text-fg/50 mb-2">Corpo enviado</p>
+          {/* Corpo do e-mail é HTML alheio (renderizado como o destinatário veria) — fica
+              sempre branco/preto fixo de propósito, não segue o tema do app. */}
           <div
             className="rounded-xl border border-v4border bg-white text-black p-4 text-sm max-h-64 overflow-y-auto"
             dangerouslySetInnerHTML={{ __html: email.corpoRenderizado }}

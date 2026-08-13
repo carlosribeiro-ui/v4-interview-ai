@@ -19,7 +19,7 @@ export function useToast() {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className={`rounded border px-4 py-2.5 text-sm font-medium shadow-lg bg-v4gray950 ${
+          className={`rounded border px-4 py-2.5 text-sm font-medium shadow-lg bg-v4surface ${
             t.tipo === 'sucesso' ? 'border-v4green text-v4green' : 'border-v4red text-v4red'
           }`}
         >

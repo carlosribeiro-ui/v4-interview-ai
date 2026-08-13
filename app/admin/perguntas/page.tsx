@@ -78,43 +78,43 @@ export default function AdminAnalisarPerguntas() {
   return (
     <div className="space-y-8">
       <div>
-        <a href="/" className="text-sm text-white/40 hover:text-white/70">← Dashboard</a>
+        <a href="/" className="text-sm text-fg/40 hover:text-fg/70">← Dashboard</a>
         <h1 className="font-heading text-xl font-bold mt-1">Analisar perguntas</h1>
-        <p className="text-white/50 text-sm mt-1">
+        <p className="text-fg/50 text-sm mt-1">
           Cole as perguntas e a IA avalia clareza do texto e qualidade dos critérios.
         </p>
       </div>
 
-      <section className="bg-white/5 border border-white/10 rounded p-6 space-y-4">
+      <section className="bg-fg/5 border border-fg/10 rounded p-6 space-y-4">
         <div className="grid sm:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm text-white/60 mb-1">Cargo (opcional)</label>
+            <label className="block text-sm text-fg/60 mb-1">Cargo (opcional)</label>
             <input value={cargo} onChange={(e) => setCargo(e.target.value)}
               placeholder="Ex: Desenvolvedor Backend"
-              className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-v4red" />
+              className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 outline-none focus:border-v4red" />
           </div>
           <div>
-            <label className="block text-sm text-white/60 mb-1">Senioridade (opcional)</label>
+            <label className="block text-sm text-fg/60 mb-1">Senioridade (opcional)</label>
             <select value={senioridade} onChange={(e) => setSenioridade(e.target.value)}
-              className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-v4red">
+              className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 outline-none focus:border-v4red">
               <option value="">—</option>
               <option>Estágio</option><option>Júnior</option>
               <option>Pleno</option><option>Sênior</option><option>Especialista</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm text-white/60 mb-1">Segmento (opcional)</label>
+            <label className="block text-sm text-fg/60 mb-1">Segmento (opcional)</label>
             <input value={segmento} onChange={(e) => setSegmento(e.target.value)}
               placeholder="Ex: RH Tech"
-              className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-v4red" />
+              className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 outline-none focus:border-v4red" />
           </div>
         </div>
 
         <div className="space-y-4">
           {perguntas.map((p, i) => (
-            <div key={i} className="rounded border border-white/10 bg-black/20 p-4 space-y-3">
+            <div key={i} className="rounded border border-fg/10 bg-field/20 p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-white/50">Pergunta #{i + 1}</span>
+                <span className="text-sm font-medium text-fg/50">Pergunta #{i + 1}</span>
                 {perguntas.length > 1 && (
                   <button onClick={() => removerPergunta(i)} className="text-v4red text-sm hover:underline">
                     Remover
@@ -122,30 +122,30 @@ export default function AdminAnalisarPerguntas() {
                 )}
               </div>
               <div>
-                <label className="block text-sm text-white/60 mb-1">Pergunta</label>
+                <label className="block text-sm text-fg/60 mb-1">Pergunta</label>
                 <textarea
                   value={p.texto}
                   onChange={(e) => atualizarPergunta(i, 'texto', e.target.value)}
                   placeholder="Ex: Descreva uma situação em que você precisou..."
                   rows={2}
-                  className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-v4red text-sm"
+                  className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 outline-none focus:border-v4red text-sm"
                 />
               </div>
               <div>
-                <label className="block text-sm text-white/60 mb-1">Critérios de avaliação</label>
+                <label className="block text-sm text-fg/60 mb-1">Critérios de avaliação</label>
                 <textarea
                   value={p.criterios}
                   onChange={(e) => atualizarPergunta(i, 'criterios', e.target.value)}
                   placeholder="O que a resposta ideal deve demonstrar…"
                   rows={2}
-                  className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-v4red text-sm"
+                  className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 outline-none focus:border-v4red text-sm"
                 />
               </div>
             </div>
           ))}
           <button
             onClick={adicionarPergunta}
-            className="rounded border border-white/20 hover:bg-white/10 text-white/80 px-4 py-2 text-sm"
+            className="rounded border border-fg/20 hover:bg-fg/10 text-fg/80 px-4 py-2 text-sm"
           >
             + Adicionar pergunta
           </button>
@@ -153,7 +153,7 @@ export default function AdminAnalisarPerguntas() {
 
         <div className="flex items-center gap-3">
           <button onClick={analisar} disabled={loading}
-            className="rounded bg-v4red hover:bg-v4redDark disabled:opacity-50 text-white uppercase font-bold px-4 py-2 transition">
+            className="rounded bg-v4red hover:bg-v4redDark disabled:opacity-50 text-fg uppercase font-bold px-4 py-2 transition">
             {loading ? 'Analisando com IA (Gemini Flash)…' : 'Analisar perguntas'}
           </button>
           {erro && <span className="text-v4red text-sm">{erro}</span>}
@@ -166,7 +166,7 @@ export default function AdminAnalisarPerguntas() {
           {analise.map((item) => (
             <div key={item.indice} className={`rounded border p-5 ${bgNota(Math.min(item.notaTexto, item.notaCriterios))}`}>
               <div className="flex items-start justify-between mb-3">
-                <span className="text-sm font-medium text-white/60">Pergunta #{item.indice}</span>
+                <span className="text-sm font-medium text-fg/60">Pergunta #{item.indice}</span>
                 <div className="flex gap-4 text-sm">
                   <span>Texto: <span className={`font-semibold ${corNota(item.notaTexto)}`}>{item.notaTexto.toFixed(1)}</span></span>
                   <span>Critérios: <span className={`font-semibold ${corNota(item.notaCriterios)}`}>{item.notaCriterios.toFixed(1)}</span></span>
@@ -175,32 +175,32 @@ export default function AdminAnalisarPerguntas() {
 
               <div className="grid sm:grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-white/40 mb-1">📝 Feedback do texto</p>
-                  <p className="text-white/80">{item.feedbackTexto}</p>
+                  <p className="text-fg/40 mb-1">📝 Feedback do texto</p>
+                  <p className="text-fg/80">{item.feedbackTexto}</p>
                 </div>
                 <div>
-                  <p className="text-white/40 mb-1">🎯 Feedback dos critérios</p>
-                  <p className="text-white/80">{item.feedbackCriterios}</p>
+                  <p className="text-fg/40 mb-1">🎯 Feedback dos critérios</p>
+                  <p className="text-fg/80">{item.feedbackCriterios}</p>
                 </div>
               </div>
 
               {item.sugestaoMelhoria && (
                 <div className="mt-3 bg-v4green/10 border border-v4green/30 rounded px-4 py-2 text-sm">
                   <span className="text-v4green font-medium">💡 Sugestão: </span>
-                  <span className="text-white/80">{item.sugestaoMelhoria}</span>
+                  <span className="text-fg/80">{item.sugestaoMelhoria}</span>
                 </div>
               )}
             </div>
           ))}
 
-          <div className="bg-white/5 border border-white/10 rounded p-4 text-sm">
-            <p className="text-white/50">
+          <div className="bg-fg/5 border border-fg/10 rounded p-4 text-sm">
+            <p className="text-fg/50">
               Médias:Texto{' '}
-              <span className="font-semibold text-white/80">
+              <span className="font-semibold text-fg/80">
                 {(analise.reduce((s, i) => s + i.notaTexto, 0) / analise.length).toFixed(1)}
               </span>
               {' · '}Critérios{' '}
-              <span className="font-semibold text-white/80">
+              <span className="font-semibold text-fg/80">
                 {(analise.reduce((s, i) => s + i.notaCriterios, 0) / analise.length).toFixed(1)}
               </span>
             </p>

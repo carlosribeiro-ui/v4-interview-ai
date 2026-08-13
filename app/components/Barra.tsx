@@ -6,10 +6,10 @@ export default function Barra({ label, valor, corIndice = 0 }: { label: string; 
   return (
     <div>
       <div className="flex items-center justify-between text-xs mb-1">
-        <span className="text-white/70">{label}</span>
-        <span className="font-semibold text-white/90">{Math.round(pct)}%</span>
+        <span className="text-fg/70">{label}</span>
+        <span className="font-semibold text-fg/90">{Math.round(pct)}%</span>
       </div>
-      <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+      <div className="h-1.5 rounded-full bg-fg/[0.06] overflow-hidden">
         <div
           className="h-full rounded-full transition-all"
           style={{ width: `${pct}%`, backgroundColor: CORES[corIndice % CORES.length] }}

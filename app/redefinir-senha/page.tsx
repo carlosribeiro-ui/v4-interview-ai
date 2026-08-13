@@ -73,36 +73,36 @@ function RedefinirSenhaForm() {
             </Link>
           </>
         ) : sucesso ? (
-          <p className="text-white/60 text-sm">Senha redefinida! Redirecionando pro login…</p>
+          <p className="text-fg/60 text-sm">Senha redefinida! Redirecionando pro login…</p>
         ) : (
           <form onSubmit={redefinir} className="space-y-3">
             <div>
-              <label className="block text-xs text-white/50 mb-1">Nova senha</label>
+              <label className="block text-xs text-fg/50 mb-1">Nova senha</label>
               <input
                 required
                 type="password"
                 minLength={8}
                 value={novaSenha}
                 onChange={(e) => setNovaSenha(e.target.value)}
-                className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
+                className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
               />
             </div>
             <div>
-              <label className="block text-xs text-white/50 mb-1">Confirmar nova senha</label>
+              <label className="block text-xs text-fg/50 mb-1">Confirmar nova senha</label>
               <input
                 required
                 type="password"
                 minLength={8}
                 value={confirmar}
                 onChange={(e) => setConfirmar(e.target.value)}
-                className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
+                className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
               />
             </div>
             {erro && <p className="text-v4red text-sm">{erro}</p>}
             <button
               type="submit"
               disabled={enviando}
-              className="w-full rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-white font-semibold px-4 py-2.5 text-sm transition"
+              className="w-full rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-fg font-semibold px-4 py-2.5 text-sm transition"
             >
               {enviando ? 'Redefinindo…' : 'Redefinir senha'}
             </button>

@@ -328,16 +328,16 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
                   ? 'bg-v4green text-black'
                   : i === step
                   ? 'bg-v4green text-black'
-                  : 'bg-white/10 text-white/40'
+                  : 'bg-fg/10 text-fg/40'
               }`}
             >
               {i < step ? '✓' : i + 1}
             </div>
-            <span className={`text-xs whitespace-nowrap ${i === step ? 'text-white font-medium' : 'text-white/40'}`}>
+            <span className={`text-xs whitespace-nowrap ${i === step ? 'text-fg font-medium' : 'text-fg/40'}`}>
               {label}
             </span>
             {i < STEP_LABELS.length - 1 && (
-              <div className={`flex-1 h-px mx-1 ${i < step ? 'bg-v4green' : 'bg-white/10'}`} />
+              <div className={`flex-1 h-px mx-1 ${i < step ? 'bg-v4green' : 'bg-fg/10'}`} />
             )}
           </div>
         ))}
@@ -352,35 +352,35 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
               <div className="space-y-4">
                 <div>
                   <h2 className="font-heading text-xl font-bold mb-1">Informações da entrevista</h2>
-                  <p className="text-white/50 text-sm">Preencha os dados básicos para criar sua entrevista</p>
+                  <p className="text-fg/50 text-sm">Preencha os dados básicos para criar sua entrevista</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm text-white/60 mb-1">Identificador</label>
+                    <label className="block text-sm text-fg/60 mb-1">Identificador</label>
                     <input
                       value={identificador}
                       onChange={(e) => setIdentificador(e.target.value)}
                       placeholder="Ex: DEV-2025-01"
-                      className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                      className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-white/60 mb-1">Título da entrevista *</label>
+                    <label className="block text-sm text-fg/60 mb-1">Título da entrevista *</label>
                     <input
                       required
                       value={cargo}
                       onChange={(e) => setCargo(e.target.value)}
                       placeholder="Ex: Desenvolvedor Full Stack"
-                      className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                      className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-white/60 mb-1">Segmento da atividade econômica *</label>
+                    <label className="block text-sm text-fg/60 mb-1">Segmento da atividade econômica *</label>
                     <select
                       value={segmento}
                       onChange={(e) => setSegmento(e.target.value)}
-                      className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                      className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
                     >
                       <option value="">Selecione segmento</option>
                       {SEGMENTOS.map((s) => (
@@ -389,11 +389,11 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm text-white/60 mb-1">Nível profissional *</label>
+                    <label className="block text-sm text-fg/60 mb-1">Nível profissional *</label>
                     <select
                       value={senioridade}
                       onChange={(e) => setSenioridade(e.target.value)}
-                      className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                      className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
                     >
                       {NIVEIS.map((n) => (
                         <option key={n.value} value={n.value}>{n.label}</option>
@@ -401,11 +401,11 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm text-white/60 mb-1">Formação acadêmica</label>
+                    <label className="block text-sm text-fg/60 mb-1">Formação acadêmica</label>
                     <select
                       value={formacaoAcademica}
                       onChange={(e) => setFormacaoAcademica(e.target.value)}
-                      className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                      className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
                     >
                       {FORMACOES.map((f) => (
                         <option key={f.value} value={f.value}>{f.label}</option>
@@ -413,14 +413,14 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm text-white/60 mb-1">País</label>
+                    <label className="block text-sm text-fg/60 mb-1">País</label>
                     <select
                       value={pais}
                       onChange={(e) => {
                         setPais(e.target.value);
                         if (e.target.value !== 'Brasil') { setEstado(''); setCidade(''); }
                       }}
-                      className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                      className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
                     >
                       {PAISES.map((p) => (
                         <option key={p.value} value={p.value}>{p.label}</option>
@@ -428,12 +428,12 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm text-white/60 mb-1">Estado</label>
+                    <label className="block text-sm text-fg/60 mb-1">Estado</label>
                     {pais === 'Brasil' ? (
                       <select
                         value={estado}
                         onChange={(e) => { setEstado(e.target.value); setCidade(''); }}
-                        className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                        className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
                       >
                         <option value="">Selecione o estado</option>
                         {UFS.map((uf) => (
@@ -445,12 +445,12 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
                         value={estado}
                         onChange={(e) => setEstado(e.target.value)}
                         placeholder="Ex: SP"
-                        className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                        className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
                       />
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm text-white/60 mb-1">Cidade</label>
+                    <label className="block text-sm text-fg/60 mb-1">Cidade</label>
                     {pais === 'Brasil' && estado ? (
                       <BuscaCidade
                         uf={estado}
@@ -464,7 +464,7 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
                         onChange={(e) => setCidade(e.target.value)}
                         placeholder={pais === 'Brasil' ? 'Selecione o estado primeiro' : 'Ex: São Paulo'}
                         disabled={pais === 'Brasil' && !estado}
-                        className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red disabled:opacity-40"
+                        className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red disabled:opacity-40"
                       />
                     )}
                   </div>
@@ -472,17 +472,17 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm text-white/60 mb-1">Idioma da entrevista</label>
+                    <label className="block text-sm text-fg/60 mb-1">Idioma da entrevista</label>
                     <select
                       value={idiomaEntrevista}
                       onChange={(e) => setIdiomaEntrevista(e.target.value)}
-                      className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                      className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
                     >
                       {IDIOMAS.map((i) => (
                         <option key={i.value} value={i.value}>{i.label}</option>
                       ))}
                     </select>
-                    <p className="text-white/30 text-xs mt-1">
+                    <p className="text-fg/30 text-xs mt-1">
                       Define o idioma em que a entrevista será conduzida — perguntas, avaliação e feedbacks gerados.
                     </p>
                   </div>
@@ -491,16 +491,16 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
                       type="button"
                       onClick={() => setAvaliarIdioma(!avaliarIdioma)}
                       className={`w-12 h-6 rounded-full transition-colors relative ${
-                        avaliarIdioma ? 'bg-v4green' : 'bg-white/20'
+                        avaliarIdioma ? 'bg-v4green' : 'bg-fg/20'
                       }`}
                     >
-                      <div className={`w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform ${
+                      <div className={`w-5 h-5 rounded-full bg-fg absolute top-0.5 transition-transform ${
                         avaliarIdioma ? 'translate-x-6' : 'translate-x-0.5'
                       }`} />
                     </button>
                     <div>
                       <div className="text-sm">Avaliar proficiência no idioma</div>
-                      <div className="text-white/40 text-xs">Avalia gramática e fluência nas respostas</div>
+                      <div className="text-fg/40 text-xs">Avalia gramática e fluência nas respostas</div>
                     </div>
                   </div>
                 </div>
@@ -512,7 +512,7 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
               <div className="space-y-4">
                 <div>
                   <h2 className="font-heading text-xl font-bold mb-1">Detalhes da entrevista</h2>
-                  <p className="text-white/50 text-sm">Descreva as responsabilidades e requisitos da posição</p>
+                  <p className="text-fg/50 text-sm">Descreva as responsabilidades e requisitos da posição</p>
                 </div>
 
                 <div className="flex items-center justify-end gap-2 flex-wrap">
@@ -520,7 +520,7 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
                     <select
                       value={vagaModeloId}
                       onChange={(e) => usarVagaModelo(e.target.value)}
-                      className="rounded-full bg-black/30 border border-white/10 px-4 py-2 text-sm outline-none focus:border-v4red max-w-[260px]"
+                      className="rounded-full bg-field/30 border border-fg/10 px-4 py-2 text-sm outline-none focus:border-v4red max-w-[260px]"
                     >
                       <option value="">📋 Usar descrição de vaga existente…</option>
                       {vagasAnteriores
@@ -550,42 +550,42 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
                 </div>
 
                 <div>
-                  <label className="block text-sm text-white/60 mb-1">Descrição da Vaga</label>
+                  <label className="block text-sm text-fg/60 mb-1">Descrição da Vaga</label>
                   <textarea
                     value={jobDescription}
                     onChange={(e) => setJobDescription(e.target.value)}
                     rows={6}
                     maxLength={3000}
                     placeholder="Descreva a vaga de forma clara e objetiva…"
-                    className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                    className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
                   />
-                  <div className="text-right text-white/30 text-xs">{jobDescription.length}/3000</div>
+                  <div className="text-right text-fg/30 text-xs">{jobDescription.length}/3000</div>
                 </div>
 
                 <div>
-                  <label className="block text-sm text-white/60 mb-1">Responsabilidades</label>
+                  <label className="block text-sm text-fg/60 mb-1">Responsabilidades</label>
                   <textarea
                     value={responsabilidades}
                     onChange={(e) => setResponsabilidades(e.target.value)}
                     rows={6}
                     maxLength={3000}
                     placeholder="Detalhe as responsabilidades diárias do cargo…"
-                    className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                    className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
                   />
-                  <div className="text-right text-white/30 text-xs">{responsabilidades.length}/3000</div>
+                  <div className="text-right text-fg/30 text-xs">{responsabilidades.length}/3000</div>
                 </div>
 
                 <div>
-                  <label className="block text-sm text-white/60 mb-1">Requisitos</label>
+                  <label className="block text-sm text-fg/60 mb-1">Requisitos</label>
                   <textarea
                     value={requisitos}
                     onChange={(e) => setRequisitos(e.target.value)}
                     rows={6}
                     maxLength={3000}
                     placeholder={'Um requisito por linha. Ex:\nDomínio de Node.js e TypeScript\nExperiência com APIs REST\nComunicação clara'}
-                    className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                    className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
                   />
-                  <div className="text-right text-white/30 text-xs">{requisitos.length}/3000</div>
+                  <div className="text-right text-fg/30 text-xs">{requisitos.length}/3000</div>
                 </div>
               </div>
             )}
@@ -595,16 +595,16 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
               <div className="space-y-4">
                 <div>
                   <h2 className="font-heading text-xl font-bold mb-1">Perguntas da Entrevista</h2>
-                  <p className="text-white/50 text-sm">Configure as perguntas que serão feitas aos candidatos</p>
+                  <p className="text-fg/50 text-sm">Configure as perguntas que serão feitas aos candidatos</p>
                 </div>
 
                 <div className="flex items-center gap-4 flex-wrap">
                   <div>
-                    <label className="block text-sm text-white/60 mb-1">Número de perguntas</label>
+                    <label className="block text-sm text-fg/60 mb-1">Número de perguntas</label>
                     <select
                       value={numeroPerguntas}
                       onChange={(e) => setNumeroPerguntas(Number(e.target.value))}
-                      className="rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                      className="rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
                     >
                       {NUMERO_PERGUNTAS_OPTIONS.map((n) => (
                         <option key={n} value={n}>{n} perguntas</option>
@@ -636,7 +636,7 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
                   </div>
                 </div>
 
-                <p className="text-white/40 text-xs">
+                <p className="text-fg/40 text-xs">
                   Clique em &quot;Gerar perguntas&quot; para que a IA crie as perguntas pra você
                 </p>
 
@@ -644,7 +644,7 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
                   {Array.from({ length: numeroPerguntas }, (_, i) => (
                     <div key={i} className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm text-white/70">Pergunta {i + 1}</label>
+                        <label className="text-sm text-fg/70">Pergunta {i + 1}</label>
                         <button
                           type="button"
                           onClick={() => {
@@ -675,7 +675,7 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
                         rows={3}
                         maxLength={500}
                         placeholder="Digite a pergunta…"
-                        className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                        className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
                       />
                     </div>
                   ))}
@@ -688,23 +688,23 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
               <div className="space-y-4">
                 <div>
                   <h2 className="font-heading text-xl font-bold mb-1">Configurações de Notificação</h2>
-                  <p className="text-white/50 text-sm">Personalize as mensagens enviadas aos candidatos</p>
+                  <p className="text-fg/50 text-sm">Personalize as mensagens enviadas aos candidatos</p>
                 </div>
 
-                <div className="bg-black/20 rounded-xl border border-white/5 p-4">
+                <div className="bg-field/20 rounded-xl border border-fg/5 p-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-sm font-medium">Mensagem de rejeição por e-mail</div>
-                      <div className="text-white/40 text-xs">Configure o modelo de mensagem para candidaturas rejeitadas</div>
+                      <div className="text-fg/40 text-xs">Configure o modelo de mensagem para candidaturas rejeitadas</div>
                     </div>
                     <button
                       type="button"
                       onClick={() => setNotifAtiva(!notifAtiva)}
                       className={`w-12 h-6 rounded-full transition-colors relative ${
-                        notifAtiva ? 'bg-v4green' : 'bg-white/20'
+                        notifAtiva ? 'bg-v4green' : 'bg-fg/20'
                       }`}
                     >
-                      <div className={`w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform ${
+                      <div className={`w-5 h-5 rounded-full bg-fg absolute top-0.5 transition-transform ${
                         notifAtiva ? 'translate-x-6' : 'translate-x-0.5'
                       }`} />
                     </button>
@@ -715,7 +715,7 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
                       onChange={(e) => setMensagemRejeicao(e.target.value)}
                       rows={4}
                       placeholder="Prezado(a), agradecemos seu interesse… Infelizmente, não seguaremos com sua candidatura…"
-                      className="w-full mt-3 rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                      className="w-full mt-3 rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
                     />
                   )}
                 </div>
@@ -727,47 +727,47 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
               <div className="space-y-4">
                 <div>
                   <h2 className="font-heading text-xl font-bold mb-1">Configurações Adicionais</h2>
-                  <p className="text-white/50 text-sm">Ajuste as configurações finais da sua entrevista</p>
+                  <p className="text-fg/50 text-sm">Ajuste as configurações finais da sua entrevista</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm text-white/60 mb-1">Data de fechamento</label>
+                    <label className="block text-sm text-fg/60 mb-1">Data de fechamento</label>
                     <input
                       type="date"
                       value={dataFechamento}
                       onChange={(e) => setDataFechamento(e.target.value)}
-                      className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                      className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-white/60 mb-1">Número de entrevistas</label>
+                    <label className="block text-sm text-fg/60 mb-1">Número de entrevistas</label>
                     <input
                       type="number"
                       value={numeroEntrevistas}
                       onChange={(e) => setNumeroEntrevistas(e.target.value)}
                       placeholder="0 = ilimitado"
                       min={0}
-                      className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                      className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
                     />
                   </div>
                 </div>
 
                 {/* Toggle: Vaga Privada */}
-                <div className="bg-black/20 rounded-xl border border-white/5 p-4">
+                <div className="bg-field/20 rounded-xl border border-fg/5 p-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-sm font-medium">Vaga Privada</div>
-                      <div className="text-white/40 text-xs">Vaga visível no banco público de vagas</div>
+                      <div className="text-fg/40 text-xs">Vaga visível no banco público de vagas</div>
                     </div>
                     <button
                       type="button"
                       onClick={() => setVagaPrivada(!vagaPrivada)}
                       className={`w-12 h-6 rounded-full transition-colors relative ${
-                        vagaPrivada ? 'bg-v4green' : 'bg-white/20'
+                        vagaPrivada ? 'bg-v4green' : 'bg-fg/20'
                       }`}
                     >
-                      <div className={`w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform ${
+                      <div className={`w-5 h-5 rounded-full bg-fg absolute top-0.5 transition-transform ${
                         vagaPrivada ? 'translate-x-6' : 'translate-x-0.5'
                       }`} />
                     </button>
@@ -775,20 +775,20 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
                 </div>
 
                 {/* Toggle: Prioritária */}
-                <div className="bg-black/20 rounded-xl border border-white/5 p-4">
+                <div className="bg-field/20 rounded-xl border border-fg/5 p-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-sm font-medium">Vaga com Prioridade</div>
-                      <div className="text-white/40 text-xs">Esta vaga será listada na ordem padrão</div>
+                      <div className="text-fg/40 text-xs">Esta vaga será listada na ordem padrão</div>
                     </div>
                     <button
                       type="button"
                       onClick={() => setPrioritaria(!prioritaria)}
                       className={`w-12 h-6 rounded-full transition-colors relative ${
-                        prioritaria ? 'bg-v4green' : 'bg-white/20'
+                        prioritaria ? 'bg-v4green' : 'bg-fg/20'
                       }`}
                     >
-                      <div className={`w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform ${
+                      <div className={`w-5 h-5 rounded-full bg-fg absolute top-0.5 transition-transform ${
                         prioritaria ? 'translate-x-6' : 'translate-x-0.5'
                       }`} />
                     </button>
@@ -796,20 +796,20 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
                 </div>
 
                 {/* Toggle: Boas-vindas */}
-                <div className="bg-black/20 rounded-xl border border-white/5 p-4">
+                <div className="bg-field/20 rounded-xl border border-fg/5 p-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-sm font-medium">Mensagem de boas-vindas</div>
-                      <div className="text-white/40 text-xs">Configure a mensagem exibida ao iniciar a entrevista</div>
+                      <div className="text-fg/40 text-xs">Configure a mensagem exibida ao iniciar a entrevista</div>
                     </div>
                     <button
                       type="button"
                       onClick={() => setBoasVindasAtiva(!boasVindasAtiva)}
                       className={`w-12 h-6 rounded-full transition-colors relative ${
-                        boasVindasAtiva ? 'bg-v4green' : 'bg-white/20'
+                        boasVindasAtiva ? 'bg-v4green' : 'bg-fg/20'
                       }`}
                     >
-                      <div className={`w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform ${
+                      <div className={`w-5 h-5 rounded-full bg-fg absolute top-0.5 transition-transform ${
                         boasVindasAtiva ? 'translate-x-6' : 'translate-x-0.5'
                       }`} />
                     </button>
@@ -820,26 +820,26 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
                       onChange={(e) => setMsgBoasVindas(e.target.value)}
                       rows={3}
                       placeholder="Olá! Bem-vindo(a) à entrevista…"
-                      className="w-full mt-3 rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                      className="w-full mt-3 rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
                     />
                   )}
                 </div>
 
                 {/* Toggle: Agradecimento */}
-                <div className="bg-black/20 rounded-xl border border-white/5 p-4">
+                <div className="bg-field/20 rounded-xl border border-fg/5 p-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-sm font-medium">Mensagem de agradecimento</div>
-                      <div className="text-white/40 text-xs">Configure a mensagem exibida ao finalizar a entrevista</div>
+                      <div className="text-fg/40 text-xs">Configure a mensagem exibida ao finalizar a entrevista</div>
                     </div>
                     <button
                       type="button"
                       onClick={() => setAgradecimentoAtivo(!agradecimentoAtivo)}
                       className={`w-12 h-6 rounded-full transition-colors relative ${
-                        agradecimentoAtivo ? 'bg-v4green' : 'bg-white/20'
+                        agradecimentoAtivo ? 'bg-v4green' : 'bg-fg/20'
                       }`}
                     >
-                      <div className={`w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform ${
+                      <div className={`w-5 h-5 rounded-full bg-fg absolute top-0.5 transition-transform ${
                         agradecimentoAtivo ? 'translate-x-6' : 'translate-x-0.5'
                       }`} />
                     </button>
@@ -850,7 +850,7 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
                       onChange={(e) => setMsgAgradecimento(e.target.value)}
                       rows={3}
                       placeholder="Obrigado por participar da entrevista…"
-                      className="w-full mt-3 rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                      className="w-full mt-3 rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
                     />
                   )}
                 </div>
@@ -858,12 +858,12 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
             )}
 
             {/* Navegação */}
-            <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/5">
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-fg/5">
               {step > 0 ? (
                 <button
                   type="button"
                   onClick={voltar}
-                  className="rounded-full border border-white/20 text-white/70 hover:text-white px-5 py-2.5 text-sm transition"
+                  className="rounded-full border border-fg/20 text-fg/70 hover:text-fg px-5 py-2.5 text-sm transition"
                 >
                   Voltar
                 </button>
@@ -901,19 +901,19 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
               {step === 3 && 'Dicas para configurar notificações:'}
               {step === 4 && 'Dicas para configurar sua vaga:'}
             </h3>
-            <ul className="text-white/50 text-xs space-y-2">
+            <ul className="text-fg/50 text-xs space-y-2">
               {step === 0 && (
                 <>
-                  <li><strong className="text-white/70">Identificador:</strong> Identifique a entrevista com um identificador único para facilitar a busca.</li>
-                  <li><strong className="text-white/70">Título:</strong> Seja claro e objetivo no título da entrevista para atrair os candidatos certos.</li>
-                  <li><strong className="text-white/70">Segmento:</strong> Selecione o segmento de atividade econômica para a entrevista.</li>
+                  <li><strong className="text-fg/70">Identificador:</strong> Identifique a entrevista com um identificador único para facilitar a busca.</li>
+                  <li><strong className="text-fg/70">Título:</strong> Seja claro e objetivo no título da entrevista para atrair os candidatos certos.</li>
+                  <li><strong className="text-fg/70">Segmento:</strong> Selecione o segmento de atividade econômica para a entrevista.</li>
                 </>
               )}
               {step === 1 && (
                 <>
-                  <li><strong className="text-white/70">Descrição da Vaga:</strong> Seja claro e objetivo na descrição das atividades.</li>
-                  <li><strong className="text-white/70">Responsabilidades:</strong> Detalhe as responsabilidades diárias do cargo.</li>
-                  <li><strong className="text-white/70">Requisitos:</strong> Liste requisitos realmente necessários para a função.</li>
+                  <li><strong className="text-fg/70">Descrição da Vaga:</strong> Seja claro e objetivo na descrição das atividades.</li>
+                  <li><strong className="text-fg/70">Responsabilidades:</strong> Detalhe as responsabilidades diárias do cargo.</li>
+                  <li><strong className="text-fg/70">Requisitos:</strong> Liste requisitos realmente necessários para a função.</li>
                 </>
               )}
               {step === 2 && (

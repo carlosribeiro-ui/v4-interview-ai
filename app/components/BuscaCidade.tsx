@@ -92,14 +92,14 @@ export default function BuscaCidade({ uf, value, onChange, disabled, placeholder
         onFocus={() => { if (!disabled) setAberto(true); }}
         disabled={disabled}
         placeholder={placeholder ?? 'Digite para buscar…'}
-        className="w-full rounded bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red disabled:opacity-40"
+        className="w-full rounded bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red disabled:opacity-40"
         autoComplete="off"
         onKeyDown={tecla}
       />
 
       {mostrarDropdown && filtradas.length > 0 && (
-        <div className="absolute z-50 mt-1 w-full max-h-60 overflow-y-auto rounded border border-white/10 bg-v4gray950 shadow-lg">
-          <div className="px-3 py-1 text-xs text-white/30 border-b border-white/5">
+        <div className="absolute z-50 mt-1 w-full max-h-60 overflow-y-auto rounded border border-fg/10 bg-v4surface shadow-lg">
+          <div className="px-3 py-1 text-xs text-fg/30 border-b border-fg/5">
             {filtradas.length} cidade{filtradas.length !== 1 ? 's' : ''}
           </div>
           {filtradas.map((cid, i) => (
@@ -111,7 +111,7 @@ export default function BuscaCidade({ uf, value, onChange, disabled, placeholder
               className={`w-full text-left px-3 py-1.5 text-sm transition-colors ${
                 i === indiceFoco
                   ? 'bg-v4green/20 text-v4green'
-                  : 'text-white/70 hover:bg-white/5'
+                  : 'text-fg/70 hover:bg-fg/5'
               }`}
             >
               {cid}
@@ -121,7 +121,7 @@ export default function BuscaCidade({ uf, value, onChange, disabled, placeholder
       )}
 
       {mostrarDropdown && filtradas.length === 0 && (
-        <div className="absolute z-50 mt-1 w-full rounded border border-white/10 bg-v4gray950 px-3 py-2 text-sm text-white/40 shadow-lg">
+        <div className="absolute z-50 mt-1 w-full rounded border border-fg/10 bg-v4surface px-3 py-2 text-sm text-fg/40 shadow-lg">
           Nenhuma cidade encontrada para &quot;{termo}&quot;
         </div>
       )}

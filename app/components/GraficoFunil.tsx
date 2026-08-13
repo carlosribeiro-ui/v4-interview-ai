@@ -18,15 +18,15 @@ export default function GraficoFunil({
         return (
           <div key={l.label}>
             <div className="flex items-center justify-between text-sm mb-1">
-              <span className="flex items-center gap-2 text-white/70">
+              <span className="flex items-center gap-2 text-fg/70">
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: l.cor }} />
                 {l.label}
               </span>
-              <span className="text-white/90 font-semibold">
-                {pct}% <span className="text-white/40 font-normal">· {l.valor}</span>
+              <span className="text-fg/90 font-semibold">
+                {pct}% <span className="text-fg/40 font-normal">· {l.valor}</span>
               </span>
             </div>
-            <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
+            <div className="h-2 rounded-full bg-fg/[0.06] overflow-hidden">
               <div
                 className="h-full rounded-full transition-all"
                 style={{ width: `${pct}%`, backgroundColor: l.cor }}

@@ -44,7 +44,7 @@ function colunaDo(c: CandidatoEnriquecido): 'em_andamento' | 'concluido' | 'apro
  */
 const COLUNAS = [
   { id: 'em_andamento', nome: 'Em andamento', cor: 'bg-v4yellow/10 border-v4yellow/30', dot: 'bg-v4yellow', droppable: false },
-  { id: 'concluido', nome: 'Aguardando análise', cor: 'bg-white/[0.04] border-white/10', dot: 'bg-white/40', droppable: false },
+  { id: 'concluido', nome: 'Aguardando análise', cor: 'bg-fg/[0.04] border-fg/10', dot: 'bg-fg/40', droppable: false },
   { id: 'aprovado', nome: 'Aprovados', cor: 'bg-v4green/10 border-v4green/30', dot: 'bg-v4green', droppable: true },
   { id: 'reprovado', nome: 'Reprovados', cor: 'bg-v4red/10 border-v4red/30', dot: 'bg-v4red', droppable: true }
 ] as const;
@@ -53,7 +53,7 @@ type Talent = { id: string; nome: string; email: string; role: string };
 
 export default function CandidatosPage() {
   return (
-    <Suspense fallback={<p className="text-white/50">Carregando…</p>}>
+    <Suspense fallback={<p className="text-fg/50">Carregando…</p>}>
       <CandidatosPageInner />
     </Suspense>
   );
@@ -259,7 +259,7 @@ function CandidatosPageInner() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="font-heading text-2xl font-bold">Candidatos</h1>
-          <p className="text-white/40 text-sm mt-0.5">
+          <p className="text-fg/40 text-sm mt-0.5">
             Pipeline global — todas as vagas em um só lugar.
           </p>
         </div>
@@ -296,11 +296,11 @@ function CandidatosPageInner() {
         </select>
         <button
           onClick={() => setFiltroAvancado(true)}
-          className="rounded-full bg-white/[0.05] border border-white/10 text-white/60 hover:text-white hover:border-white/30 px-3 py-2.5 text-sm transition"
+          className="rounded-full bg-fg/[0.05] border border-fg/10 text-fg/60 hover:text-fg hover:border-fg/30 px-3 py-2.5 text-sm transition"
         >
           ⚙ Filtros avançados
         </button>
-        <label className="flex items-center gap-1.5 text-xs text-white/50 cursor-pointer select-none">
+        <label className="flex items-center gap-1.5 text-xs text-fg/50 cursor-pointer select-none">
           <input
             type="checkbox"
             checked={mostrarTestes}
@@ -313,22 +313,22 @@ function CandidatosPageInner() {
 
       {/* Kanban global */}
       {loading ? (
-        <p className="text-white/50">Carregando…</p>
+        <p className="text-fg/50">Carregando…</p>
       ) : candidatos.length === 0 ? (
-        <p className="text-white/50">Nenhum candidato encontrado com esses filtros.</p>
+        <p className="text-fg/50">Nenhum candidato encontrado com esses filtros.</p>
       ) : (
         <div className="space-y-4">
         {/* Barra de ações em massa */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => { setModoSelecao(!modoSelecao); if (modoSelecao) setSelecionados(new Set()); }}
-            className={`rounded-full px-3 py-1.5 text-sm transition ${modoSelecao ? 'bg-v4red text-white' : 'bg-white/[0.05] text-white/60 hover:bg-white/10'}`}
+            className={`rounded-full px-3 py-1.5 text-sm transition ${modoSelecao ? 'bg-v4red text-fg' : 'bg-fg/[0.05] text-fg/60 hover:bg-fg/10'}`}
           >
             {modoSelecao ? '✕ Cancelar' : '☑ Selecionar'}
           </button>
           {modoSelecao && selecionados.size > 0 && (
             <>
-              <span className="text-xs text-white/50">{selecionados.size} selecionado(s)</span>
+              <span className="text-xs text-fg/50">{selecionados.size} selecionado(s)</span>
               <select
                 onChange={(e) => { if (e.target.value) { moverEmMassa(e.target.value); e.target.value = ''; } }}
                 className="rounded-full bg-v4surface border border-v4border px-3 py-1.5 text-sm outline-none focus:border-v4red"
@@ -357,7 +357,7 @@ function CandidatosPageInner() {
               {COLUNAS.map((col) => (
                 <ColunaCandidatos key={col.id} col={col} total={porColuna[col.id].length}>
                   {porColuna[col.id].length === 0 ? (
-                    <div className="flex items-center justify-center h-16 text-xs text-white/20 border border-dashed border-white/10 rounded-lg">
+                    <div className="flex items-center justify-center h-16 text-xs text-fg/20 border border-dashed border-fg/10 rounded-lg">
                       {col.droppable ? 'Arraste candidatos aqui' : 'Nenhum candidato'}
                     </div>
                   ) : (
@@ -386,11 +386,11 @@ function CandidatosPageInner() {
 
       {/* Modal de filtro avançado */}
       {filtroAvancado && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center v4-fade-in" onClick={(e) => { if (e.target === e.currentTarget) setFiltroAvancado(false); }}>
+        <div className="fixed inset-0 z-50 bg-field/85 backdrop-blur-sm flex items-center justify-center v4-fade-in" onClick={(e) => { if (e.target === e.currentTarget) setFiltroAvancado(false); }}>
           <div className="bg-v4bg border border-v4border rounded-2xl p-6 w-full max-w-lg shadow-card">
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-heading font-semibold text-lg">+Filtros</h3>
-              <button onClick={() => setFiltroAvancado(false)} className="text-white/50 hover:text-white text-lg">✕</button>
+              <button onClick={() => setFiltroAvancado(false)} className="text-fg/50 hover:text-fg text-lg">✕</button>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <FiltroAvancadoSelect label="Segmento" value={faSegmento} onChange={setFaSegmento} options={[
@@ -407,9 +407,9 @@ function CandidatosPageInner() {
               <FiltroAvancadoInput label="Estado" value={faEstado} onChange={setFaEstado} placeholder="Ex: SP" />
               <FiltroAvancadoInput label="Cidade" value={faCidade} onChange={setFaCidade} placeholder="Ex: São Paulo" />
             </div>
-            <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/10">
-              <button onClick={() => { setFaSegmento(''); setFaNivel(''); setFaFormacao(''); setFaPais(''); setFaEstado(''); setFaCidade(''); setFaIdioma(''); }} className="text-sm text-white/50 hover:text-white">Limpar filtros</button>
-              <button onClick={() => setFiltroAvancado(false)} className="rounded-full bg-v4red hover:bg-v4redDark text-white font-semibold px-5 py-2 text-sm transition">Aplicar</button>
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-fg/10">
+              <button onClick={() => { setFaSegmento(''); setFaNivel(''); setFaFormacao(''); setFaPais(''); setFaEstado(''); setFaCidade(''); setFaIdioma(''); }} className="text-sm text-fg/50 hover:text-fg">Limpar filtros</button>
+              <button onClick={() => setFiltroAvancado(false)} className="rounded-full bg-v4red hover:bg-v4redDark text-fg font-semibold px-5 py-2 text-sm transition">Aplicar</button>
             </div>
           </div>
         </div>
@@ -417,8 +417,8 @@ function CandidatosPageInner() {
 
       {/* Modal de perfil do candidato */}
       {carregandoPerfil && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center">
-          <div className="text-white/50">Carregando perfil…</div>
+        <div className="fixed inset-0 z-50 bg-field/85 backdrop-blur-sm flex items-center justify-center">
+          <div className="text-fg/50">Carregando perfil…</div>
         </div>
       )}
       {candidaturaAberta && vagaAberta && (
@@ -449,8 +449,8 @@ function ColunaCandidatos({
       {/* Cabeçalho da coluna */}
       <div className={`flex items-center gap-2 px-3 py-2.5 rounded-t-xl border ${col.cor}`}>
         <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${col.dot}`} />
-        <h3 className="text-sm font-semibold text-white/80 flex-1 truncate">{col.nome}</h3>
-        <span className="text-xs font-medium text-white/40 bg-white/5 px-2 py-0.5 rounded-full">{total}</span>
+        <h3 className="text-sm font-semibold text-fg/80 flex-1 truncate">{col.nome}</h3>
+        <span className="text-xs font-medium text-fg/40 bg-fg/5 px-2 py-0.5 rounded-full">{total}</span>
       </div>
 
       {/* Cards */}
@@ -488,7 +488,7 @@ function CardCandidatoKanban({
       ref={setNodeRef}
       style={style}
       onClick={onClickCard}
-      className={`group relative rounded-xl border bg-v4surface hover:bg-white/[0.06] hover:border-white/15 p-3 transition shadow-card cursor-pointer ${
+      className={`group relative rounded-xl border bg-v4surface hover:bg-fg/[0.06] hover:border-fg/15 p-3 transition shadow-card cursor-pointer ${
         selecionado ? 'border-v4red ring-1 ring-v4red/30' : 'border-v4border'
       } ${isDragging ? 'opacity-40 relative z-10' : ''}`}
     >
@@ -497,7 +497,7 @@ function CardCandidatoKanban({
           onClick={(e) => { e.stopPropagation(); onRemover(); }}
           aria-label="Remover candidatura"
           title="Remover candidatura"
-          className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-white/30 hover:text-v4red hover:bg-v4red/10 opacity-0 group-hover:opacity-100 transition"
+          className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-fg/30 hover:text-v4red hover:bg-v4red/10 opacity-0 group-hover:opacity-100 transition"
         >
           🗑
         </button>
@@ -518,7 +518,7 @@ function CardCandidatoKanban({
             onClick={(e) => e.stopPropagation()}
             aria-label="Arrastar candidato para aprovar/reprovar"
             title="Arrastar para Aprovados/Reprovados"
-            className="shrink-0 cursor-grab active:cursor-grabbing text-white/25 hover:text-white/60 touch-none select-none -ml-1"
+            className="shrink-0 cursor-grab active:cursor-grabbing text-fg/25 hover:text-fg/60 touch-none select-none -ml-1"
           >
             ⠿
           </button>
@@ -528,7 +528,7 @@ function CardCandidatoKanban({
         </div>
         <div className="flex-1 min-w-0">
           <div className="font-medium text-sm truncate">{c.nome}</div>
-          <div className="text-xs text-white/40 truncate">{c.vagaCargo}</div>
+          <div className="text-xs text-fg/40 truncate">{c.vagaCargo}</div>
         </div>
         <ScoreRing score={c.scoreMedio} size={38} strokeWidth={3} />
       </div>
@@ -536,10 +536,10 @@ function CardCandidatoKanban({
       {(c.email || c.nivelProfissional || c.cidade || c.estado || c.pais || c.idioma) && (
         <div className="mt-1.5 space-y-0.5">
           {c.email && (
-            <div className="text-[10px] text-white/35 truncate" title={c.email}>{c.email}</div>
+            <div className="text-[10px] text-fg/35 truncate" title={c.email}>{c.email}</div>
           )}
           {(c.nivelProfissional || c.cidade || c.estado || c.pais || c.idioma) && (
-            <div className="flex flex-wrap items-center gap-x-1 text-[10px] text-white/45">
+            <div className="flex flex-wrap items-center gap-x-1 text-[10px] text-fg/45">
               {c.nivelProfissional && <span>{c.nivelProfissional}</span>}
               {(c.cidade || c.estado || c.pais) && (
                 <span>· {[c.cidade, c.estado].filter(Boolean).join('/') || c.pais}</span>
@@ -554,17 +554,17 @@ function CardCandidatoKanban({
           {c.status === 'concluida' ? 'Concluída' : 'Em andamento'}
         </Pill>
         {c.teste && <Pill tom="neutro">🧪</Pill>}
-        <span className="text-[10px] text-white/25 ml-auto">
+        <span className="text-[10px] text-fg/25 ml-auto">
           {new Date(c.createdAt).toLocaleDateString('pt-BR')}
         </span>
       </div>
       {/* Atribuição de talent */}
-      <div className="mt-2 pt-2 border-t border-white/5">
+      <div className="mt-2 pt-2 border-t border-fg/5">
         <select
           value={c.talentResponsavel ?? ''}
           onChange={(e) => { e.stopPropagation(); onAtribuirTalent(e.target.value); }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full text-[11px] rounded bg-black/30 border border-white/10 px-2 py-1 outline-none focus:border-v4red text-white/60"
+          className="w-full text-[11px] rounded bg-field/30 border border-fg/10 px-2 py-1 outline-none focus:border-v4red text-fg/60"
         >
           <option value="">Sem talent atribuído</option>
           {talents.map((t) => (
@@ -613,15 +613,15 @@ function PerfilCandidatoModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex flex-col v4-fade-in" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="fixed inset-0 z-50 bg-field/85 backdrop-blur-sm flex flex-col v4-fade-in" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="w-full h-full sm:h-[95vh] sm:my-auto sm:max-w-4xl sm:mx-auto bg-v4bg sm:rounded-2xl sm:border sm:border-v4border flex flex-col overflow-hidden shadow-card">
         {/* Header */}
-        <div className="shrink-0 flex items-start justify-between gap-4 px-6 py-5 border-b border-v4border bg-white/[0.02]">
+        <div className="shrink-0 flex items-start justify-between gap-4 px-6 py-5 border-b border-v4border bg-fg/[0.02]">
           <div className="flex items-center gap-4 min-w-0">
             <div className="w-14 h-14 shrink-0 rounded-full bg-v4red/15 text-v4red flex items-center justify-center text-lg font-bold">{iniciais(c.nome)}</div>
             <div className="min-w-0">
               <h2 className="font-heading text-xl font-bold truncate">{c.nome}</h2>
-              <p className="text-sm text-white/50 truncate">{c.email}</p>
+              <p className="text-sm text-fg/50 truncate">{c.email}</p>
               <div className="flex items-center gap-2 mt-2 flex-wrap">
                 <Pill tom={c.status === 'concluida' ? 'verde' : 'amarelo'}>{c.status === 'concluida' ? 'Concluída' : 'Em andamento'}</Pill>
                 <Pill tom="neutro">{vaga.cargo} · {vaga.senioridade}</Pill>
@@ -636,45 +636,45 @@ function PerfilCandidatoModal({
                 disabled={removendo}
                 aria-label="Remover candidatura"
                 title="Remover candidatura"
-                className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-v4red hover:bg-v4red/10 text-base transition disabled:opacity-40"
+                className="w-9 h-9 rounded-full flex items-center justify-center text-fg/50 hover:text-v4red hover:bg-v4red/10 text-base transition disabled:opacity-40"
               >
                 🗑
               </button>
             )}
-            <button onClick={onClose} aria-label="Fechar" className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 text-lg transition">✕</button>
+            <button onClick={onClose} aria-label="Fechar" className="w-9 h-9 rounded-full flex items-center justify-center text-fg/50 hover:text-fg hover:bg-fg/10 text-lg transition">✕</button>
           </div>
         </div>
         {/* Corpo */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
           {(c.linkedin || c.telefone || c.pretensaoSalarial || c.curriculoPath) && (
-            <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-white/60 border-b border-white/10 pb-4">
+            <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-fg/60 border-b border-fg/10 pb-4">
               {c.linkedin && <a href={c.linkedin} target="_blank" rel="noreferrer" className="text-v4red hover:text-v4redDark">🔗 LinkedIn</a>}
               {c.telefone && <span>📞 {c.telefone}</span>}
               {c.pretensaoSalarial && <span>💰 {c.pretensaoSalarial}</span>}
               {c.curriculoPath && <a href={c.curriculoPath} target="_blank" rel="noreferrer" className="text-v4red hover:text-v4redDark">📄 Currículo</a>}
             </div>
           )}
-          {c.respostas?.length === 0 && <p className="text-white/40 text-sm">Nenhuma resposta enviada ainda.</p>}
+          {c.respostas?.length === 0 && <p className="text-fg/40 text-sm">Nenhuma resposta enviada ainda.</p>}
           <div className="space-y-5">
             {c.respostas?.map((r: any, i: number) => {
               const pergunta = vaga.perguntas?.find((p: any) => p.id === r.perguntaId);
               return (
-                <div key={r.perguntaId} className="rounded-2xl border border-v4border bg-white/[0.025] p-4 space-y-3">
+                <div key={r.perguntaId} className="rounded-2xl border border-v4border bg-fg/[0.025] p-4 space-y-3">
                   <div className="flex items-start justify-between gap-3">
-                    <p className="text-sm font-medium text-white/80"><span className="text-white/40">Pergunta {i + 1} · </span>{pergunta?.texto ?? 'Pergunta'}</p>
+                    <p className="text-sm font-medium text-fg/80"><span className="text-fg/40">Pergunta {i + 1} · </span>{pergunta?.texto ?? 'Pergunta'}</p>
                     {r.avaliando ? <span className="shrink-0 w-[34px] h-[34px] rounded-full border-2 border-v4yellow/30 border-t-v4yellow animate-spin" /> : <ScoreRing score={r.score} size={34} strokeWidth={3} />}
                   </div>
-                  <video src={r.videoPath} controls className="w-full rounded-xl bg-black aspect-video" />
+                  <video src={r.videoPath} controls className="w-full rounded-xl bg-field aspect-video" />
                   {r.avaliando && <Pill tom="amarelo">⏳ Processando…</Pill>}
                   {!r.avaliando && r.estaLendo !== undefined && <Pill tom={r.estaLendo ? 'vermelho' : 'verde'}>{r.estaLendo ? '⚠️ Possível leitura' : '✅ Sem indícios'} · {Math.round((r.confiancaLeitura ?? 0) * 100)}%</Pill>}
-                  {!r.avaliando && <p className="text-xs text-white/40">Transcrição: <span className="text-white/70">{r.transcricao || '—'}</span></p>}
-                  {!r.avaliando && <p className="text-sm text-white/60">{r.feedback}</p>}
+                  {!r.avaliando && <p className="text-xs text-fg/40">Transcrição: <span className="text-fg/70">{r.transcricao || '—'}</span></p>}
+                  {!r.avaliando && <p className="text-sm text-fg/60">{r.feedback}</p>}
                   {!r.avaliando && r.pontoAtencao && (
                     <div className="rounded-xl border border-v4yellow/30 bg-v4yellow/5 px-3.5 py-3 space-y-1.5">
                       <p className="text-xs font-semibold text-v4yellow uppercase">Ponto de atenção</p>
-                      <p className="text-xs text-white/70"><span className="text-white/50">Lacuna: </span>{r.pontoAtencao.lacuna}</p>
-                      <p className="text-xs text-white/70"><span className="text-white/50">Impacto: </span>{r.pontoAtencao.impacto}</p>
-                      <p className="text-xs text-white/70"><span className="text-white/50">Como validar: </span>{r.pontoAtencao.comoValidar}</p>
+                      <p className="text-xs text-fg/70"><span className="text-fg/50">Lacuna: </span>{r.pontoAtencao.lacuna}</p>
+                      <p className="text-xs text-fg/70"><span className="text-fg/50">Impacto: </span>{r.pontoAtencao.impacto}</p>
+                      <p className="text-xs text-fg/70"><span className="text-fg/50">Como validar: </span>{r.pontoAtencao.comoValidar}</p>
                     </div>
                   )}
                   {r.qualidadeDiscurso && (
@@ -684,10 +684,10 @@ function PerfilCandidatoModal({
                   )}
                   {detalheAberto[r.perguntaId] && r.qualidadeDiscurso && (
                     <div className="mt-3 space-y-3 v4-fade-in">
-                      <div className="rounded-xl border border-v4border bg-black/20 p-3.5 space-y-2">
-                        <p className="text-xs font-semibold text-white/70 uppercase">Discurso</p>
+                      <div className="rounded-xl border border-v4border bg-field/20 p-3.5 space-y-2">
+                        <p className="text-xs font-semibold text-fg/70 uppercase">Discurso</p>
                         {Object.entries(r.qualidadeDiscurso).map(([k, v]) => (
-                          <div key={k} className="flex items-center gap-2 text-xs"><span className="w-28 text-white/50 capitalize">{k}</span><div className="flex-1 h-1.5 rounded-full bg-white/[0.06]"><div className="h-full rounded-full bg-v4red" style={{ width: `${Number(v)}%` }} /></div><span className="w-8 text-right text-white/60">{String(v)}</span></div>
+                          <div key={k} className="flex items-center gap-2 text-xs"><span className="w-28 text-fg/50 capitalize">{k}</span><div className="flex-1 h-1.5 rounded-full bg-fg/[0.06]"><div className="h-full rounded-full bg-v4red" style={{ width: `${Number(v)}%` }} /></div><span className="w-8 text-right text-fg/60">{String(v)}</span></div>
                         ))}
                       </div>
                     </div>
@@ -705,8 +705,8 @@ function PerfilCandidatoModal({
 function FiltroAvancadoSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: [string, string][] }) {
   return (
     <div>
-      <label className="block text-xs text-white/50 mb-1">{label}</label>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-lg bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red">
+      <label className="block text-xs text-fg/50 mb-1">{label}</label>
+      <select value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-lg bg-field/30 border border-fg/10 px-3 py-2.5 text-sm outline-none focus:border-v4red">
         <option value="">Selecione um(a) {label.toLowerCase()}</option>
         {options.map(([val, lbl]) => <option key={val} value={val}>{lbl}</option>)}
       </select>
@@ -717,8 +717,8 @@ function FiltroAvancadoSelect({ label, value, onChange, options }: { label: stri
 function FiltroAvancadoInput({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder: string }) {
   return (
     <div>
-      <label className="block text-xs text-white/50 mb-1">{label}</label>
-      <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="w-full rounded-lg bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red" />
+      <label className="block text-xs text-fg/50 mb-1">{label}</label>
+      <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="w-full rounded-lg bg-field/30 border border-fg/10 px-3 py-2.5 text-sm outline-none focus:border-v4red" />
     </div>
   );
 }

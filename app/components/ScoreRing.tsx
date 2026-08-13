@@ -18,17 +18,20 @@ export default function ScoreRing({
   const circumference = 2 * Math.PI * radius;
   const pct = score !== null ? Math.max(0, Math.min(10, score)) / 10 : 0;
   const offset = circumference * (1 - pct);
-  const cor = score !== null ? corPorScore(score) : 'rgba(255,255,255,0.15)';
+  const cor = score !== null ? corPorScore(score) : null;
 
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
+        {/* Trilha de fundo: stroke="currentColor" + classe de cor do tema, em vez de
+            rgba(255,255,255,...) fixo — senão some no tema claro (branco sobre branco). */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="rgba(255,255,255,0.08)"
+          stroke="currentColor"
+          className="text-fg/[0.08]"
           strokeWidth={strokeWidth}
         />
         {score !== null && (
@@ -37,7 +40,7 @@ export default function ScoreRing({
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke={cor}
+            stroke={cor ?? undefined}
             strokeWidth={strokeWidth}
             strokeLinecap="round"
             strokeDasharray={circumference}
@@ -47,7 +50,10 @@ export default function ScoreRing({
         )}
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-[11px] font-bold" style={{ color: score !== null ? cor : 'rgba(255,255,255,0.4)' }}>
+        <span
+          className={`text-[11px] font-bold ${cor ? '' : 'text-fg/40'}`}
+          style={cor ? { color: cor } : undefined}
+        >
           {score !== null ? score.toFixed(1) : '—'}
         </span>
       </div>

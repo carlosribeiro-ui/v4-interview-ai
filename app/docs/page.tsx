@@ -7,7 +7,7 @@ const SwaggerUI = dynamic(() => import('swagger-ui-react'), { ssr: false });
 
 export default function DocsPage() {
   return (
-    <div className="bg-white rounded p-1 -mx-6">
+    <div className="bg-fg rounded p-1 -mx-6">
       <SwaggerUI url="/openapi.json" />
     </div>
   );

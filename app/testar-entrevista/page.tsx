@@ -87,7 +87,7 @@ export default function TestarEntrevistaPage() {
     <div className="max-w-xl mx-auto space-y-6">
       <div>
         <h1 className="font-heading text-2xl font-bold">🧪 Testar entrevista</h1>
-        <p className="text-white/40 text-sm mt-1">
+        <p className="text-fg/40 text-sm mt-1">
           Escolha uma vaga (ou crie uma de teste), faça a entrevista você mesmo e veja exatamente o
           feedback que a IA geraria pra um candidato real — útil pra validar se as perguntas e a
           calibragem estão fazendo sentido antes de publicar.
@@ -96,18 +96,18 @@ export default function TestarEntrevistaPage() {
 
       <div className="rounded-2xl border border-v4border bg-v4surface p-5 shadow-card space-y-4">
         {loading ? (
-          <p className="text-white/50 text-sm">Carregando vagas…</p>
+          <p className="text-fg/50 text-sm">Carregando vagas…</p>
         ) : (
           <>
             <div>
-              <label className="block text-sm text-white/60 mb-1.5">Vaga</label>
+              <label className="block text-sm text-fg/60 mb-1.5">Vaga</label>
               {vagas.length === 0 ? (
-                <p className="text-white/40 text-sm">Nenhuma vaga cadastrada ainda.</p>
+                <p className="text-fg/40 text-sm">Nenhuma vaga cadastrada ainda.</p>
               ) : (
                 <select
                   value={vagaId}
                   onChange={(e) => setVagaId(e.target.value)}
-                  className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
+                  className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2.5 text-sm outline-none focus:border-v4red"
                 >
                   {vagas.map((v) => (
                     <option key={v.id} value={v.id}>
@@ -124,13 +124,13 @@ export default function TestarEntrevistaPage() {
               <button
                 onClick={iniciarTeste}
                 disabled={!vagaId || iniciando}
-                className="rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-white font-semibold px-5 py-2.5 text-sm transition"
+                className="rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-fg font-semibold px-5 py-2.5 text-sm transition"
               >
                 {iniciando ? 'Iniciando…' : '▶ Iniciar teste com esta vaga'}
               </button>
               <button
                 onClick={() => setCriandoNova((v) => !v)}
-                className="rounded-full border border-white/10 text-white/60 hover:text-white hover:border-white/30 px-4 py-2.5 text-sm transition"
+                className="rounded-full border border-fg/10 text-fg/60 hover:text-fg hover:border-fg/30 px-4 py-2.5 text-sm transition"
               >
                 {criandoNova ? 'Cancelar' : '+ Nova vaga de teste'}
               </button>
@@ -141,22 +141,22 @@ export default function TestarEntrevistaPage() {
         {criandoNova && (
           <form onSubmit={criarVagaDeTeste} className="border-t border-v4border pt-4 space-y-3 v4-fade-in">
             <div>
-              <label className="block text-xs text-white/50 mb-1">Cargo</label>
+              <label className="block text-xs text-fg/50 mb-1">Cargo</label>
               <input
                 required
                 value={cargo}
                 onChange={(e) => setCargo(e.target.value)}
                 placeholder="Ex: SDR"
-                className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-white/50 mb-1">Senioridade</label>
+                <label className="block text-xs text-fg/50 mb-1">Senioridade</label>
                 <select
                   value={senioridade}
                   onChange={(e) => setSenioridade(e.target.value)}
-                  className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                  className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
                 >
                   <option>Estágio</option>
                   <option>Júnior</option>
@@ -166,20 +166,20 @@ export default function TestarEntrevistaPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-white/50 mb-1">Segmento</label>
+                <label className="block text-xs text-fg/50 mb-1">Segmento</label>
                 <input
                   required
                   value={segmento}
                   onChange={(e) => setSegmento(e.target.value)}
                   placeholder="Ex: Vendas B2B"
-                  className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-v4red"
+                  className="w-full rounded-xl bg-field/30 border border-fg/10 px-3 py-2 text-sm outline-none focus:border-v4red"
                 />
               </div>
             </div>
             <button
               type="submit"
               disabled={gerando}
-              className="rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-white font-semibold px-4 py-2 text-sm transition"
+              className="rounded-full bg-v4red hover:bg-v4redDark disabled:opacity-50 text-fg font-semibold px-4 py-2 text-sm transition"
             >
               {gerando ? 'Gerando roteiro…' : 'Criar e usar esta vaga'}
             </button>

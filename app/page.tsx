@@ -36,7 +36,7 @@ type DashboardData = {
 };
 
 function corScore(score: number | null) {
-  if (score === null) return 'text-white/40';
+  if (score === null) return 'text-fg/40';
   if (score >= 7) return 'text-v4green';
   if (score >= 4) return 'text-v4yellow';
   return 'text-v4red';
@@ -116,7 +116,7 @@ export default function DashboardPage() {
     }
   }
 
-  if (loading || !data) return <p className="text-white/50">Carregando dashboard…</p>;
+  if (loading || !data) return <p className="text-fg/50">Carregando dashboard…</p>;
 
   const { totais } = data;
   const vagasFiltradas = data.vagas.filter((v) => {
@@ -132,14 +132,14 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-heading text-2xl font-bold">Dashboard</h1>
-          <p className="text-white/40 text-sm mt-0.5">Visão geral do seu funil de seleção</p>
+          <p className="text-fg/40 text-sm mt-0.5">Visão geral do seu funil de seleção</p>
         </div>
         <div className="flex items-center gap-2">
           <ExportButtons onExport={(formato) => { window.location.href = `/api/dashboard?formato=${formato}`; }} />
           {isAdmin && (
           <button
             onClick={() => setMostrarForm((v) => !v)}
-            className="rounded-full bg-v4red hover:bg-v4redDark text-white font-semibold px-5 py-2.5 text-sm transition shadow-card"
+            className="rounded-full bg-v4red hover:bg-v4redDark text-fg font-semibold px-5 py-2.5 text-sm transition shadow-card"
           >
             {mostrarForm ? 'Cancelar' : '+ Nova vaga'}
           </button>
@@ -162,12 +162,12 @@ export default function DashboardPage() {
       <section className="grid sm:grid-cols-2 gap-4">
         <div className="rounded-2xl border border-v4border bg-v4surface p-5 shadow-card">
           <h2 className="font-heading font-semibold mb-1">Funil de seleção</h2>
-          <p className="text-white/40 text-xs mb-4">Onde os candidatos avançam — e onde param</p>
+          <p className="text-fg/40 text-xs mb-4">Onde os candidatos avançam — e onde param</p>
           <GraficoFunil funil={data.funil} />
         </div>
         <div className="rounded-2xl border border-v4border bg-v4surface p-5 shadow-card">
           <h2 className="font-heading font-semibold mb-1">Distribuição de notas</h2>
-          <p className="text-white/40 text-xs mb-4">
+          <p className="text-fg/40 text-xs mb-4">
             Qualidade dos candidatos · {totais.concluidos} entrevista(s) pontuada(s)
           </p>
           <GraficoBarras dados={data.distribuicaoNotas} />
@@ -182,13 +182,13 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
           <h2 className="font-heading text-lg font-semibold">Vagas</h2>
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center rounded-full bg-white/[0.05] p-1 text-sm">
+            <div className="flex items-center rounded-full bg-fg/[0.05] p-1 text-sm">
               {(['ativas', 'inativas', 'todas'] as const).map((f) => (
                 <button
                   key={f}
                   onClick={() => setFiltroAtiva(f)}
                   className={`px-3 py-1.5 rounded-full transition ${
-                    filtroAtiva === f ? 'bg-v4red text-white' : 'text-white/50 hover:text-white/80'
+                    filtroAtiva === f ? 'bg-v4red text-fg' : 'text-fg/50 hover:text-fg/80'
                   }`}
                 >
                   {f === 'ativas' ? 'Ativas' : f === 'inativas' ? 'Inativas' : 'Todas'}
@@ -199,7 +199,7 @@ export default function DashboardPage() {
               <button
                 onClick={() => { setModoSelecao((v) => !v); if (modoSelecao) setSelecionadas(new Set()); }}
                 className={`rounded-full px-3 py-1.5 text-sm transition ${
-                  modoSelecao ? 'bg-v4red text-white' : 'bg-white/[0.05] text-white/60 hover:bg-white/10'
+                  modoSelecao ? 'bg-v4red text-fg' : 'bg-fg/[0.05] text-fg/60 hover:bg-fg/10'
                 }`}
               >
                 {modoSelecao ? '✕ Cancelar' : '☑ Selecionar'}
@@ -209,8 +209,8 @@ export default function DashboardPage() {
         </div>
 
         {modoSelecao && selecionadas.size > 0 && (
-          <div className="flex items-center gap-3 mb-4 rounded-xl bg-white/[0.04] border border-v4border px-4 py-2.5">
-            <span className="text-xs text-white/50">{selecionadas.size} selecionada(s)</span>
+          <div className="flex items-center gap-3 mb-4 rounded-xl bg-fg/[0.04] border border-v4border px-4 py-2.5">
+            <span className="text-xs text-fg/50">{selecionadas.size} selecionada(s)</span>
             <button
               disabled={aplicandoLote}
               onClick={() => aplicarAtivaEmLote(false)}
@@ -229,7 +229,7 @@ export default function DashboardPage() {
         )}
 
         {vagasFiltradas.length === 0 ? (
-          <p className="text-white/50">
+          <p className="text-fg/50">
             {filtroAtiva === 'ativas'
               ? 'Nenhuma vaga ativa. Clique em "+ Nova vaga" ou veja as inativas.'
               : 'Nenhuma vaga nessa categoria.'}
@@ -243,14 +243,14 @@ export default function DashboardPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="font-semibold truncate flex items-center gap-2">
-                        {v.cargo} <span className="text-white/40 font-normal">· {v.senioridade}</span>
+                        {v.cargo} <span className="text-fg/40 font-normal">· {v.senioridade}</span>
                         {!v.ativa && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/50 uppercase tracking-wide">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-fg/10 text-fg/50 uppercase tracking-wide">
                             Inativa
                           </span>
                         )}
                       </div>
-                      <div className="text-sm text-white/45 truncate">{v.segmento}</div>
+                      <div className="text-sm text-fg/45 truncate">{v.segmento}</div>
                     </div>
                     {modoSelecao ? (
                       <input
@@ -265,7 +265,7 @@ export default function DashboardPage() {
                   </div>
 
                   <div className="flex items-center gap-2 mt-4 flex-wrap">
-                    <span className="text-xs px-2.5 py-1 rounded-full bg-white/[0.06] text-white/60">
+                    <span className="text-xs px-2.5 py-1 rounded-full bg-fg/[0.06] text-fg/60">
                       {v.totalCandidatos} candidato(s)
                     </span>
                     <span className="text-xs px-2.5 py-1 rounded-full bg-v4green/10 text-v4green">
@@ -279,7 +279,7 @@ export default function DashboardPage() {
                   </div>
 
                   {v.topCandidato && (
-                    <div className="mt-3 pt-3 border-t border-white/[0.06] text-sm text-white/70">
+                    <div className="mt-3 pt-3 border-t border-fg/[0.06] text-sm text-fg/70">
                       🏆 Top candidato: <span className="font-medium">{v.topCandidato.nome}</span>{' '}
                       <span className={corScore(v.topCandidato.scoreMedio)}>
                         ({v.topCandidato.scoreMedio?.toFixed(1)})
@@ -297,7 +297,7 @@ export default function DashboardPage() {
                 <div
                   key={v.id}
                   onClick={() => toggleSelecao(v.id)}
-                  className={`${classeBase} bg-v4surface cursor-pointer hover:border-white/20`}
+                  className={`${classeBase} bg-v4surface cursor-pointer hover:border-fg/20`}
                 >
                   {conteudo}
                 </div>
@@ -305,7 +305,7 @@ export default function DashboardPage() {
                 <a
                   key={v.id}
                   href={`/vagas/${v.id}`}
-                  className={`${classeBase} bg-v4surface hover:bg-white/[0.06] hover:border-white/20 block`}
+                  className={`${classeBase} bg-v4surface hover:bg-fg/[0.06] hover:border-fg/20 block`}
                 >
                   {conteudo}
                 </a>
@@ -332,8 +332,8 @@ function StatCard({
   return (
     <div className="rounded-2xl border border-v4border bg-v4surface p-4 shadow-card">
       <div className="flex items-center justify-between mb-2">
-        <div className="text-xs text-white/50 uppercase tracking-wide">{label}</div>
-        <span className="w-7 h-7 rounded-full bg-white/[0.06] flex items-center justify-center text-sm">
+        <div className="text-xs text-fg/50 uppercase tracking-wide">{label}</div>
+        <span className="w-7 h-7 rounded-full bg-fg/[0.06] flex items-center justify-center text-sm">
           {icone}
         </span>
       </div>
