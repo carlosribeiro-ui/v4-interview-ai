@@ -4,11 +4,25 @@ import { useEffect, useState } from 'react';
 
 const CHAVE_TEMA = 'v4-theme';
 
+/** Aplica o atributo no <html> — única função que mexe no DOM, chamada tanto
+    pelo clique local quanto pelo evento de sincronização entre abas abaixo. */
+function aplicarNoDom(tema: 'dark' | 'light') {
+  if (tema === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+}
+
 /**
  * Alterna entre tema escuro (padrão, sem atributo) e claro (`data-theme="light"`
  * em <html>). O script inline em app/layout.tsx já aplica o atributo antes do
- * primeiro paint (lendo o mesmo localStorage) — aqui só sincroniza o estado do
- * botão com o que já está no DOM e trata o clique.
+ * primeiro paint (lendo o mesmo localStorage) — aqui sincroniza o estado do
+ * botão com o que já está no DOM, trata o clique, E escuta o evento `storage`
+ * pra refletir a troca em TODAS as abas já abertas na hora — sem isso, uma aba
+ * já aberta só pegaria o tema novo no próximo reload (localStorage só dispara
+ * `storage` nas OUTRAS abas, nunca na que fez a mudança — por isso o clique
+ * local ainda precisa aplicar no DOM diretamente, além de gravar no storage).
  */
 export default function ThemeToggle() {
   const [tema, setTema] = useState<'dark' | 'light'>('dark');
@@ -16,20 +30,26 @@ export default function ThemeToggle() {
   useEffect(() => {
     const atual = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
     setTema(atual);
+
+    function aoMudarStorage(e: StorageEvent) {
+      if (e.key !== CHAVE_TEMA) return;
+      const novo = e.newValue === 'light' ? 'light' : 'dark';
+      aplicarNoDom(novo);
+      setTema(novo);
+    }
+    window.addEventListener('storage', aoMudarStorage);
+    return () => window.removeEventListener('storage', aoMudarStorage);
   }, []);
 
   function alternar() {
     const novo = tema === 'dark' ? 'light' : 'dark';
     setTema(novo);
-    if (novo === 'light') {
-      document.documentElement.setAttribute('data-theme', 'light');
-    } else {
-      document.documentElement.removeAttribute('data-theme');
-    }
+    aplicarNoDom(novo);
     try {
       localStorage.setItem(CHAVE_TEMA, novo);
     } catch {
-      // localStorage indisponível (modo privado etc.) — tema só não persiste entre sessões.
+      // localStorage indisponível (modo privado etc.) — tema só não persiste entre sessões
+      // nem sincroniza com outras abas, mas continua funcionando na aba atual.
     }
   }
 
