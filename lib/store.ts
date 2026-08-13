@@ -131,7 +131,15 @@ export async function updateVaga(
 ): Promise<Vaga | null> {
   const col = await vagasCollection();
   const update: UpdateFilter<Vaga> = { $set: fields as any };
-  return updateWithVersion(col, id, currentVersion, update);
+  const atualizada = await updateWithVersion(col, id, currentVersion, update);
+  if (atualizada) {
+    // Sem isso, o findOneAndUpdate acima grava certo no Mongo mas o próximo GET
+    // (inclusive o carregar() que a UI chama logo após "Salvar") continua servindo
+    // a versão em cache por até 30-60s (stale-while-revalidate) — parece que não salvou.
+    await cacheDel(id, 'vaga');
+    await cacheDelPrefix('vagas');
+  }
+  return atualizada;
 }
 
 /** Remove a vaga e todas as candidaturas dela — não há como recuperar depois. */
