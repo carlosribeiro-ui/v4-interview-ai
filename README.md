@@ -6,7 +6,7 @@ Clone funcional da Coploy: entrevistas assíncronas em vídeo avaliadas por IA. 
 
 ## Fluxo
 
-1. **Admin cria a vaga** (`/`): informa cargo, senioridade e segmento (ou cola uma Job Description completa). A IA gera automaticamente os requisitos e as perguntas com critérios técnicos. Vagas também podem ser criadas por sistemas externos via API.
+1. **Admin cria a vaga** (`/`): informa cargo, senioridade e segmento (ou cola uma Job Description completa). A IA gera automaticamente os requisitos e as perguntas com critérios técnicos. Vagas também podem ser criadas por sistemas externos via API. A seção "Vagas" do dashboard tem filtro **Ativas/Inativas/Todas** e um modo de seleção múltipla ("☑ Selecionar") pra inativar ou reativar várias vagas de uma vez — inativar não apaga nada (candidaturas/vídeos ficam intactos), só some da listagem pública (`/api/vagas/publicas`) usada na tela de entrevista.
 2. **Admin compartilha o link** (`/vagas/[id]` → "Copiar link"): `/entrevista/[vagaId]`.
 3. **Candidato responde** (`/entrevista/[vagaId]`): preenche nome/e-mail (+ LinkedIn, telefone, pretensão salarial e CV em PDF opcionais). A gravação é automática — sem botões, sem controle manual. Cada resposta é processada em background enquanto o candidato lê a próxima pergunta.
 4. **IA avalia automaticamente**: Gemini transcreve o áudio, analisa frames do vídeo (detecção de teleprompter), e gera nota 0-10 + feedback técnico calibrado por senioridade. Quando disponível, o CV/LinkedIn do candidato é usado como contexto adicional na avaliação.
