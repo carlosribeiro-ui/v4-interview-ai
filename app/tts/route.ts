@@ -24,7 +24,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
 
-  const bloqueado = await aplicarRateLimit(req, 'tts', LIMITES.tts);
+  // V-SEC: escopo por candidato/sessão, não por IP — ver nota em .../respostas/route.ts
+  const bloqueado = await aplicarRateLimit(req, 'tts', LIMITES.tts, sessao?.email || candidatoId || undefined);
   if (bloqueado) return bloqueado;
 
   const body = await req.json().catch(() => ({}));

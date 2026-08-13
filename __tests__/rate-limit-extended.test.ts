@@ -7,12 +7,12 @@ describe('rate-limit - LIMITES', () => {
     expect(LIMITES.login.windowMs).toBe(60_000);
   });
 
-  it('candidaturaWrite: 10 req/min', () => {
-    expect(LIMITES.candidaturaWrite.limit).toBe(10);
+  it('candidaturaWrite: 30 req/min', () => {
+    expect(LIMITES.candidaturaWrite.limit).toBe(30);
   });
 
-  it('videoUpload: 5 req/min', () => {
-    expect(LIMITES.videoUpload.limit).toBe(5);
+  it('videoUpload: 8 req/min', () => {
+    expect(LIMITES.videoUpload.limit).toBe(8);
   });
 
   it('tts: 15 req/min', () => {

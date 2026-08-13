@@ -31,7 +31,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
 
-  const bloqueado = await aplicarRateLimit(req, 'video-upload', LIMITES.videoUpload);
+  // V-SEC: escopo por candidato/sessão, não por IP — várias pessoas testando da
+  // mesma rede (mesmo IP de escritório) não competem pelo mesmo balde de limite.
+  const bloqueado = await aplicarRateLimit(req, 'video-upload', LIMITES.videoUpload, sessao?.email || candidatoId || undefined);
   if (bloqueado) return bloqueado;
 
   const candidaturaId = params.id;

@@ -119,11 +119,23 @@ export function extrairIP(req: Request): string {
 
 /** Limites pré-definidos por categoria de rota */
 export const LIMITES = {
-  /** Endritos públicos de interview — prevenir flood de candidaturas */
-  candidaturaWrite: { limit: 10, windowMs: 60_000 },
-  /** Upload de vídeo — operação pesada */
-  videoUpload: { limit: 5, windowMs: 60_000 },
-  /** TTS — custo por chamada */
+  /**
+   * Criação de candidatura — endpoint público (pré-auth, sem candidatoId ainda),
+   * então continua escopado por IP. 10->30: várias pessoas testando da mesma
+   * rede (mesmo IP público de escritório) não podiam competir pelo mesmo balde
+   * de 10/min — 30/min dá folga confortável pra dezenas de gente começando
+   * junto, sem abrir mão de barrar flood de verdade.
+   */
+  candidaturaWrite: { limit: 30, windowMs: 60_000 },
+  /**
+   * Upload de vídeo — operação pesada. Desde 2026-08-13 as rotas que usam esse
+   * limite (respostas/iniciar e respostas) passam actorKey=candidatoId, então o
+   * balde já é POR CANDIDATO, não por IP — várias pessoas na mesma rede não
+   * compartilham mais o mesmo limite. 5->8 só dá folga extra pra reenvio em
+   * caso de falha (cada resposta consome 2 unidades: 1 no /iniciar + 1 no upload).
+   */
+  videoUpload: { limit: 8, windowMs: 60_000 },
+  /** TTS — custo por chamada. Também escopado por candidatoId/email desde 2026-08-13. */
   tts: { limit: 15, windowMs: 60_000 },
   /** Login — prevenir brute force */
   login: { limit: 5, windowMs: 60_000 },
