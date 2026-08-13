@@ -159,11 +159,50 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
       if (data.jobDescription) setJobDescription(data.jobDescription);
       if (data.responsabilidades) setResponsabilidades(data.responsabilidades);
       if (data.requisitos?.length) setRequisitos(data.requisitos.join('\n'));
-      mostrar('Descrição gerada com sucesso!', 'sucesso');
+      return data;
     } catch (err: any) {
       mostrar(err.message ?? 'Erro ao gerar descrição', 'erro');
+      return null;
     } finally {
       setGerandoDescricao(false);
+    }
+  }
+
+  /* ─── IA — Gerar entrevista completa: descrição + requisitos + perguntas, 1 clique ─── */
+
+  async function gerarEntrevistaCompleta() {
+    setGerandoDescricao(true);
+    try {
+      const descricao = await gerarDescricao();
+      if (!descricao) return; // gerarDescricao já mostrou o erro
+      const reqLines: string[] = descricao.requisitos?.length
+        ? descricao.requisitos
+        : requisitos.split('\n').map((s) => s.trim()).filter(Boolean);
+      if (reqLines.length === 0) {
+        mostrar('Descrição gerada, mas sem requisitos — preencha manualmente antes de gerar perguntas.', 'erro');
+        return;
+      }
+      setGerandoPerguntas(true);
+      const resPerg = await fetch('/api/vagas/gerar-perguntas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cargo, senioridade, segmento,
+          jobDescription: descricao.jobDescription ?? jobDescription,
+          responsabilidades: descricao.responsabilidades ?? responsabilidades,
+          requisitos: reqLines, numeroPerguntas
+        })
+      });
+      const dataPerg = await resPerg.json();
+      if (!resPerg.ok) throw new Error(dataPerg.error ?? 'Erro ao gerar perguntas');
+      if (dataPerg.perguntas?.length) {
+        setPerguntas(dataPerg.perguntas.map((p: any) => ({ label: p.texto, text: p.criterios ? `${p.texto}\n[critérios] ${p.criterios}` : p.texto })));
+      }
+      mostrar('Entrevista completa gerada: descrição, requisitos e perguntas!', 'sucesso');
+    } catch (err: any) {
+      mostrar(err.message ?? 'Erro ao gerar perguntas', 'erro');
+    } finally {
+      setGerandoPerguntas(false);
     }
   }
 
@@ -495,12 +534,15 @@ export default function NovaVagaWizard({ onCriar }: { onCriar: (data: any) => Pr
                   )}
                   <button
                     type="button"
-                    onClick={gerarDescricao}
-                    disabled={gerandoDescricao}
+                    onClick={gerarEntrevistaCompleta}
+                    disabled={gerandoDescricao || gerandoPerguntas}
+                    title="Gera descrição, responsabilidades, requisitos e as perguntas da entrevista de uma vez"
                     className="flex items-center gap-2 rounded-full border border-v4green/30 text-v4green hover:bg-v4green/10 px-4 py-2 text-sm transition disabled:opacity-50"
                   >
                     {gerandoDescricao ? (
-                      <>⏳ Gerando…</>
+                      <>⏳ Gerando descrição…</>
+                    ) : gerandoPerguntas ? (
+                      <>⏳ Gerando perguntas…</>
                     ) : (
                       <>✨ Gerar entrevista com AI</>
                     )}
