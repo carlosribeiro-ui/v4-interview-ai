@@ -12,7 +12,7 @@ import {
 type Fase = 'carregando' | 'form' | 'idioma' | 'onboarding' | 'entrevista' | 'csat' | 'concluido' | 'erro';
 
 const TEMPO_LEITURA_SEG = 20;
-const TEMPO_MAX_RESPOSTA_SEG = 180;
+const TEMPO_MAX_RESPOSTA_SEG = 60;
 
 /** Chave da sessao local do candidato — permite retomar apos recarregar/fechar o navegador. */
 function chaveSessao(vagaId: string) {

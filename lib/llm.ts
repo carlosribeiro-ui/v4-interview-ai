@@ -217,7 +217,7 @@ Gere:
 1. Uma lista de 6 a 8 requisitos tecnicos e comportamentais esperados.
 2. Exatamente 5 perguntas PRINCIPAIS (tipo="principal") — obrigatorias, cobrem os requisitos mais criticos da vaga.
 3. Exatamente 2 perguntas ADICIONAIS (tipo="adicional") — complementares/opcionais, aprofundam pontos secundarios ou situacoes menos frequentes.
-Todas as perguntas devem ser adequadas a resposta em video de ate 2-3 minutos. Para cada pergunta, inclua criterios detalhados de avaliacao.
+Todas as perguntas devem ser CURTAS e OBJETIVAS, respondiveis em video em ate 1 minuto — vao direto ao ponto, sem multiplas sub-perguntas empilhadas. Para cada pergunta, inclua criterios detalhados de avaliacao (calibrados pra uma resposta de ate 1 minuto, nao exija profundidade incompativel com esse tempo).
 
 Responda SOMENTE com um JSON valido, sem markdown, no formato exato:
 {"requisitos":["requisito 1","requisito 2"],"perguntas":[{"texto":"pergunta 1","criterios":"o que uma boa resposta deve conter","tipo":"principal"}]}`;
@@ -653,7 +653,7 @@ ${jobDescription ? `\nJob Description:\n"""${jobDescription}"""\n` : ''}
 ${responsabilidades ? `\nResponsabilidades:\n"""${responsabilidades}"""\n` : ''}
 Requisitos: ${requisitos.join('; ')}
 
-Gere exatamente ${numeroPerguntas} perguntas. Todas devem ser adequadas a resposta em video de ate 2-3 minutos. Para cada pergunta, inclua criterios detalhados de avaliacao.
+Gere exatamente ${numeroPerguntas} perguntas. Todas devem ser CURTAS e OBJETIVAS, respondiveis em video em ate 1 minuto — vao direto ao ponto, sem multiplas sub-perguntas empilhadas. Para cada pergunta, inclua criterios detalhados de avaliacao (calibrados pra uma resposta de ate 1 minuto, nao exija profundidade incompativel com esse tempo).
 As primeiras ${Math.ceil(numeroPerguntas * 0.7)} perguntas devem ser PRINCIPAIS (tipo="principal") — cobrem os requisitos mais criticos.
 As demais devem ser ADICIONAIS (tipo="adicional") — complementares/opcionais.
 

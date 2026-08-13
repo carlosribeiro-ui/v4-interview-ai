@@ -172,7 +172,7 @@ export async function extrairCandidaturaId(req: NextRequest): Promise<string | n
  */
 export type GravacaoPayload = { candidaturaId: string; perguntaId: string; iniciadoEm: number; exp: number };
 
-const GRAVACAO_TTL_MS = 10 * 60 * 1000; // 10min — cobre leitura (20s) + resposta (até 180s) + upload lento
+const GRAVACAO_TTL_MS = 10 * 60 * 1000; // 10min — cobre leitura (20s) + resposta (até 60s) + upload lento; folga generosa de propósito
 const GRAVACAO_MIN_ELAPSED_MS = 2000; // upload em menos de 2s do início é fisicamente implausível
 
 export async function criarTokenGravacao(candidaturaId: string, perguntaId: string): Promise<string> {
