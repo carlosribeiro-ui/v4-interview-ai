@@ -763,6 +763,22 @@ function Gravador({
   const [segundosResposta, setSegundosResposta] = useState(TEMPO_MAX_RESPOSTA_SEG);
   const stopTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
+  // Avisa antes de sair/fechar a aba durante leitura/gravação/envio — o vídeo só é
+  // enviado no onstop do MediaRecorder (ver enviar()); se o candidato fechar a aba
+  // ou navegar pra fora antes disso, a gravação em memória (chunksRef) se perde e
+  // NADA chega a ser salvo no back pra essa pergunta. Isso não impede 100% da perda
+  // (fechar o navegador à força ignora o beforeunload), mas cobre o caso comum de
+  // sair sem querer/voltar o navegador.
+  useEffect(() => {
+    if (estado !== 'leitura' && estado !== 'gravando' && estado !== 'enviando') return;
+    function avisar(e: BeforeUnloadEvent) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+    window.addEventListener('beforeunload', avisar);
+    return () => window.removeEventListener('beforeunload', avisar);
+  }, [estado]);
+
   // Pede o token de gravação assim que a leitura começa (bem antes de precisar dele no
   // upload) — anti-fraude: prova que essa resposta passou pelo fluxo real da tela, não um
   // vídeo qualquer mandado direto pra API. Ver lib/auth-edge.ts (criarTokenGravacao).
