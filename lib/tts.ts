@@ -5,6 +5,10 @@ const GEMINI_TTS_URL =
 const MAX_RETRIES = 3;
 
 import { medir } from './metrics';
+import { aguardarVagaGemini } from './gemini-throttle';
+
+/** Tier real da conta: RPM=10, RPD=100. Usa 8 como margem de segurança. */
+const TTS_LIMITE_RPM = 8;
 
 /** PCM 16-bit mono a 24kHz — formato fixo devolvido pelo Gemini TTS. */
 function pcmParaWav(pcm: Buffer, sampleRate = 24000): Buffer {
@@ -50,6 +54,8 @@ export async function sintetizarFala(texto: string): Promise<Buffer> {
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    await aguardarVagaGemini('gemini-2.5-flash-preview-tts', TTS_LIMITE_RPM);
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30_000);
 

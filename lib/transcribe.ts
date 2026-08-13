@@ -1,11 +1,15 @@
 import fs from 'fs';
 import path from 'path';
+import { aguardarVagaGemini } from './gemini-throttle';
+import { RECURSO_GEMINI_FLASH } from './llm';
 
 const GEMINI_URL =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
 /** Máximo de retentativas em erros transitórios (429 rate limit, 5xx, timeout/rede). */
 const MAX_RETRIES = 3;
+/** Mesmo modelo/cota de lib/llm.ts (RPM=1000, margem em 800) — throttle compartilhado. */
+const FLASH_LIMITE_RPM = 800;
 
 const MIME_BY_EXT: Record<string, string> = {
   '.webm': 'audio/webm',
@@ -50,6 +54,8 @@ export async function transcribeAudio(filePath: string): Promise<string> {
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    await aguardarVagaGemini(RECURSO_GEMINI_FLASH, FLASH_LIMITE_RPM);
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000); // 60s pra vídeos grandes
 

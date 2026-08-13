@@ -6,8 +6,14 @@ const GEMINI_URL =
 const GEMINI_TIMEOUT_MS = 30_000;
 /** Máximo de retentativas em erros transitórios (429, 5xx, network). */
 const MAX_RETRIES = 3;
+/** Tier real da conta pro gemini-2.5-flash: RPM=1000. Margem de segurança em 800. Mesmo
+ *  balde do modelo usado por lib/transcribe.ts — chave de recurso igual de propósito. */
+const FLASH_LIMITE_RPM = 800;
+/** Nome do recurso compartilhado com lib/transcribe.ts (mesmo modelo, mesma cota da conta). */
+export const RECURSO_GEMINI_FLASH = 'gemini-2.5-flash';
 
 import { medir } from './metrics';
+import { aguardarVagaGemini } from './gemini-throttle';
 
 function geminiUrl() {
   return `${GEMINI_URL}?key=${GEMINI_API_KEY}`;
@@ -45,6 +51,8 @@ async function geminiGenerate(
 
   let lastError: Error | null = null;
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    await aguardarVagaGemini(RECURSO_GEMINI_FLASH, FLASH_LIMITE_RPM);
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
 
