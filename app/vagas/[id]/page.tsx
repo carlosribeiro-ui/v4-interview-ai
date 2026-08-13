@@ -67,6 +67,9 @@ export default function VagaPage({ params }: { params: { id: string } }) {
   const [editJobDescription, setEditJobDescription] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [link, setLink] = useState('');
+  const [gerandoJD, setGerandoJD] = useState(false);
+  const [gerandoRequisitos, setGerandoRequisitos] = useState(false);
+  const [gerandoPerguntasIA, setGerandoPerguntasIA] = useState(false);
 
   const [gerenciandoFases, setGerenciandoFases] = useState(false);
   const [editFasesList, setEditFasesList] = useState<FaseDef[]>([]);
@@ -198,6 +201,130 @@ export default function VagaPage({ params }: { params: { id: string } }) {
     } finally {
       setSalvando(false);
     }
+  }
+
+  /* ─── IA — gera cada bloco à parte (JD, requisitos/roteiro, perguntas) ───
+     Funciona tanto em vaga nova quanto em vaga já existente/publicada — se um
+     bloco já tem conteúdo, gerar outro não mexe nele. */
+
+  async function gerarJDComIA(): Promise<string | null> {
+    if (!vaga) return null;
+    if (!editando) iniciarEdicao();
+    setGerandoJD(true);
+    try {
+      const res = await fetch('/api/vagas/gerar-descricao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cargo: vaga.cargo, senioridade: vaga.senioridade, segmento: vaga.segmento,
+          formacaoAcademica: vaga.formacaoAcademica, idiomaEntrevista: vaga.idiomaEntrevista,
+          pais: vaga.pais, estado: vaga.estado, cidade: vaga.cidade
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Erro ao gerar Job Description');
+      if (data.jobDescription) {
+        setEditJobDescription(data.jobDescription);
+        mostrar('Job Description gerada por IA — revise e salve.', 'sucesso');
+        return data.jobDescription as string;
+      }
+      return null;
+    } catch (err: any) {
+      mostrar(err.message ?? 'Erro ao gerar Job Description', 'erro');
+      return null;
+    } finally {
+      setGerandoJD(false);
+    }
+  }
+
+  async function gerarRequisitosComIA(): Promise<string[] | null> {
+    if (!vaga) return null;
+    if (!editando) iniciarEdicao();
+    setGerandoRequisitos(true);
+    try {
+      const res = await fetch('/api/vagas/gerar-descricao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cargo: vaga.cargo, senioridade: vaga.senioridade, segmento: vaga.segmento,
+          formacaoAcademica: vaga.formacaoAcademica, idiomaEntrevista: vaga.idiomaEntrevista,
+          pais: vaga.pais, estado: vaga.estado, cidade: vaga.cidade
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Erro ao gerar roteiro');
+      if (data.requisitos?.length) {
+        setEditRequisitos(data.requisitos);
+        mostrar('Roteiro (requisitos) gerado por IA — revise e salve.', 'sucesso');
+        return data.requisitos as string[];
+      }
+      return null;
+    } catch (err: any) {
+      mostrar(err.message ?? 'Erro ao gerar roteiro', 'erro');
+      return null;
+    } finally {
+      setGerandoRequisitos(false);
+    }
+  }
+
+  async function gerarPerguntasComIA(override?: { requisitos?: string[]; jobDescription?: string }) {
+    if (!vaga) return;
+    // Se vier override (chamado por gerarTudoComIA logo após gerar JD/requisitos), usa
+    // ele — o state (editRequisitos/editJobDescription) só reflete o setState anterior
+    // depois de um re-render, não dá pra confiar nele no mesmo fluxo síncrono.
+    const reqAtual = (override?.requisitos ?? (editando ? editRequisitos : vaga.requisitos)).filter((r) => r.trim());
+    if (reqAtual.length === 0) {
+      mostrar('Gere ou preencha os requisitos (roteiro) antes de gerar as perguntas.', 'erro');
+      return;
+    }
+    const jdAtual = override?.jobDescription ?? (editando ? editJobDescription : (vaga.jobDescription ?? ''));
+    const numPerguntas = (editando ? editPerguntas.length : vaga.perguntas.length) || vaga.numeroPerguntas || 7;
+    if (!editando) iniciarEdicao();
+    setGerandoPerguntasIA(true);
+    try {
+      const res = await fetch('/api/vagas/gerar-perguntas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cargo: vaga.cargo, senioridade: vaga.senioridade, segmento: vaga.segmento,
+          jobDescription: jdAtual, responsabilidades: vaga.responsabilidades,
+          requisitos: reqAtual, numeroPerguntas: numPerguntas
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Erro ao gerar perguntas');
+      if (data.perguntas?.length) {
+        setEditPerguntas(
+          data.perguntas.map((p: any) => ({
+            id: 'pergunta-' + Math.random().toString(36).slice(2, 9),
+            texto: p.texto,
+            criterios: p.criterios,
+            tipo: p.tipo ?? 'principal'
+          }))
+        );
+        mostrar(`${data.perguntas.length} perguntas geradas por IA — revise e salve.`, 'sucesso');
+      }
+    } catch (err: any) {
+      mostrar(err.message ?? 'Erro ao gerar perguntas', 'erro');
+    } finally {
+      setGerandoPerguntasIA(false);
+    }
+  }
+
+  /** Botão único: gera JD (se vazia) → requisitos (se vazio) → perguntas, em sequência,
+      encadeando o valor recém-gerado de cada etapa pra próxima (sem depender de state). */
+  async function gerarTudoComIA() {
+    if (!vaga) return;
+    if (!editando) iniciarEdicao();
+    let jd = editJobDescription || vaga.jobDescription || '';
+    if (!jd) {
+      jd = (await gerarJDComIA()) ?? '';
+    }
+    let reqs = (editando ? editRequisitos : vaga.requisitos).filter((r) => r.trim());
+    if (reqs.length === 0) {
+      reqs = (await gerarRequisitosComIA()) ?? [];
+    }
+    await gerarPerguntasComIA({ requisitos: reqs, jobDescription: jd });
   }
 
   function iniciarGerenciarFases() {
@@ -340,15 +467,49 @@ export default function VagaPage({ params }: { params: { id: string } }) {
         </div>
       </section>
 
+      {isAdmin && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={gerarTudoComIA}
+            disabled={gerandoJD || gerandoRequisitos || gerandoPerguntasIA}
+            title="Gera (ou completa) Job Description, roteiro/requisitos e perguntas de uma vez — o que já existir não é sobrescrito"
+            className="flex items-center gap-2 rounded-full border border-v4green/30 text-v4green hover:bg-v4green/10 px-4 py-2 text-sm transition disabled:opacity-50"
+          >
+            {gerandoJD ? (
+              <>⏳ Gerando Job Description…</>
+            ) : gerandoRequisitos ? (
+              <>⏳ Gerando roteiro…</>
+            ) : gerandoPerguntasIA ? (
+              <>⏳ Gerando perguntas…</>
+            ) : (
+              <>✨ Gerar por IA</>
+            )}
+          </button>
+        </div>
+      )}
+
       <section className="bg-white/5 border border-white/10 rounded p-5">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-heading font-semibold">
             Job Description {!vaga.jobDescription && !editando && <span className="text-white/40 font-normal text-sm">(não cadastrada)</span>}
           </h2>
-          {!editando && isAdmin && (
-            <button onClick={iniciarEdicao} className="text-xs text-v4red hover:text-v4redDark">
-              Editar
-            </button>
+          {isAdmin && (
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={gerarJDComIA}
+                disabled={gerandoJD}
+                className="text-xs text-v4green hover:text-v4green/70 disabled:opacity-50"
+              >
+                {gerandoJD ? '⏳ Gerando…' : '✨ Gerar com IA'}
+              </button>
+              {!editando && (
+                <button onClick={iniciarEdicao} className="text-xs text-v4red hover:text-v4redDark">
+                  Editar
+                </button>
+              )}
+            </div>
           )}
         </div>
         {editando ? (
@@ -373,10 +534,22 @@ export default function VagaPage({ params }: { params: { id: string } }) {
         <div className="bg-white/5 border border-white/10 rounded p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-heading font-semibold">Requisitos</h2>
-            {!editando && isAdmin && (
-              <button onClick={iniciarEdicao} className="text-xs text-v4red hover:text-v4redDark">
-                Editar
-              </button>
+            {isAdmin && (
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={gerarRequisitosComIA}
+                  disabled={gerandoRequisitos}
+                  className="text-xs text-v4green hover:text-v4green/70 disabled:opacity-50"
+                >
+                  {gerandoRequisitos ? '⏳ Gerando…' : '✨ Gerar roteiro com IA'}
+                </button>
+                {!editando && (
+                  <button onClick={iniciarEdicao} className="text-xs text-v4red hover:text-v4redDark">
+                    Editar
+                  </button>
+                )}
+              </div>
             )}
           </div>
           {editando ? (
@@ -402,10 +575,22 @@ export default function VagaPage({ params }: { params: { id: string } }) {
         <div className="bg-white/5 border border-white/10 rounded p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-heading font-semibold">Perguntas da entrevista</h2>
-            {!editando && isAdmin && (
-              <button onClick={iniciarEdicao} className="text-xs text-v4red hover:text-v4redDark">
-                Editar
-              </button>
+            {isAdmin && (
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => gerarPerguntasComIA()}
+                  disabled={gerandoPerguntasIA}
+                  className="text-xs text-v4green hover:text-v4green/70 disabled:opacity-50"
+                >
+                  {gerandoPerguntasIA ? '⏳ Gerando…' : '✨ Gerar com IA'}
+                </button>
+                {!editando && (
+                  <button onClick={iniciarEdicao} className="text-xs text-v4red hover:text-v4redDark">
+                    Editar
+                  </button>
+                )}
+              </div>
             )}
           </div>
           {editando ? (
