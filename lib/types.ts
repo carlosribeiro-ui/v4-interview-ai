@@ -6,6 +6,8 @@ export type Pergunta = {
   tipo?: 'principal' | 'adicional';
   /** URL pública (R2) do áudio TTS já sintetizado desta pergunta — evita chamar a API Gemini a cada "Ouvir pergunta". */
   audioUrl?: string;
+  /** Hash sha256 do `texto` no momento em que audioUrl foi gerado — se o texto mudar (admin edita a pergunta), o hash não bate e o áudio é regenerado. Sem isso não dá pra cachear com segurança (ver lib/tts.ts). */
+  audioTextoHash?: string;
 };
 
 export type Vaga = {
