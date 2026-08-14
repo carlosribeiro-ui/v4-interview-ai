@@ -11,6 +11,8 @@ import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
 import { reportarErro } from '@/lib/monitoring';
 import { comFila } from '@/lib/queue';
 import { lerSessao, extrairCandidaturaId, validarTokenGravacao } from '@/lib/auth';
+import { analisarIntegridadeVideo, type SinalIntegridade } from '@/lib/video-forense';
+import { tokenJaUsado } from '@/lib/token-uso-unico';
 import type { Resposta } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -55,15 +57,40 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: 'perguntaId e video são obrigatórios' }, { status: 400 });
     }
 
-    // V-SEC (anti-fraude): exige prova de que a gravação passou pelo fluxo real da tela —
-    // fecha a brecha de enviar um vídeo qualquer direto pra API sem nunca ter gravado nada.
-    // Ver lib/auth-edge.ts (criarTokenGravacao/validarTokenGravacao).
+    // V-SEC (anti-fraude, redesenhado 2026-08-14): as checagens abaixo NÃO rejeitam mais o
+    // upload com mensagem explicativa. Uma resposta tipo "token de gravação ausente" ensina
+    // o atacante exatamente qual é a barreira, e ele ajusta a tentativa seguinte até passar.
+    // Agora o upload é aceito normalmente — o candidato não percebe nada — e o indício fica
+    // registrado em `sinaisIntegridade` pro recrutador ver no perfil.
+    const sinais: SinalIntegridade[] = [];
+    let iniciadoEm: number | null = null;
+
     if (typeof tokenGravacao !== 'string' || !tokenGravacao) {
-      return NextResponse.json({ error: 'Token de gravação ausente — recarregue a página e responda em tempo real' }, { status: 400 });
-    }
-    const validacaoGravacao = await validarTokenGravacao(tokenGravacao, candidaturaId, perguntaId);
-    if (!validacaoGravacao.ok) {
-      return NextResponse.json({ error: validacaoGravacao.erro }, { status: 400 });
+      sinais.push({
+        codigo: 'sem_token',
+        detalhe: 'O envio não trouxe a credencial que a tela de entrevista gera ao iniciar a gravação. Indica que o vídeo foi enviado direto para o sistema, sem passar pela tela.',
+        peso: 'alto'
+      });
+    } else {
+      const validacaoGravacao = await validarTokenGravacao(tokenGravacao, candidaturaId, perguntaId);
+      if (!validacaoGravacao.ok) {
+        sinais.push({
+          codigo: 'token_invalido',
+          detalhe: `A credencial de gravação não confere (${validacaoGravacao.erro}). O envio não corresponde a uma gravação iniciada normalmente nesta pergunta.`,
+          peso: 'alto'
+        });
+      } else {
+        iniciadoEm = validacaoGravacao.iniciadoEm;
+        // Cada credencial vale para UM envio. Um segundo upload com a mesma credencial
+        // significa que ela foi capturada e reaproveitada para outro arquivo.
+        if (await tokenJaUsado(tokenGravacao)) {
+          sinais.push({
+            codigo: 'token_reusado',
+            detalhe: 'A mesma credencial de gravação já havia sido usada em outro envio. Cada gravação gera uma credencial própria — reaproveitar indica envio de arquivo fora do fluxo normal.',
+            peso: 'alto'
+          });
+        }
+      }
     }
 
     // V-08: File size limit
@@ -94,6 +121,14 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     if (!isMp4 && !isWebm) {
       return NextResponse.json({ error: 'Arquivo não é um vídeo válido (aceitos: MP4, WebM)' }, { status: 400 });
+    }
+
+    // Análise forense do container: procura contradições factuais entre o arquivo e a janela
+    // de tempo real da sessão (ver lib/video-forense.ts). Só roda com token válido — sem
+    // `iniciadoEm` não há relógio confiável pra comparar, e o indício de token já foi
+    // registrado acima de qualquer forma.
+    if (iniciadoEm !== null) {
+      sinais.push(...analisarIntegridadeVideo(buffer, isWebm, Date.now() - iniciadoEm));
     }
 
     const ext = isMp4 ? 'mp4' : 'webm';
@@ -148,6 +183,20 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       }
     }
 
+    // Regravação da MESMA pergunta: o upsert abaixo apaga a resposta anterior, então sem
+    // contar aqui a informação se perde. Não bloqueamos a regravação (câmera falha, aba
+    // recarrega — barrar puniria candidato honesto), mas um número alto mostra que a resposta
+    // foi ensaiada até sair do jeito desejado, o que descaracteriza a espontaneidade.
+    const anterior = candidatura.respostas?.find((r) => r.perguntaId === perguntaId);
+    const tentativas = (anterior?.tentativas ?? (anterior ? 1 : 0)) + 1;
+    if (tentativas >= 3) {
+      sinais.push({
+        codigo: 'regravacao_repetida',
+        detalhe: `Esta pergunta foi gravada ${tentativas} vezes. Cada nova gravação substitui a anterior — o que está registrado é a última tentativa, não a resposta espontânea.`,
+        peso: tentativas >= 5 ? 'alto' : 'medio'
+      });
+    }
+
     const respostaPlaceholder: Resposta = {
       perguntaId,
       videoPath,
@@ -155,7 +204,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       score: 0,
       feedback: '',
       avaliando: true,
-      ...(perdeuFoco ? { perdeuFoco } : {})
+      ...(perdeuFoco ? { perdeuFoco } : {}),
+      ...(sinais.length > 0 ? { sinaisIntegridade: sinais } : {}),
+      tentativas
     };
 
     await upsertRespostaAtomica(candidaturaId, respostaPlaceholder);

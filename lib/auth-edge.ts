@@ -189,7 +189,7 @@ export async function validarTokenGravacao(
   token: string,
   candidaturaId: string,
   perguntaId: string
-): Promise<{ ok: true } | { ok: false; erro: string }> {
+): Promise<{ ok: true; iniciadoEm: number } | { ok: false; erro: string }> {
   const [corpo, assinatura] = token.split('.');
   if (!corpo || !assinatura) return { ok: false, erro: 'Token de gravação ausente ou inválido' };
   try {
@@ -212,7 +212,10 @@ export async function validarTokenGravacao(
     if (Date.now() - payload.iniciadoEm < GRAVACAO_MIN_ELAPSED_MS) {
       return { ok: false, erro: 'Resposta enviada rápido demais — grave a resposta em tempo real' };
     }
-    return { ok: true };
+    // iniciadoEm sai daqui porque é o relógio CONFIÁVEL (assinado pelo servidor) da abertura
+    // desta pergunta — a análise forense do vídeo compara a duração do arquivo contra essa
+    // janela. Ver lib/video-forense.ts::analisarIntegridadeVideo.
+    return { ok: true, iniciadoEm: payload.iniciadoEm };
   } catch {
     return { ok: false, erro: 'Token de gravação inválido' };
   }
