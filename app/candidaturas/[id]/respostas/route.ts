@@ -7,7 +7,6 @@ import { getCandidatura, getVaga, upsertRespostaAtomica, atualizarRespostaAtomic
 import { uploadParaR2 } from '@/lib/r2';
 import { transcribeAudio } from '@/lib/transcribe';
 import { avaliarResposta } from '@/lib/llm';
-import { extractarFrames } from '@/lib/video';
 import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
 import { reportarErro } from '@/lib/monitoring';
 import { comFila } from '@/lib/queue';
@@ -50,6 +49,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const file = formData.get('video');
     const tokenGravacao = formData.get('tokenGravacao');
     const perdeuFocoRaw = formData.get('perdeuFoco');
+    const framesRaw = formData.get('frames');
 
     if (typeof perguntaId !== 'string' || !(file instanceof File)) {
       return NextResponse.json({ error: 'perguntaId e video são obrigatórios' }, { status: 400 });
@@ -123,6 +123,31 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       }
     }
 
+    // V-SEC: frames vêm do canvas do navegador (ver app/entrevista/[vagaId]/page.tsx), não de
+    // ffmpeg no servidor — o Vercel serverless não tem o binário, então a extração antiga
+    // (lib/video.ts) sempre voltava [] em produção e a detecção de leitura nunca via imagem
+    // nenhuma. Cap de 6 frames / ~800KB de base64 cada: generoso pro JPEG qualidade 0.5 do
+    // client, mas impede abuso de payload (não é upload de arquivo, é campo de texto do form,
+    // não entra no limite de 50MB do vídeo).
+    let frames: { frameBase64: string; timestamp: string }[] = [];
+    if (typeof framesRaw === 'string' && framesRaw.length < 6 * 1024 * 1024) {
+      try {
+        const parsed = JSON.parse(framesRaw);
+        if (Array.isArray(parsed)) {
+          frames = parsed
+            .filter(
+              (f): f is { frameBase64: string; timestamp: string } =>
+                typeof f?.frameBase64 === 'string' &&
+                typeof f?.timestamp === 'string' &&
+                f.frameBase64.length < 800 * 1024
+            )
+            .slice(0, 6);
+        }
+      } catch {
+        // formato inesperado, segue sem imagens (mesmo fallback de antes: estaLendo=false)
+      }
+    }
+
     const respostaPlaceholder: Resposta = {
       perguntaId,
       videoPath,
@@ -136,7 +161,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     await upsertRespostaAtomica(candidaturaId, respostaPlaceholder);
 
     const curriculoTexto = [candidatura.linkedin, candidatura.curriculoPath].filter(Boolean).join('\n');
-    processarRespostaIA(candidaturaId, perguntaId, tmpPath, videoPath, pergunta.texto, pergunta.criterios, vaga, curriculoTexto || undefined)
+    processarRespostaIA(candidaturaId, perguntaId, tmpPath, videoPath, pergunta.texto, pergunta.criterios, vaga, frames, curriculoTexto || undefined)
       .catch(() => {});
 
     return NextResponse.json({ status: 'processing', perguntaId }, { status: 202 });
@@ -151,13 +176,11 @@ async function processarRespostaIA(
   textoPergunta: string,
   criterios: string,
   vaga: { senioridade: string; requisitos: string[]; jobDescription?: string; avaliarIdioma?: boolean },
+  frames: { frameBase64: string; timestamp: string }[],
   curriculoTexto?: string
 ) {
   try {
-    const [transcricao, frames] = await Promise.all([
-      transcribeAudio(tmpPath),
-      Promise.resolve(extractarFrames(tmpPath))
-    ]);
+    const transcricao = await transcribeAudio(tmpPath);
 
     const avaliacao = await avaliarResposta(
       textoPergunta, criterios, transcricao, vaga.senioridade, vaga.requisitos,

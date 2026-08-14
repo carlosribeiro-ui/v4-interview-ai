@@ -765,6 +765,31 @@ function Gravador({
   // V-SEC (sinal, não prova): conta quantas vezes a aba perdeu foco durante a gravação
   // e por quanto tempo — candidato pode ter saído pra ler uma cola em outra tela.
   const focoRef = useRef({ vezes: 0, segundosFora: 0, saiuEm: 0 });
+  // Detecção de teleprompter/leitura (2026-08-14): captura frames DIRETO no navegador (canvas
+  // sobre o <video> da própria webcam) em vez de extrair no servidor com ffmpeg — o Vercel
+  // serverless não tem ffmpeg instalado, então lib/video.ts::extractarFrames() sempre retornava
+  // [] em produção e a IA nunca via imagem nenhuma (avaliarResposta cai no fallback
+  // estaLendo=false/confiancaLeitura=0 sem frames — ver lib/llm.ts). Capturando aqui, o frame
+  // sempre existe, não depende de infraestrutura nenhuma no servidor.
+  const framesTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const framesRef = useRef<{ frameBase64: string; timestamp: string }[]>([]);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  function capturarFrame(timestamp: string) {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas || video.videoWidth === 0) return;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    // qualidade baixa (0.5) — é só pra IA ler expressão/olhar, não precisa de definição alta,
+    // e mantém o upload leve (frames vão junto com o form do vídeo).
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+    const base64 = dataUrl.split(',')[1];
+    if (base64) framesRef.current.push({ frameBase64: base64, timestamp });
+  }
 
   // Avisa antes de sair/fechar a aba durante leitura/gravação/envio — o vídeo só é
   // enviado no onstop do MediaRecorder (ver enviar()); se o candidato fechar a aba
@@ -808,6 +833,7 @@ function Gravador({
     formData.append('video', blob, 'resposta.webm');
     formData.append('tokenGravacao', tokenGravacaoRef.current ?? '');
     formData.append('perdeuFoco', JSON.stringify({ vezes: focoRef.current.vezes, segundosFora: Math.round(focoRef.current.segundosFora) }));
+    formData.append('frames', JSON.stringify(framesRef.current));
     const res = await fetch(`/candidaturas/${candidaturaId}/respostas`, {
       method: 'POST',
       body: formData
@@ -825,6 +851,8 @@ function Gravador({
     if (!streamRef.current) return;
     chunksRef.current = [];
     focoRef.current = { vezes: 0, segundosFora: 0, saiuEm: 0 };
+    framesRef.current = [];
+    framesTimeoutsRef.current.forEach(clearTimeout);
     const recorder = new MediaRecorder(streamRef.current, { mimeType: 'video/webm' });
     recorder.ondataavailable = (e) => {
       if (e.data.size > 0) chunksRef.current.push(e.data);
@@ -839,6 +867,13 @@ function Gravador({
     stopTimeoutRef.current = setTimeout(() => {
       recorderRef.current?.stop();
     }, TEMPO_MAX_RESPOSTA_SEG * 1000);
+    // 3 capturas espaçadas ao longo da resposta (início/meio/fim) — o candidato pode desviar
+    // o olhar num instante só, então múltiplos pontos aumentam a chance de pegar o sinal sem
+    // deixar o payload pesado (3 JPEGs em baixa qualidade).
+    const pontos = [2, Math.floor(TEMPO_MAX_RESPOSTA_SEG / 2), Math.max(3, TEMPO_MAX_RESPOSTA_SEG - 3)];
+    framesTimeoutsRef.current = pontos.map((seg) =>
+      setTimeout(() => capturarFrame(`00:00:${String(seg).padStart(2, '0')}`), seg * 1000)
+    );
   }
 
   useEffect(() => {
@@ -868,6 +903,7 @@ function Gravador({
       ativo = false;
       streamRef.current?.getTracks().forEach((t) => t.stop());
       if (stopTimeoutRef.current) clearTimeout(stopTimeoutRef.current);
+      framesTimeoutsRef.current.forEach(clearTimeout);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -931,12 +967,18 @@ function Gravador({
 
   function encerrarResposta() {
     if (stopTimeoutRef.current) clearTimeout(stopTimeoutRef.current);
+    framesTimeoutsRef.current.forEach(clearTimeout);
+    // Se o candidato encerrar antes do último ponto agendado, captura um frame na hora —
+    // melhor um frame "fim antecipado" do que nenhum frame do fim da resposta.
+    capturarFrame('encerramento-antecipado');
     recorderRef.current?.stop();
   }
 
   return (
     <div className="space-y-3">
       <video ref={videoRef} autoPlay playsInline className="w-full rounded bg-field aspect-video" />
+      {/* Oculto — só usado como buffer pra capturarFrame() desenhar o <video> e virar JPEG. */}
+      <canvas ref={canvasRef} className="hidden" />
       {erro && <p className="text-v4red text-sm">{erro}</p>}
 
       {estado === 'leitura' && (
