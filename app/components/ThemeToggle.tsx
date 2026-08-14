@@ -7,33 +7,34 @@ const CHAVE_TEMA = 'v4-theme';
 /** Aplica o atributo no <html> — única função que mexe no DOM, chamada tanto
     pelo clique local quanto pelo evento de sincronização entre abas abaixo. */
 function aplicarNoDom(tema: 'dark' | 'light') {
-  if (tema === 'light') {
-    document.documentElement.setAttribute('data-theme', 'light');
+  if (tema === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
   } else {
     document.documentElement.removeAttribute('data-theme');
   }
 }
 
 /**
- * Alterna entre tema escuro (padrão, sem atributo) e claro (`data-theme="light"`
- * em <html>). O script inline em app/layout.tsx já aplica o atributo antes do
- * primeiro paint (lendo o mesmo localStorage) — aqui sincroniza o estado do
- * botão com o que já está no DOM, trata o clique, E escuta o evento `storage`
- * pra refletir a troca em TODAS as abas já abertas na hora — sem isso, uma aba
- * já aberta só pegaria o tema novo no próximo reload (localStorage só dispara
- * `storage` nas OUTRAS abas, nunca na que fez a mudança — por isso o clique
- * local ainda precisa aplicar no DOM diretamente, além de gravar no storage).
+ * Alterna entre tema claro (padrão desde 2026-08-14, sem atributo) e escuro
+ * (`data-theme="dark"` em <html>). O script inline em app/layout.tsx já aplica
+ * o atributo antes do primeiro paint (lendo o mesmo localStorage) — aqui
+ * sincroniza o estado do botão com o que já está no DOM, trata o clique, E
+ * escuta o evento `storage` pra refletir a troca em TODAS as abas já abertas
+ * na hora — sem isso, uma aba já aberta só pegaria o tema novo no próximo
+ * reload (localStorage só dispara `storage` nas OUTRAS abas, nunca na que fez
+ * a mudança — por isso o clique local ainda precisa aplicar no DOM
+ * diretamente, além de gravar no storage).
  */
 export default function ThemeToggle() {
-  const [tema, setTema] = useState<'dark' | 'light'>('dark');
+  const [tema, setTema] = useState<'dark' | 'light'>('light');
 
   useEffect(() => {
-    const atual = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+    const atual = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
     setTema(atual);
 
     function aoMudarStorage(e: StorageEvent) {
       if (e.key !== CHAVE_TEMA) return;
-      const novo = e.newValue === 'light' ? 'light' : 'dark';
+      const novo = e.newValue === 'dark' ? 'dark' : 'light';
       aplicarNoDom(novo);
       setTema(novo);
     }

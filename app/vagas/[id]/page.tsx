@@ -1147,6 +1147,11 @@ function PerfilCandidatoModal({
                       {Math.round((r.confiancaLeitura ?? 0) * 100)}%
                     </Pill>
                   )}
+                  {!!r.perdeuFoco?.vezes && (
+                    <Pill tom="amarelo">
+                      👁️ Saiu da aba {r.perdeuFoco.vezes}x durante a resposta ({r.perdeuFoco.segundosFora}s fora)
+                    </Pill>
+                  )}
                   {!r.avaliando && (
                     <p className="text-xs text-fg/40">
                       Transcrição: <span className="text-fg/70">{r.transcricao || '—'}</span>

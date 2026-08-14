@@ -667,6 +667,7 @@ function PerfilCandidatoModal({
                   <video src={r.videoPath} controls className="w-full rounded-xl bg-field aspect-video" />
                   {r.avaliando && <Pill tom="amarelo">⏳ Processando…</Pill>}
                   {!r.avaliando && r.estaLendo !== undefined && <Pill tom={r.estaLendo ? 'vermelho' : 'verde'}>{r.estaLendo ? '⚠️ Possível leitura' : '✅ Sem indícios'} · {Math.round((r.confiancaLeitura ?? 0) * 100)}%</Pill>}
+                  {!!r.perdeuFoco?.vezes && <Pill tom="amarelo">👁️ Saiu da aba {r.perdeuFoco.vezes}x ({r.perdeuFoco.segundosFora}s)</Pill>}
                   {!r.avaliando && <p className="text-xs text-fg/40">Transcrição: <span className="text-fg/70">{r.transcricao || '—'}</span></p>}
                   {!r.avaliando && <p className="text-sm text-fg/60">{r.feedback}</p>}
                   {!r.avaliando && r.pontoAtencao && (

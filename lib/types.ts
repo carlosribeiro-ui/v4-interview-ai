@@ -132,6 +132,12 @@ export type Resposta = {
   competenciasAdicionais?: CompetenciaAvaliada[];
   /** Avaliação de idioma (quando vaga ativa essa feature). */
   avaliacaoIdioma?: { score: number; nivel: string; feedback: string } | null;
+  /** Sinal client-side (2026-08-14): quantas vezes a aba/janela perdeu foco durante a
+      gravação e por quantos segundos no total — candidato pode ter saído pra ler uma
+      cola em outra tela/dispositivo. Não é prova de fraude (pode ser notificação, troca
+      de janela por engano etc.), só um sinal a mais pro recrutador junto com
+      estaLendo/confiancaLeitura (teleprompter por frame, quando ffmpeg disponível). */
+  perdeuFoco?: { vezes: number; segundosFora: number };
 };
 
 /** Comentário interno do recrutador sobre a candidatura — não visível ao candidato. */

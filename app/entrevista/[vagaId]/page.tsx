@@ -762,6 +762,9 @@ function Gravador({
   const [segundosLeitura, setSegundosLeitura] = useState(TEMPO_LEITURA_SEG);
   const [segundosResposta, setSegundosResposta] = useState(TEMPO_MAX_RESPOSTA_SEG);
   const stopTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  // V-SEC (sinal, não prova): conta quantas vezes a aba perdeu foco durante a gravação
+  // e por quanto tempo — candidato pode ter saído pra ler uma cola em outra tela.
+  const focoRef = useRef({ vezes: 0, segundosFora: 0, saiuEm: 0 });
 
   // Avisa antes de sair/fechar a aba durante leitura/gravação/envio — o vídeo só é
   // enviado no onstop do MediaRecorder (ver enviar()); se o candidato fechar a aba
@@ -804,6 +807,7 @@ function Gravador({
     formData.append('perguntaId', perguntaId);
     formData.append('video', blob, 'resposta.webm');
     formData.append('tokenGravacao', tokenGravacaoRef.current ?? '');
+    formData.append('perdeuFoco', JSON.stringify({ vezes: focoRef.current.vezes, segundosFora: Math.round(focoRef.current.segundosFora) }));
     const res = await fetch(`/candidaturas/${candidaturaId}/respostas`, {
       method: 'POST',
       body: formData
@@ -820,6 +824,7 @@ function Gravador({
   function iniciarGravacao() {
     if (!streamRef.current) return;
     chunksRef.current = [];
+    focoRef.current = { vezes: 0, segundosFora: 0, saiuEm: 0 };
     const recorder = new MediaRecorder(streamRef.current, { mimeType: 'video/webm' });
     recorder.ondataavailable = (e) => {
       if (e.data.size > 0) chunksRef.current.push(e.data);
@@ -892,6 +897,36 @@ function Gravador({
       setSegundosResposta((s) => Math.max(0, s - 1));
     }, 1000);
     return () => clearInterval(intervalo);
+  }, [estado]);
+
+  // Tracking de "saída da tela" durante a gravação (feedback de call, 2026-08-14): troca de
+  // aba/janela é um sinal de que o candidato pode ter ido ler uma cola em outro lugar. Só
+  // conta enquanto 'gravando' — sair durante a leitura da pergunta é normal/esperado.
+  useEffect(() => {
+    if (estado !== 'gravando') return;
+    function aoPerderFoco() {
+      if (focoRef.current.saiuEm) return; // já contando, ignora repetição do mesmo evento
+      focoRef.current.vezes += 1;
+      focoRef.current.saiuEm = Date.now();
+    }
+    function aoRecuperarFoco() {
+      if (!focoRef.current.saiuEm) return;
+      focoRef.current.segundosFora += (Date.now() - focoRef.current.saiuEm) / 1000;
+      focoRef.current.saiuEm = 0;
+    }
+    function aoMudarVisibilidade() {
+      if (document.hidden) aoPerderFoco();
+      else aoRecuperarFoco();
+    }
+    window.addEventListener('blur', aoPerderFoco);
+    window.addEventListener('focus', aoRecuperarFoco);
+    document.addEventListener('visibilitychange', aoMudarVisibilidade);
+    return () => {
+      window.removeEventListener('blur', aoPerderFoco);
+      window.removeEventListener('focus', aoRecuperarFoco);
+      document.removeEventListener('visibilitychange', aoMudarVisibilidade);
+      aoRecuperarFoco(); // fecha qualquer janela de ausência aberta ao trocar de estado
+    };
   }, [estado]);
 
   function encerrarResposta() {

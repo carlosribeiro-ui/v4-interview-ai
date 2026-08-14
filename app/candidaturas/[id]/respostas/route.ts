@@ -49,6 +49,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const perguntaId = formData.get('perguntaId');
     const file = formData.get('video');
     const tokenGravacao = formData.get('tokenGravacao');
+    const perdeuFocoRaw = formData.get('perdeuFoco');
 
     if (typeof perguntaId !== 'string' || !(file instanceof File)) {
       return NextResponse.json({ error: 'perguntaId e video são obrigatórios' }, { status: 400 });
@@ -108,13 +109,28 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: 'Erro ao salvar o vídeo' }, { status: 500 });
     }
 
+    // V-SEC: sinal client-side, não confiável por si só (pode ser manipulado como qualquer
+    // dado vindo do cliente) — daí o try/catch silencioso, não vale bloquear o upload por isso.
+    let perdeuFoco: Resposta['perdeuFoco'];
+    if (typeof perdeuFocoRaw === 'string') {
+      try {
+        const parsed = JSON.parse(perdeuFocoRaw);
+        if (typeof parsed?.vezes === 'number' && typeof parsed?.segundosFora === 'number') {
+          perdeuFoco = { vezes: Math.max(0, parsed.vezes), segundosFora: Math.max(0, parsed.segundosFora) };
+        }
+      } catch {
+        // formato inesperado, segue sem o dado
+      }
+    }
+
     const respostaPlaceholder: Resposta = {
       perguntaId,
       videoPath,
       transcricao: '',
       score: 0,
       feedback: '',
-      avaliando: true
+      avaliando: true,
+      ...(perdeuFoco ? { perdeuFoco } : {})
     };
 
     await upsertRespostaAtomica(candidaturaId, respostaPlaceholder);
