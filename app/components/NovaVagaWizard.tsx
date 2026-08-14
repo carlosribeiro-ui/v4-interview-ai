@@ -7,16 +7,26 @@ import BuscaCidade from '@/app/components/BuscaCidade';
 
 /* ─── Constantes ─── */
 
+// Áreas internas de atuação da V4 (2026-08-14, feedback de call + catálogo auditado "Vagas
+// Coploy") — a V4 contrata pra si mesma, não é um ATS multi-cliente com segmentos de indústria
+// variados; o antigo enum genérico (tecnologia/saude/varejo...) veio do modelo Coploy original
+// e não fazia sentido aqui. value=label porque o catálogo auditado (CSV fonte da verdade) já
+// usa esse texto exato na coluna "Segmento da Atividade Econômica" — sem tradução value↔label
+// pra manter a importação 1:1.
 const SEGMENTOS = [
-  { value: 'tecnologia', label: 'Tecnologia' },
-  { value: 'saude', label: 'Saúde' },
-  { value: 'educacao', label: 'Educação' },
-  { value: 'financeiro', label: 'Financeiro' },
-  { value: 'varejo', label: 'Varejo' },
-  { value: 'industria', label: 'Indústria' },
-  { value: 'servicos', label: 'Serviços' },
-  { value: 'rh', label: 'Recrutamento e seleção (RH tech)' },
-  { value: 'outro', label: 'Outro' }
+  { value: 'Administração / Finanças', label: 'Administração / Finanças' },
+  { value: 'Dados / BI', label: 'Dados / BI' },
+  { value: 'Design / Criação', label: 'Design / Criação' },
+  { value: 'Expansão / Franquias', label: 'Expansão / Franquias' },
+  { value: 'Gestão de Projetos / Estratégia', label: 'Gestão de Projetos / Estratégia' },
+  { value: 'Jurídico / Compliance', label: 'Jurídico / Compliance' },
+  { value: 'Marketing / Atendimento', label: 'Marketing / Atendimento' },
+  { value: 'Marketing / Comunicação', label: 'Marketing / Comunicação' },
+  { value: 'Recursos Humanos', label: 'Recursos Humanos' },
+  { value: 'Tecnologia / Marketing', label: 'Tecnologia / Marketing' },
+  { value: 'Tecnologia / Produto', label: 'Tecnologia / Produto' },
+  { value: 'Vendas / Comercial', label: 'Vendas / Comercial' },
+  { value: 'Outro', label: 'Outro' }
 ];
 
 const NIVEIS = [
@@ -25,6 +35,9 @@ const NIVEIS = [
   { value: 'Pleno', label: 'Pleno' },
   { value: 'Sênior', label: 'Sênior' },
   { value: 'Especialista', label: 'Especialista' },
+  // 'Liderança' (2026-08-14): nível de coordenador no catálogo auditado — nem "Sênior" nem
+  // "Gerente" descreviam certo essa faixa (cargos tipo Coordenador de Cobrança/Contabilidade/etc.).
+  { value: 'Liderança', label: 'Liderança (coordenação)' },
   { value: 'Gerente', label: 'Gerente' },
   { value: 'Diretor', label: 'Diretor' }
 ];
