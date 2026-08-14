@@ -34,10 +34,15 @@ function limparMemoria() {
 
 /**
  * Registra o uso do token e informa se ele JÁ tinha sido usado antes.
- * Falha de infraestrutura nunca propaga: em caso de erro devolve `false` (não acusa),
- * porque um falso positivo aqui mancharia o perfil de um candidato honesto.
+ *
+ * `verificado: false` significa que a checagem NÃO pôde rodar (Redis fora do ar, ou nem
+ * configurado). Isso é diferente de "rodou e está limpo" — sem essa distinção, uma queda do
+ * Redis deixaria todos os perfis aparentemente limpos e ninguém saberia que o controle parou.
+ * O chamador decide o que fazer; hoje ele só registra em log, porque acusar o candidato por
+ * uma falha da nossa infraestrutura seria injusto (e acusar TODOS, que é o que aconteceria
+ * com fail-closed, seria pior ainda).
  */
-export async function tokenJaUsado(token: string): Promise<boolean> {
+export async function tokenJaUsado(token: string): Promise<{ usado: boolean; verificado: boolean }> {
   // Guarda só o hash — o token é uma credencial; não faz sentido persistir o valor cru.
   const chave = `gravacao-usada:${createHash('sha256').update(token).digest('hex').slice(0, 32)}`;
 
@@ -46,14 +51,17 @@ export async function tokenJaUsado(token: string): Promise<boolean> {
       // SET NX devolve null quando a chave já existia — operação atômica, sem race entre
       // uploads concorrentes.
       const definido = await redis.set(chave, 1, { nx: true, ex: TTL_SEG });
-      return definido === null;
+      return { usado: definido === null, verificado: true };
     } catch {
-      return false;
+      return { usado: false, verificado: false };
     }
   }
 
+  // Sem Redis: o Set em memória só enxerga a própria instância serverless, então um reuso
+  // que caia em outra instância passa batido. Vale como rede de segurança parcial, mas não
+  // conta como verificação confiável.
   limparMemoria();
-  if (memoria.has(chave)) return true;
+  if (memoria.has(chave)) return { usado: true, verificado: true };
   memoria.set(chave, Date.now() + TTL_SEG * 1000);
-  return false;
+  return { usado: false, verificado: false };
 }

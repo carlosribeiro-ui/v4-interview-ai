@@ -12,7 +12,17 @@ import {
 type Fase = 'carregando' | 'form' | 'idioma' | 'onboarding' | 'entrevista' | 'csat' | 'concluido' | 'erro';
 
 const TEMPO_LEITURA_SEG = 20;
-const TEMPO_MAX_RESPOSTA_SEG = 60;
+/** 1min45 (2026-08-14, era 60s). O corte de verdade é o setTimeout em iniciarGravacao — o
+    cronômetro na tela é só visual. Mexer aqui exige revisar junto: os prompts de geração de
+    perguntas em lib/llm.ts (que dimensionam a pergunta pro tempo disponível) e o teto de
+    50MB do upload (ver VIDEO_BITRATE_BPS abaixo). */
+const TEMPO_MAX_RESPOSTA_SEG = 105;
+
+/** Vídeo mais longo = arquivo maior, e o upload corta em 50MB. Sem fixar a taxa, o
+    MediaRecorder escolhe sozinha (chega a ~2.5Mbps em máquina boa): 105s nessa taxa dá ~33MB
+    e encosta no limite. Fixando em 1Mbps, 1min45 fica em ~13MB com sobra — qualidade
+    suficiente pra fala e pra análise de olhar, que é tudo o que a avaliação usa. */
+const VIDEO_BITRATE_BPS = 1_000_000;
 
 /** Chave da sessao local do candidato — permite retomar apos recarregar/fechar o navegador. */
 function chaveSessao(vagaId: string) {
@@ -853,7 +863,10 @@ function Gravador({
     focoRef.current = { vezes: 0, segundosFora: 0, saiuEm: 0 };
     framesRef.current = [];
     framesTimeoutsRef.current.forEach(clearTimeout);
-    const recorder = new MediaRecorder(streamRef.current, { mimeType: 'video/webm' });
+    const recorder = new MediaRecorder(streamRef.current, {
+      mimeType: 'video/webm',
+      videoBitsPerSecond: VIDEO_BITRATE_BPS
+    });
     recorder.ondataavailable = (e) => {
       if (e.data.size > 0) chunksRef.current.push(e.data);
     };

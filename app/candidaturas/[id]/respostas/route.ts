@@ -83,11 +83,21 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         iniciadoEm = validacaoGravacao.iniciadoEm;
         // Cada credencial vale para UM envio. Um segundo upload com a mesma credencial
         // significa que ela foi capturada e reaproveitada para outro arquivo.
-        if (await tokenJaUsado(tokenGravacao)) {
+        const reuso = await tokenJaUsado(tokenGravacao);
+        if (reuso.usado) {
           sinais.push({
             codigo: 'token_reusado',
             detalhe: 'A mesma credencial de gravação já havia sido usada em outro envio. Cada gravação gera uma credencial própria — reaproveitar indica envio de arquivo fora do fluxo normal.',
             peso: 'alto'
+          });
+        } else if (!reuso.verificado) {
+          // Sem isso, uma queda do Redis deixaria o perfil "limpo" sem que ninguém soubesse
+          // que o controle de reuso simplesmente não rodou. Não vira sinal no perfil (seria
+          // injusto acusar por falha nossa), mas fica registrado pra operação enxergar.
+          reportarErro(new Error('Verificação de reuso de credencial indisponível (Redis fora do ar ou não configurado)'), {
+            route: '/candidaturas/[id]/respostas',
+            candidaturaId,
+            extra: { perguntaId, fase: 'antifraude' }
           });
         }
       }
