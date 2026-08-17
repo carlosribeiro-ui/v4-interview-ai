@@ -35,7 +35,11 @@ const envSchema = z.object({
   // ─── CORS (allowlist de origins para rotas de integração) ───
   CORS_ALLOWED_ORIGINS: z.string().optional(),
 
-  // ─── SMTP (e-mail de "esqueci minha senha") — opcional ───
+  // ─── Resend (e-mail transacional, preferido) — opcional ───
+  RESEND_API_KEY: z.string().optional(),
+  RESEND_FROM: z.string().optional(),
+
+  // ─── SMTP genérico (fallback legado, usado se RESEND_API_KEY ausente) — opcional ───
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.string().optional(),
   SMTP_USER: z.string().optional(),

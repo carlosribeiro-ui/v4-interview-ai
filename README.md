@@ -67,6 +67,9 @@ cp .env.local.example .env.local
 #   R2_PUBLIC_URL=...
 #   EXTERNAL_API_KEY=...       (chave pra API externa)
 #   SESSION_SECRET=...         (pra production — senão usa fallback dev)
+# opcional (sem isso, "esqueci senha" e e-mails de evento só logam, não enviam):
+#   RESEND_API_KEY=...         (console.resend.com/api-keys — preferido)
+#   RESEND_FROM=...            (ex: "V4 Interview AI <notificacoes@v4company.com>")
 npm run dev
 ```
 
@@ -137,7 +140,7 @@ integrador, escopo ou expiração/rotação automática. Se um integrador for de
 
 ## Limitações conhecidas
 
-- **Sem email notifications** — candidato e recrutador não recebem alertas por email.
+- **E-mail depende de RESEND_API_KEY (ou SMTP como fallback)** — o sistema de templates/webhooks por evento (`candidatura_finalizada`, `parecer_gerado`, recuperação de senha) já está implementado e funcional, mas sem um desses dois configurados nada é enviado de fato: cada tentativa cai na Caixa de saída (`/admin/config`) como `nao_configurado`.
 - **Candidatura ID é o "auth" do candidato** — quem tem o UUID acessa tudo (dados, vídeo, CV, notas internas). Aceitável pra MVP, mas não pra produção com dados sensíveis.
 - **Sem paginação** — listagens carregam todos os registros. OK com volume baixo.
 - **ffmpeg não roda no Vercel** — extração de frames degrada graceful (retorna `[]`), detecção de teleprompter desativada.
