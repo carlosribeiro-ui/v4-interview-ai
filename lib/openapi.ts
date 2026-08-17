@@ -1,8 +1,14 @@
-/** OpenAPI 3.0 spec — hand-maintained. Atualizado para v0.2.0. */
+/** OpenAPI 3.0 spec — hand-maintained. Atualizado para v0.3.0 (Bearer padrão nas Integracoes). */
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const spec = {
   openapi: '3.0.3',
-  info: { title: 'V4 Interview AI — API', version: '0.2.0' },
+  info: {
+    title: 'V4 Interview AI — API',
+    version: '0.3.0',
+    description:
+      'Rotas /integracoes/* aceitam `Authorization: Bearer <EXTERNAL_API_KEY>` (preferido, padrão RFC 6750) ' +
+      'ou `x-api-key: <EXTERNAL_API_KEY>` (legado, mantido por compatibilidade). Mesma chave para os dois formatos.'
+  },
   servers: [{ url: '/' }],
   tags: [
     { name: 'Auth' }, { name: 'Vagas' }, { name: 'Candidaturas' },
@@ -12,7 +18,8 @@ const spec = {
   components: {
     securitySchemes: {
       SessionAuth: { type: 'apiKey', in: 'cookie', name: 'v4_session' },
-      ApiKeyAuth: { type: 'apiKey', in: 'header', name: 'x-api-key' }
+      BearerAuth: { type: 'http', scheme: 'bearer', description: 'Authorization: Bearer <EXTERNAL_API_KEY> — preferido para /integracoes/*' },
+      ApiKeyAuth: { type: 'apiKey', in: 'header', name: 'x-api-key', description: 'Legado — mesma chave que BearerAuth' }
     },
     schemas: {
       Erro: { type: 'object', properties: { error: { type: 'string' } } },
@@ -62,11 +69,11 @@ const spec = {
     },
     '/usuarios/{id}': { delete: { tags: ['Usuarios'], summary: 'Remove usuario (admin)', security: [{ SessionAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'OK' } } } },
     '/logs': { get: { tags: ['Logs'], summary: 'Auditoria (admin) (+ ?formato=csv|pdf)', security: [{ SessionAuth: [] }], responses: { '200': { description: 'OK' } } } },
-    '/integracoes/vagas': { get: { tags: ['Integracoes'], summary: 'Lista vagas (externo)', security: [{ ApiKeyAuth: [] }], responses: { '200': { description: 'OK' } } }, post: { tags: ['Integracoes'], summary: 'Cria vaga (externo)', security: [{ ApiKeyAuth: [] }], responses: { '201': { description: 'OK' } } } },
-    '/integracoes/vagas/{id}': { get: { tags: ['Integracoes'], summary: 'Detalhe vaga (externo)', security: [{ ApiKeyAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'OK' } } } },
-    '/integracoes/candidaturas': { get: { tags: ['Integracoes'], summary: 'Lista candidaturas (externo)', security: [{ ApiKeyAuth: [] }], responses: { '200': { description: 'OK' } } } },
-    '/integracoes/candidaturas/{id}': { get: { tags: ['Integracoes'], summary: 'Detalhe candidatura (externo)', security: [{ ApiKeyAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'OK' } } } },
-    '/integracoes/export': { get: { tags: ['Integracoes'], summary: 'Export completo (externo)', security: [{ ApiKeyAuth: [] }], responses: { '200': { description: 'OK' } } } }
+    '/integracoes/vagas': { get: { tags: ['Integracoes'], summary: 'Lista vagas (externo)', security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }], responses: { '200': { description: 'OK' } } }, post: { tags: ['Integracoes'], summary: 'Cria vaga (externo)', security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }], responses: { '201': { description: 'OK' } } } },
+    '/integracoes/vagas/{id}': { get: { tags: ['Integracoes'], summary: 'Detalhe vaga (externo)', security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'OK' } } } },
+    '/integracoes/candidaturas': { get: { tags: ['Integracoes'], summary: 'Lista candidaturas (externo)', security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }], responses: { '200': { description: 'OK' } } } },
+    '/integracoes/candidaturas/{id}': { get: { tags: ['Integracoes'], summary: 'Detalhe candidatura (externo)', security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'OK' } } } },
+    '/integracoes/export': { get: { tags: ['Integracoes'], summary: 'Export completo (externo)', security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }], responses: { '200': { description: 'OK' } } } }
   }
 };
 
