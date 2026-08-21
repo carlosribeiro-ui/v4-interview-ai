@@ -98,10 +98,10 @@ npm run typecheck    # Verifica tipos TypeScript
 ## API externa
 
 Vagas e candidaturas podem ser criadas/consultadas por sistemas externos (n8n, Pipefy) via
-`/integracoes/*`. Autenticação padronizada em **`Authorization: Bearer <chave>`** (RFC 6750 —
-reconhecido nativamente por Postman, n8n HTTP Request node, curl, etc.). O formato antigo
-`x-api-key: <chave>` continua funcionando (mesma chave, `EXTERNAL_API_KEY`), mas prefira Bearer
-em integrações novas. Doc interativa completa em `/docs` (Swagger UI sobre `/openapi.json`).
+`/integracoes/*`. Autenticação em **`Authorization: Bearer <chave>`** (RFC 6750 — reconhecido
+nativamente por Postman, n8n HTTP Request node, curl, etc.) — **único formato aceito** desde
+21/08/2026. O formato antigo `x-api-key: <chave>` foi removido; qualquer chamada que ainda
+o use recebe 401. Doc interativa completa em `/docs` (Swagger UI sobre `/openapi.json`).
 
 ```bash
 # Criar vaga

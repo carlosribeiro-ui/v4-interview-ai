@@ -58,7 +58,7 @@ describe('middleware CORS - lógica', () => {
     const res = new NextResponse(null, { status: 204 });
     res.headers.set('Access-Control-Allow-Origin', '*');
     res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
-    res.headers.set('Access-Control-Allow-Headers', 'Content-Type, x-api-key');
+    res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.headers.set('Access-Control-Max-Age', '86400');
 
     expect(res.status).toBe(204);
@@ -67,9 +67,9 @@ describe('middleware CORS - lógica', () => {
     expect(res.headers.get('Access-Control-Max-Age')).toBe('86400');
   });
 
-  it('rotas de integração permitem x-api-key header', () => {
+  it('rotas de integração permitem Authorization header (Bearer)', () => {
     const res = new NextResponse();
-    res.headers.set('Access-Control-Allow-Headers', 'Content-Type, x-api-key');
-    expect(res.headers.get('Access-Control-Allow-Headers')).toContain('x-api-key');
+    res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    expect(res.headers.get('Access-Control-Allow-Headers')).toContain('Authorization');
   });
 });

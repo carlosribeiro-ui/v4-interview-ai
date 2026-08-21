@@ -7,8 +7,8 @@ export const dynamic = 'force-dynamic';
 
 /**
  * API para sistemas externos (ex: n8n, Pipefy via automação) criarem e
- * consultarem vagas sem passar pelo painel admin. Autenticada por header
- * x-api-key (ver lib/auth-externa.ts).
+ * consultarem vagas sem passar pelo painel admin. Autenticada por
+ * Authorization: Bearer (ver lib/auth-externa.ts).
  */
 export async function GET(req: NextRequest) {
   const authErro = checarChaveExterna(req);
