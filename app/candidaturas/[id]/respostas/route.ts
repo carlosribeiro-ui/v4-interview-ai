@@ -7,11 +7,12 @@ import { getCandidatura, getVaga, upsertRespostaAtomica, atualizarRespostaAtomic
 import { uploadParaR2 } from '@/lib/r2';
 import { transcribeAudio } from '@/lib/transcribe';
 import { avaliarResposta } from '@/lib/llm';
-import { extractarFrames } from '@/lib/video';
 import { aplicarRateLimit, LIMITES } from '@/lib/api-helpers';
 import { reportarErro } from '@/lib/monitoring';
 import { comFila } from '@/lib/queue';
 import { lerSessao, extrairCandidaturaId, validarTokenGravacao } from '@/lib/auth';
+import { analisarIntegridadeVideo, type SinalIntegridade } from '@/lib/video-forense';
+import { tokenJaUsado } from '@/lib/token-uso-unico';
 import type { Resposta } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -49,20 +50,57 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const perguntaId = formData.get('perguntaId');
     const file = formData.get('video');
     const tokenGravacao = formData.get('tokenGravacao');
+    const perdeuFocoRaw = formData.get('perdeuFoco');
+    const framesRaw = formData.get('frames');
 
     if (typeof perguntaId !== 'string' || !(file instanceof File)) {
       return NextResponse.json({ error: 'perguntaId e video são obrigatórios' }, { status: 400 });
     }
 
-    // V-SEC (anti-fraude): exige prova de que a gravação passou pelo fluxo real da tela —
-    // fecha a brecha de enviar um vídeo qualquer direto pra API sem nunca ter gravado nada.
-    // Ver lib/auth-edge.ts (criarTokenGravacao/validarTokenGravacao).
+    // V-SEC (anti-fraude, redesenhado 2026-08-14): as checagens abaixo NÃO rejeitam mais o
+    // upload com mensagem explicativa. Uma resposta tipo "token de gravação ausente" ensina
+    // o atacante exatamente qual é a barreira, e ele ajusta a tentativa seguinte até passar.
+    // Agora o upload é aceito normalmente — o candidato não percebe nada — e o indício fica
+    // registrado em `sinaisIntegridade` pro recrutador ver no perfil.
+    const sinais: SinalIntegridade[] = [];
+    let iniciadoEm: number | null = null;
+
     if (typeof tokenGravacao !== 'string' || !tokenGravacao) {
-      return NextResponse.json({ error: 'Token de gravação ausente — recarregue a página e responda em tempo real' }, { status: 400 });
-    }
-    const validacaoGravacao = await validarTokenGravacao(tokenGravacao, candidaturaId, perguntaId);
-    if (!validacaoGravacao.ok) {
-      return NextResponse.json({ error: validacaoGravacao.erro }, { status: 400 });
+      sinais.push({
+        codigo: 'sem_token',
+        detalhe: 'O envio não trouxe a credencial que a tela de entrevista gera ao iniciar a gravação. Indica que o vídeo foi enviado direto para o sistema, sem passar pela tela.',
+        peso: 'alto'
+      });
+    } else {
+      const validacaoGravacao = await validarTokenGravacao(tokenGravacao, candidaturaId, perguntaId);
+      if (!validacaoGravacao.ok) {
+        sinais.push({
+          codigo: 'token_invalido',
+          detalhe: `A credencial de gravação não confere (${validacaoGravacao.erro}). O envio não corresponde a uma gravação iniciada normalmente nesta pergunta.`,
+          peso: 'alto'
+        });
+      } else {
+        iniciadoEm = validacaoGravacao.iniciadoEm;
+        // Cada credencial vale para UM envio. Um segundo upload com a mesma credencial
+        // significa que ela foi capturada e reaproveitada para outro arquivo.
+        const reuso = await tokenJaUsado(tokenGravacao);
+        if (reuso.usado) {
+          sinais.push({
+            codigo: 'token_reusado',
+            detalhe: 'A mesma credencial de gravação já havia sido usada em outro envio. Cada gravação gera uma credencial própria — reaproveitar indica envio de arquivo fora do fluxo normal.',
+            peso: 'alto'
+          });
+        } else if (!reuso.verificado) {
+          // Sem isso, uma queda do Redis deixaria o perfil "limpo" sem que ninguém soubesse
+          // que o controle de reuso simplesmente não rodou. Não vira sinal no perfil (seria
+          // injusto acusar por falha nossa), mas fica registrado pra operação enxergar.
+          reportarErro(new Error('Verificação de reuso de credencial indisponível (Redis fora do ar ou não configurado)'), {
+            route: '/candidaturas/[id]/respostas',
+            candidaturaId,
+            extra: { perguntaId, fase: 'antifraude' }
+          });
+        }
+      }
     }
 
     // V-08: File size limit
@@ -95,6 +133,14 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: 'Arquivo não é um vídeo válido (aceitos: MP4, WebM)' }, { status: 400 });
     }
 
+    // Análise forense do container: procura contradições factuais entre o arquivo e a janela
+    // de tempo real da sessão (ver lib/video-forense.ts). Só roda com token válido — sem
+    // `iniciadoEm` não há relógio confiável pra comparar, e o indício de token já foi
+    // registrado acima de qualquer forma.
+    if (iniciadoEm !== null) {
+      sinais.push(...analisarIntegridadeVideo(buffer, isWebm, Date.now() - iniciadoEm));
+    }
+
     const ext = isMp4 ? 'mp4' : 'webm';
     const contentType = ext === 'mp4' ? 'video/mp4' : 'video/webm';
     const tmpPath = path.join(os.tmpdir(), `${randomUUID()}.${ext}`);
@@ -108,19 +154,75 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: 'Erro ao salvar o vídeo' }, { status: 500 });
     }
 
+    // V-SEC: sinal client-side, não confiável por si só (pode ser manipulado como qualquer
+    // dado vindo do cliente) — daí o try/catch silencioso, não vale bloquear o upload por isso.
+    let perdeuFoco: Resposta['perdeuFoco'];
+    if (typeof perdeuFocoRaw === 'string') {
+      try {
+        const parsed = JSON.parse(perdeuFocoRaw);
+        if (typeof parsed?.vezes === 'number' && typeof parsed?.segundosFora === 'number') {
+          perdeuFoco = { vezes: Math.max(0, parsed.vezes), segundosFora: Math.max(0, parsed.segundosFora) };
+        }
+      } catch {
+        // formato inesperado, segue sem o dado
+      }
+    }
+
+    // V-SEC: frames vêm do canvas do navegador (ver app/entrevista/[vagaId]/page.tsx), não de
+    // ffmpeg no servidor — o Vercel serverless não tem o binário, então a extração antiga
+    // (lib/video.ts) sempre voltava [] em produção e a detecção de leitura nunca via imagem
+    // nenhuma. Cap de 6 frames / ~800KB de base64 cada: generoso pro JPEG qualidade 0.5 do
+    // client, mas impede abuso de payload (não é upload de arquivo, é campo de texto do form,
+    // não entra no limite de 50MB do vídeo).
+    let frames: { frameBase64: string; timestamp: string }[] = [];
+    if (typeof framesRaw === 'string' && framesRaw.length < 6 * 1024 * 1024) {
+      try {
+        const parsed = JSON.parse(framesRaw);
+        if (Array.isArray(parsed)) {
+          frames = parsed
+            .filter(
+              (f): f is { frameBase64: string; timestamp: string } =>
+                typeof f?.frameBase64 === 'string' &&
+                typeof f?.timestamp === 'string' &&
+                f.frameBase64.length < 800 * 1024
+            )
+            .slice(0, 6);
+        }
+      } catch {
+        // formato inesperado, segue sem imagens (mesmo fallback de antes: estaLendo=false)
+      }
+    }
+
+    // Regravação da MESMA pergunta: o upsert abaixo apaga a resposta anterior, então sem
+    // contar aqui a informação se perde. Não bloqueamos a regravação (câmera falha, aba
+    // recarrega — barrar puniria candidato honesto), mas um número alto mostra que a resposta
+    // foi ensaiada até sair do jeito desejado, o que descaracteriza a espontaneidade.
+    const anterior = candidatura.respostas?.find((r) => r.perguntaId === perguntaId);
+    const tentativas = (anterior?.tentativas ?? (anterior ? 1 : 0)) + 1;
+    if (tentativas >= 3) {
+      sinais.push({
+        codigo: 'regravacao_repetida',
+        detalhe: `Esta pergunta foi gravada ${tentativas} vezes. Cada nova gravação substitui a anterior — o que está registrado é a última tentativa, não a resposta espontânea.`,
+        peso: tentativas >= 5 ? 'alto' : 'medio'
+      });
+    }
+
     const respostaPlaceholder: Resposta = {
       perguntaId,
       videoPath,
       transcricao: '',
       score: 0,
       feedback: '',
-      avaliando: true
+      avaliando: true,
+      ...(perdeuFoco ? { perdeuFoco } : {}),
+      ...(sinais.length > 0 ? { sinaisIntegridade: sinais } : {}),
+      tentativas
     };
 
     await upsertRespostaAtomica(candidaturaId, respostaPlaceholder);
 
     const curriculoTexto = [candidatura.linkedin, candidatura.curriculoPath].filter(Boolean).join('\n');
-    processarRespostaIA(candidaturaId, perguntaId, tmpPath, videoPath, pergunta.texto, pergunta.criterios, vaga, curriculoTexto || undefined)
+    processarRespostaIA(candidaturaId, perguntaId, tmpPath, videoPath, pergunta.texto, pergunta.criterios, vaga, frames, curriculoTexto || undefined)
       .catch(() => {});
 
     return NextResponse.json({ status: 'processing', perguntaId }, { status: 202 });
@@ -135,13 +237,11 @@ async function processarRespostaIA(
   textoPergunta: string,
   criterios: string,
   vaga: { senioridade: string; requisitos: string[]; jobDescription?: string; avaliarIdioma?: boolean },
+  frames: { frameBase64: string; timestamp: string }[],
   curriculoTexto?: string
 ) {
   try {
-    const [transcricao, frames] = await Promise.all([
-      transcribeAudio(tmpPath),
-      Promise.resolve(extractarFrames(tmpPath))
-    ]);
+    const transcricao = await transcribeAudio(tmpPath);
 
     const avaliacao = await avaliarResposta(
       textoPergunta, criterios, transcricao, vaga.senioridade, vaga.requisitos,

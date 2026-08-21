@@ -67,6 +67,9 @@ cp .env.local.example .env.local
 #   R2_PUBLIC_URL=...
 #   EXTERNAL_API_KEY=...       (chave pra API externa)
 #   SESSION_SECRET=...         (pra production — senão usa fallback dev)
+# opcional (sem isso, "esqueci senha" e e-mails de evento só logam, não enviam):
+#   RESEND_API_KEY=...         (console.resend.com/api-keys — preferido)
+#   RESEND_FROM=...            (ex: "V4 Interview AI <notificacoes@v4company.com>")
 npm run dev
 ```
 
@@ -94,22 +97,50 @@ npm run typecheck    # Verifica tipos TypeScript
 
 ## API externa
 
-Vagas podem ser criadas/consultadas por sistemas externos via `/integracoes/*`, autenticado por `x-api-key`:
+Vagas e candidaturas podem ser criadas/consultadas por sistemas externos (n8n, Pipefy) via
+`/integracoes/*`. Autenticação em **`Authorization: Bearer <chave>`** (RFC 6750 — reconhecido
+nativamente por Postman, n8n HTTP Request node, curl, etc.) — **único formato aceito** desde
+21/08/2026. O formato antigo `x-api-key: <chave>` foi removido; qualquer chamada que ainda
+o use recebe 401. Doc interativa completa em `/docs` (Swagger UI sobre `/openapi.json`).
 
 ```bash
 # Criar vaga
 curl -X POST https://v4-interview-ai.vercel.app/integracoes/vagas \
-  -H "x-api-key: SUA_CHAVE" -H "Content-Type: application/json" \
+  -H "Authorization: Bearer SUA_CHAVE" -H "Content-Type: application/json" \
   -d '{"cargo":"Dev Backend","senioridade":"Pleno","segmento":"Tech"}'
+
+# Listar vagas
+curl https://v4-interview-ai.vercel.app/integracoes/vagas \
+  -H "Authorization: Bearer SUA_CHAVE"
+
+# Detalhe de uma vaga
+curl https://v4-interview-ai.vercel.app/integracoes/vagas/VAGA_ID \
+  -H "Authorization: Bearer SUA_CHAVE"
 
 # Listar candidaturas de uma vaga
 curl "https://v4-interview-ai.vercel.app/integracoes/candidaturas?vagaExternalId=xxx" \
-  -H "x-api-key: SUA_CHAVE"
+  -H "Authorization: Bearer SUA_CHAVE"
+
+# Detalhe de uma candidatura
+curl https://v4-interview-ai.vercel.app/integracoes/candidaturas/CANDIDATURA_ID \
+  -H "Authorization: Bearer SUA_CHAVE"
+
+# Export completo (todas as vagas + candidaturas) — rate limited
+curl https://v4-interview-ai.vercel.app/integracoes/export \
+  -H "Authorization: Bearer SUA_CHAVE"
 ```
+
+**No n8n:** credencial do tipo "Header Auth" ou "Generic Credential Type" com header
+`Authorization` = `Bearer SUA_CHAVE` no nó HTTP Request — mesmo padrão em todos os 5 endpoints
+acima, nenhum precisa de configuração diferente.
+
+**Limitação conhecida:** a chave (`EXTERNAL_API_KEY`) é única e global — não há chave por
+integrador, escopo ou expiração/rotação automática. Se um integrador for descontinuado, a
+única forma de revogar o acesso dele é trocar a chave para TODOS de uma vez.
 
 ## Limitações conhecidas
 
-- **Sem email notifications** — candidato e recrutador não recebem alertas por email.
+- **E-mail depende de RESEND_API_KEY (ou SMTP como fallback)** — o sistema de templates/webhooks por evento (`candidatura_finalizada`, `parecer_gerado`, recuperação de senha) já está implementado e funcional, mas sem um desses dois configurados nada é enviado de fato: cada tentativa cai na Caixa de saída (`/admin/config`) como `nao_configurado`.
 - **Candidatura ID é o "auth" do candidato** — quem tem o UUID acessa tudo (dados, vídeo, CV, notas internas). Aceitável pra MVP, mas não pra produção com dados sensíveis.
 - **Sem paginação** — listagens carregam todos os registros. OK com volume baixo.
 - **ffmpeg não roda no Vercel** — extração de frames degrada graceful (retorna `[]`), detecção de teleprompter desativada.

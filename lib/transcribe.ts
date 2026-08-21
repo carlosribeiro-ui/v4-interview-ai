@@ -57,7 +57,9 @@ export async function transcribeAudio(filePath: string): Promise<string> {
     await aguardarVagaGemini(RECURSO_GEMINI_FLASH, FLASH_LIMITE_RPM);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60_000); // 60s pra vídeos grandes
+    // 90s: a resposta passou de 60s pra 1min45 em 2026-08-14, então o arquivo enviado ao
+    // Gemini ficou proporcionalmente maior e o timeout antigo (60s) passou a ser apertado.
+    const timeoutId = setTimeout(() => controller.abort(), 90_000);
 
     try {
       const res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
@@ -93,7 +95,7 @@ export async function transcribeAudio(filePath: string): Promise<string> {
       clearTimeout(timeoutId);
 
       if (err.name === 'AbortError') {
-        lastError = new Error('Gemini transcricao timeout (60s) — vídeo muito longo ou rede lenta');
+        lastError = new Error('Gemini transcricao timeout (90s) — vídeo muito longo ou rede lenta');
         continue;
       }
       // Erros de rede transitórios também merecem retry

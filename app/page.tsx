@@ -131,7 +131,7 @@ export default function DashboardPage() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-2xl font-bold">Dashboard</h1>
+          <h1 className="font-heading text-2xl font-bold">Vagas</h1>
           <p className="text-fg/40 text-sm mt-0.5">Visão geral do seu funil de seleção</p>
         </div>
         <div className="flex items-center gap-2">

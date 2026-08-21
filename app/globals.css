@@ -2,29 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── Tokens de tema (dark = padrão, light = opt-in via [data-theme="light"]) ───
+/* ─── Tokens de tema (light = padrão desde 2026-08-14 por feedback de usuários,
+   dark = opt-in via [data-theme="dark"]) ───
    Todo texto/borda/fundo "neutro" da UI usa estes tokens (via tailwind.config.ts:
    fg, field, v4bg, v4surface, v4border) em vez de white/black cru — assim os dois
    temas vêm "de graça" pros ~870 usos espalhados pelas telas, sem precisar trocar
    className condicionalmente em cada componente. Cores de marca (v4red, v4green,
    v4yellow) não mudam entre temas — não fazem parte desse mecanismo. */
 :root {
-  color-scheme: dark;
-  --c-bg: 10 10 11; /* v4bg */
-  --c-surface: 19 19 21; /* v4surface */
-  --c-fg: 255 255 255; /* texto/borda "branco" — pivô de todo o tema */
-  --c-border-base: 255 255 255; /* base do v4border (opacidade fixa em 8%) */
-  --c-selection-fg: 255 255 255;
-}
-
-/* Ativado por ThemeToggle (app/components/ThemeToggle.tsx), que seta o atributo
-   em <html> e persiste em localStorage — ver app/layout.tsx pro script anti-flash. */
-:root[data-theme='light'] {
   color-scheme: light;
   --c-bg: 255 255 255;
   --c-surface: 246 246 248;
   --c-fg: 15 15 17;
   --c-border-base: 15 15 17;
+  --c-selection-fg: 255 255 255;
+}
+
+/* Ativado por ThemeToggle (app/components/ThemeToggle.tsx), que seta o atributo
+   em <html> e persiste em localStorage — ver app/layout.tsx pro script anti-flash. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --c-bg: 10 10 11; /* v4bg */
+  --c-surface: 19 19 21; /* v4surface */
+  --c-fg: 255 255 255; /* texto/borda "branco" — pivô de todo o tema */
+  --c-border-base: 255 255 255; /* base do v4border (opacidade fixa em 8%) */
   --c-selection-fg: 255 255 255;
 }
 

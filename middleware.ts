@@ -90,14 +90,14 @@ export async function middleware(req: NextRequest) {
       if (originPermitida) {
         res.headers.set('Access-Control-Allow-Origin', origin);
         res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
-        res.headers.set('Access-Control-Allow-Headers', 'Content-Type, x-api-key');
+        res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
         res.headers.set('Access-Control-Max-Age', '86400');
       }
       return aplicarSecurityHeaders(res);
     }
 
     // V-SEC: Se origin não está na allowlist, não aplica headers CORS
-    // (o request ainda passa — auth por x-api-key — mas o browser bloqueia a resposta)
+    // (o request ainda passa — auth por Bearer — mas o browser bloqueia a resposta)
     if (!originPermitida && origin) {
       return aplicarSecurityHeaders(
         NextResponse.json({ error: 'Origin não permitida' }, { status: 403 })

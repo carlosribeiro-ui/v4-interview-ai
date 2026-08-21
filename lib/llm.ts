@@ -225,7 +225,7 @@ Gere:
 1. Uma lista de 6 a 8 requisitos tecnicos e comportamentais esperados.
 2. Exatamente 5 perguntas PRINCIPAIS (tipo="principal") — obrigatorias, cobrem os requisitos mais criticos da vaga.
 3. Exatamente 2 perguntas ADICIONAIS (tipo="adicional") — complementares/opcionais, aprofundam pontos secundarios ou situacoes menos frequentes.
-Todas as perguntas devem ser CURTAS e OBJETIVAS, respondiveis em video em ate 1 minuto — vao direto ao ponto, sem multiplas sub-perguntas empilhadas. Para cada pergunta, inclua criterios detalhados de avaliacao (calibrados pra uma resposta de ate 1 minuto, nao exija profundidade incompativel com esse tempo).
+Todas as perguntas devem ser OBJETIVAS, respondiveis em video em ate 1 minuto e 45 segundos — vao direto ao ponto, sem multiplas sub-perguntas empilhadas. Para cada pergunta, inclua criterios detalhados de avaliacao (calibrados pra uma resposta de ate 1 minuto e 45 segundos, nao exija profundidade incompativel com esse tempo).
 
 Responda SOMENTE com um JSON valido, sem markdown, no formato exato:
 {"requisitos":["requisito 1","requisito 2"],"perguntas":[{"texto":"pergunta 1","criterios":"o que uma boa resposta deve conter","tipo":"principal"}]}`;
@@ -410,7 +410,19 @@ Responda:
 3. pontoAtencao: se houver lacuna relevante, objeto com "lacuna" (o que faltou, especifico),
    "impacto" (risco/consequencia concreta para a vaga) e "comoValidar" (acao pratica pra
    validar na proxima etapa do processo). Use null se a resposta nao tiver lacuna relevante.
-${hasFrames ? '4. Nas imagens do video, analise se o candidato PARECE estar lendo um script/teleprompter (olhos vidrados, movimento ocular repetitivo, falta de contato visual com a camera) — preencha estaLendo/confiancaLeitura (0-1). Sem imagens, use estaLendo=false e confiancaLeitura=0.' : '4. Sem imagens disponiveis: use estaLendo=false e confiancaLeitura=0.'}
+${hasFrames ? `4. Nas imagens (frames capturados em momentos diferentes da resposta), avalie se o candidato
+   PARECE estar lendo um texto pronto. Sinais a procurar, em ordem de peso:
+   (a) olhar consistentemente DESVIADO da camera na MESMA direcao nos varios frames (ler de um
+       segundo monitor, notebook ao lado ou papel na mesa produz esse padrao fixo);
+   (b) olhar apontado para BAIXO de forma repetida (celular/papel no colo ou na mesa);
+   (c) movimento ocular horizontal de varredura, tipico de quem percorre linhas de texto;
+   (d) rosto estatico/inexpressivo com pouca gesticulacao, expressao "vidrada";
+   (e) reflexo de tela visivel em oculos, quando houver.
+   ATENCAO a falsos positivos: olhar para cima/para o lado brevemente ao PENSAR e normal e NAO
+   e leitura; uma unica ocorrencia isolada num frame nao basta. So marque estaLendo=true com
+   sinal consistente em mais de um frame. Em confiancaLeitura (0-1) reflita honestamente a
+   incerteza — frames escuros, de baixa qualidade ou com o rosto parcialmente fora do
+   enquadramento devem baixar a confianca, nao inventar certeza.` : '4. Sem imagens disponiveis: use estaLendo=false e confiancaLeitura=0.'}
 5. qualidadeDiscurso (0-100 cada, SOMENTE forma/linguagem, nao conteudo tecnico):
    naturalidade (espontaneidade vs decorado), personalizacao (menciona casos/situacoes reais
    vs generico), complexidade (sofisticacao do raciocinio), padroesLinguisticos (clareza/coesao),

@@ -132,6 +132,25 @@ export type Resposta = {
   competenciasAdicionais?: CompetenciaAvaliada[];
   /** Avaliação de idioma (quando vaga ativa essa feature). */
   avaliacaoIdioma?: { score: number; nivel: string; feedback: string } | null;
+  /** Sinal client-side (2026-08-14): quantas vezes a aba/janela perdeu foco durante a
+      gravação e por quantos segundos no total — candidato pode ter saído pra ler uma
+      cola em outra tela/dispositivo. Não é prova de fraude (pode ser notificação, troca
+      de janela por engano etc.), só um sinal a mais pro recrutador junto com
+      estaLendo/confiancaLeitura (teleprompter por frame). */
+  perdeuFoco?: { vezes: number; segundosFora: number };
+  /** Indícios SERVER-SIDE de que o vídeo não é a gravação ao vivo desta sessão (arquivo
+      trocado, pré-gravado, editado, token reusado). Diferente dos sinais acima, estes o
+      candidato não controla — saem do arquivo e do relógio assinado pelo servidor.
+      Ver lib/video-forense.ts. Registrado em silêncio: o upload é aceito normalmente e o
+      candidato não é avisado, senão a mensagem de erro ensinaria qual é a checagem. */
+  sinaisIntegridade?: { codigo: string; detalhe: string; peso: 'alto' | 'medio' | 'baixo' }[];
+  /** Quantas vezes ESTA pergunta foi gravada (2026-08-14). A gravação é substituída a cada
+      envio (upsertRespostaAtomica remove a anterior), então nada impede o candidato de voltar
+      e regravar até sair a resposta desejada — o que anula o efeito de "resposta espontânea".
+      Regravar não é bloqueado de propósito (câmera falha, navegador trava, e barrar prejudicaria
+      candidato honesto), mas a contagem fica visível pro recrutador. Ausente/1 = primeira e
+      única gravação. */
+  tentativas?: number;
 };
 
 /** Comentário interno do recrutador sobre a candidatura — não visível ao candidato. */

@@ -667,6 +667,16 @@ function PerfilCandidatoModal({
                   <video src={r.videoPath} controls className="w-full rounded-xl bg-field aspect-video" />
                   {r.avaliando && <Pill tom="amarelo">⏳ Processando…</Pill>}
                   {!r.avaliando && r.estaLendo !== undefined && <Pill tom={r.estaLendo ? 'vermelho' : 'verde'}>{r.estaLendo ? '⚠️ Possível leitura' : '✅ Sem indícios'} · {Math.round((r.confiancaLeitura ?? 0) * 100)}%</Pill>}
+                  {!!r.perdeuFoco?.vezes && <Pill tom="amarelo">👁️ Saiu da aba {r.perdeuFoco.vezes}x ({r.perdeuFoco.segundosFora}s)</Pill>}
+                  {(r.tentativas ?? 1) > 1 && <Pill tom="amarelo">🔁 Gravada {r.tentativas}x</Pill>}
+                  {!!r.sinaisIntegridade?.length && (
+                    <div className="rounded-xl border border-v4red/30 bg-v4red/5 px-3.5 py-3 space-y-1.5">
+                      <p className="text-xs font-semibold text-v4red uppercase">Integridade da gravação</p>
+                      {r.sinaisIntegridade.map((s: { detalhe: string; peso: string }, idx: number) => (
+                        <p key={idx} className="text-xs text-fg/70">{s.peso === 'alto' ? '🔴' : '🟡'} {s.detalhe}</p>
+                      ))}
+                    </div>
+                  )}
                   {!r.avaliando && <p className="text-xs text-fg/40">Transcrição: <span className="text-fg/70">{r.transcricao || '—'}</span></p>}
                   {!r.avaliando && <p className="text-sm text-fg/60">{r.feedback}</p>}
                   {!r.avaliando && r.pontoAtencao && (

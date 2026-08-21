@@ -1147,6 +1147,30 @@ function PerfilCandidatoModal({
                       {Math.round((r.confiancaLeitura ?? 0) * 100)}%
                     </Pill>
                   )}
+                  {!!r.perdeuFoco?.vezes && (
+                    <Pill tom="amarelo">
+                      👁️ Saiu da aba {r.perdeuFoco.vezes}x durante a resposta ({r.perdeuFoco.segundosFora}s fora)
+                    </Pill>
+                  )}
+                  {(r.tentativas ?? 1) > 1 && (
+                    <Pill tom="amarelo">🔁 Gravada {r.tentativas}x (vale a última)</Pill>
+                  )}
+                  {!!r.sinaisIntegridade?.length && (
+                    <div className="rounded-xl border border-v4red/30 bg-v4red/5 px-3.5 py-3 space-y-2">
+                      <p className="text-xs font-semibold text-v4red uppercase">
+                        Integridade da gravação — {r.sinaisIntegridade.length} {r.sinaisIntegridade.length === 1 ? 'indício' : 'indícios'}
+                      </p>
+                      {r.sinaisIntegridade.map((s, idx) => (
+                        <p key={idx} className="text-xs text-fg/70">
+                          <span className="text-fg/50">{s.peso === 'alto' ? '🔴' : '🟡'} </span>
+                          {s.detalhe}
+                        </p>
+                      ))}
+                      <p className="text-[11px] text-fg/40 pt-1">
+                        Indícios técnicos, não prova de fraude — confirme antes de decidir.
+                      </p>
+                    </div>
+                  )}
                   {!r.avaliando && (
                     <p className="text-xs text-fg/40">
                       Transcrição: <span className="text-fg/70">{r.transcricao || '—'}</span>

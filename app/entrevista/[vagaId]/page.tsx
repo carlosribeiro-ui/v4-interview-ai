@@ -12,7 +12,17 @@ import {
 type Fase = 'carregando' | 'form' | 'idioma' | 'onboarding' | 'entrevista' | 'csat' | 'concluido' | 'erro';
 
 const TEMPO_LEITURA_SEG = 20;
-const TEMPO_MAX_RESPOSTA_SEG = 60;
+/** 1min45 (2026-08-14, era 60s). O corte de verdade é o setTimeout em iniciarGravacao — o
+    cronômetro na tela é só visual. Mexer aqui exige revisar junto: os prompts de geração de
+    perguntas em lib/llm.ts (que dimensionam a pergunta pro tempo disponível) e o teto de
+    50MB do upload (ver VIDEO_BITRATE_BPS abaixo). */
+const TEMPO_MAX_RESPOSTA_SEG = 105;
+
+/** Vídeo mais longo = arquivo maior, e o upload corta em 50MB. Sem fixar a taxa, o
+    MediaRecorder escolhe sozinha (chega a ~2.5Mbps em máquina boa): 105s nessa taxa dá ~33MB
+    e encosta no limite. Fixando em 1Mbps, 1min45 fica em ~13MB com sobra — qualidade
+    suficiente pra fala e pra análise de olhar, que é tudo o que a avaliação usa. */
+const VIDEO_BITRATE_BPS = 1_000_000;
 
 /** Chave da sessao local do candidato — permite retomar apos recarregar/fechar o navegador. */
 function chaveSessao(vagaId: string) {
@@ -762,6 +772,34 @@ function Gravador({
   const [segundosLeitura, setSegundosLeitura] = useState(TEMPO_LEITURA_SEG);
   const [segundosResposta, setSegundosResposta] = useState(TEMPO_MAX_RESPOSTA_SEG);
   const stopTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  // V-SEC (sinal, não prova): conta quantas vezes a aba perdeu foco durante a gravação
+  // e por quanto tempo — candidato pode ter saído pra ler uma cola em outra tela.
+  const focoRef = useRef({ vezes: 0, segundosFora: 0, saiuEm: 0 });
+  // Detecção de teleprompter/leitura (2026-08-14): captura frames DIRETO no navegador (canvas
+  // sobre o <video> da própria webcam) em vez de extrair no servidor com ffmpeg — o Vercel
+  // serverless não tem ffmpeg instalado, então lib/video.ts::extractarFrames() sempre retornava
+  // [] em produção e a IA nunca via imagem nenhuma (avaliarResposta cai no fallback
+  // estaLendo=false/confiancaLeitura=0 sem frames — ver lib/llm.ts). Capturando aqui, o frame
+  // sempre existe, não depende de infraestrutura nenhuma no servidor.
+  const framesTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const framesRef = useRef<{ frameBase64: string; timestamp: string }[]>([]);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  function capturarFrame(timestamp: string) {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas || video.videoWidth === 0) return;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    // qualidade baixa (0.5) — é só pra IA ler expressão/olhar, não precisa de definição alta,
+    // e mantém o upload leve (frames vão junto com o form do vídeo).
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+    const base64 = dataUrl.split(',')[1];
+    if (base64) framesRef.current.push({ frameBase64: base64, timestamp });
+  }
 
   // Avisa antes de sair/fechar a aba durante leitura/gravação/envio — o vídeo só é
   // enviado no onstop do MediaRecorder (ver enviar()); se o candidato fechar a aba
@@ -804,6 +842,8 @@ function Gravador({
     formData.append('perguntaId', perguntaId);
     formData.append('video', blob, 'resposta.webm');
     formData.append('tokenGravacao', tokenGravacaoRef.current ?? '');
+    formData.append('perdeuFoco', JSON.stringify({ vezes: focoRef.current.vezes, segundosFora: Math.round(focoRef.current.segundosFora) }));
+    formData.append('frames', JSON.stringify(framesRef.current));
     const res = await fetch(`/candidaturas/${candidaturaId}/respostas`, {
       method: 'POST',
       body: formData
@@ -820,7 +860,13 @@ function Gravador({
   function iniciarGravacao() {
     if (!streamRef.current) return;
     chunksRef.current = [];
-    const recorder = new MediaRecorder(streamRef.current, { mimeType: 'video/webm' });
+    focoRef.current = { vezes: 0, segundosFora: 0, saiuEm: 0 };
+    framesRef.current = [];
+    framesTimeoutsRef.current.forEach(clearTimeout);
+    const recorder = new MediaRecorder(streamRef.current, {
+      mimeType: 'video/webm',
+      videoBitsPerSecond: VIDEO_BITRATE_BPS
+    });
     recorder.ondataavailable = (e) => {
       if (e.data.size > 0) chunksRef.current.push(e.data);
     };
@@ -834,6 +880,13 @@ function Gravador({
     stopTimeoutRef.current = setTimeout(() => {
       recorderRef.current?.stop();
     }, TEMPO_MAX_RESPOSTA_SEG * 1000);
+    // 3 capturas espaçadas ao longo da resposta (início/meio/fim) — o candidato pode desviar
+    // o olhar num instante só, então múltiplos pontos aumentam a chance de pegar o sinal sem
+    // deixar o payload pesado (3 JPEGs em baixa qualidade).
+    const pontos = [2, Math.floor(TEMPO_MAX_RESPOSTA_SEG / 2), Math.max(3, TEMPO_MAX_RESPOSTA_SEG - 3)];
+    framesTimeoutsRef.current = pontos.map((seg) =>
+      setTimeout(() => capturarFrame(`00:00:${String(seg).padStart(2, '0')}`), seg * 1000)
+    );
   }
 
   useEffect(() => {
@@ -863,6 +916,7 @@ function Gravador({
       ativo = false;
       streamRef.current?.getTracks().forEach((t) => t.stop());
       if (stopTimeoutRef.current) clearTimeout(stopTimeoutRef.current);
+      framesTimeoutsRef.current.forEach(clearTimeout);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -894,14 +948,50 @@ function Gravador({
     return () => clearInterval(intervalo);
   }, [estado]);
 
+  // Tracking de "saída da tela" durante a gravação (feedback de call, 2026-08-14): troca de
+  // aba/janela é um sinal de que o candidato pode ter ido ler uma cola em outro lugar. Só
+  // conta enquanto 'gravando' — sair durante a leitura da pergunta é normal/esperado.
+  useEffect(() => {
+    if (estado !== 'gravando') return;
+    function aoPerderFoco() {
+      if (focoRef.current.saiuEm) return; // já contando, ignora repetição do mesmo evento
+      focoRef.current.vezes += 1;
+      focoRef.current.saiuEm = Date.now();
+    }
+    function aoRecuperarFoco() {
+      if (!focoRef.current.saiuEm) return;
+      focoRef.current.segundosFora += (Date.now() - focoRef.current.saiuEm) / 1000;
+      focoRef.current.saiuEm = 0;
+    }
+    function aoMudarVisibilidade() {
+      if (document.hidden) aoPerderFoco();
+      else aoRecuperarFoco();
+    }
+    window.addEventListener('blur', aoPerderFoco);
+    window.addEventListener('focus', aoRecuperarFoco);
+    document.addEventListener('visibilitychange', aoMudarVisibilidade);
+    return () => {
+      window.removeEventListener('blur', aoPerderFoco);
+      window.removeEventListener('focus', aoRecuperarFoco);
+      document.removeEventListener('visibilitychange', aoMudarVisibilidade);
+      aoRecuperarFoco(); // fecha qualquer janela de ausência aberta ao trocar de estado
+    };
+  }, [estado]);
+
   function encerrarResposta() {
     if (stopTimeoutRef.current) clearTimeout(stopTimeoutRef.current);
+    framesTimeoutsRef.current.forEach(clearTimeout);
+    // Se o candidato encerrar antes do último ponto agendado, captura um frame na hora —
+    // melhor um frame "fim antecipado" do que nenhum frame do fim da resposta.
+    capturarFrame('encerramento-antecipado');
     recorderRef.current?.stop();
   }
 
   return (
     <div className="space-y-3">
       <video ref={videoRef} autoPlay playsInline className="w-full rounded bg-field aspect-video" />
+      {/* Oculto — só usado como buffer pra capturarFrame() desenhar o <video> e virar JPEG. */}
+      <canvas ref={canvasRef} className="hidden" />
       {erro && <p className="text-v4red text-sm">{erro}</p>}
 
       {estado === 'leitura' && (

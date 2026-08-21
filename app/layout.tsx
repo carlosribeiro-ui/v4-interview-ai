@@ -6,9 +6,9 @@ import { SessaoProvider, UserBadge, AdminNavLink } from '@/app/components/Sessao
 import ThemeToggle from '@/app/components/ThemeToggle';
 
 // Roda antes do primeiro paint (script síncrono no <head>) — evita o "flash" de tema
-// escuro seguido de claro quando o usuário já tinha escolhido claro numa sessão
-// anterior. app/globals.css já assume escuro por padrão (:root sem atributo).
-const SCRIPT_ANTI_FLASH = `try{if(localStorage.getItem('v4-theme')==='light')document.documentElement.setAttribute('data-theme','light')}catch(e){}`;
+// claro seguido de escuro quando o usuário já tinha escolhido escuro numa sessão
+// anterior. app/globals.css já assume claro por padrão (:root sem atributo).
+const SCRIPT_ANTI_FLASH = `try{if(localStorage.getItem('v4-theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}`;
 
 const fontBody = Montserrat({
   subsets: ['latin'],
